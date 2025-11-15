@@ -6,3 +6,5 @@ parameters:
 		- tests
 		- config
 		- public
+	scanDirectories:
+		- tools/protoc-php-gen/src

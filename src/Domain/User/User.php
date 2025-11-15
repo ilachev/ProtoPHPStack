@@ -8,7 +8,7 @@ use App\Domain\Entity;
 use ProtoPhpGen\Attributes\ProtoField;
 use ProtoPhpGen\Attributes\ProtoMapping;
 
-#[ProtoMapping(class: 'App\\Api\\V1\\User')]
+#[ProtoMapping(class: 'App\Api\V1\User')]
 final readonly class User implements Entity
 {
     public function __construct(
