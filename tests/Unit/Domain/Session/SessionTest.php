@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Domain\Session;
 
-use App\Domain\Session\Session;
+use App\Modules\Session\Domain\Session;
 use PHPUnit\Framework\TestCase;
 
 final class SessionTest extends TestCase

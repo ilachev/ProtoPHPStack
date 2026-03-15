@@ -11,13 +11,13 @@ use App\Application\Middleware\{
     HttpLoggingMiddleware,
     Pipeline,
     RequestMetricsMiddleware,
-    RoutingMiddleware,
-    SessionMiddleware
+    RoutingMiddleware
 };
 use App\Infrastructure\Cache\CacheService;
 use App\Infrastructure\DI\Container;
 use App\Infrastructure\DI\DIContainer;
 use App\Infrastructure\Logger\Logger;
+use App\Modules\Session\Transport\Http\SessionMiddleware;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Spiral\RoadRunner\Http\PSR7Worker;

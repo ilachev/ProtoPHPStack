@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Application\Middleware;
 
-use App\Application\Client\ClientDetector;
-use App\Application\Client\ClientIdentity;
-use App\Application\Client\SessionPayloadFactory;
 use App\Application\Http\RequestHandler;
-use App\Application\Middleware\SessionMiddleware;
-use App\Domain\Session\Session;
-use App\Domain\Session\SessionConfig;
-use App\Domain\Session\SessionPayload;
-use App\Domain\Session\SessionRepository;
-use App\Domain\Session\SessionService;
 use App\Infrastructure\Hydrator\JsonFieldAdapter;
+use App\Modules\Session\Application\ClientDetector;
+use App\Modules\Session\Application\ClientIdentity;
+use App\Modules\Session\Application\SessionPayloadFactory;
+use App\Modules\Session\Domain\Session;
+use App\Modules\Session\Domain\SessionConfig;
+use App\Modules\Session\Domain\SessionPayload;
+use App\Modules\Session\Domain\SessionRepository;
+use App\Modules\Session\Domain\SessionService;
+use App\Modules\Session\Transport\Http\SessionMiddleware;
 use Nyholm\Psr7\Response;
 use Nyholm\Psr7\ServerRequest;
 use PHPUnit\Framework\TestCase;

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Session;
 
-use App\Application\Client\ClientDetector;
-use App\Application\Client\SessionPayloadFactory;
-use App\Domain\Session\SessionService;
 use App\Infrastructure\Hydrator\JsonFieldAdapter;
+use App\Modules\Session\Application\ClientDetector;
+use App\Modules\Session\Application\SessionPayloadFactory;
+use App\Modules\Session\Domain\SessionService;
 use Nyholm\Psr7\ServerRequest;
 use Tests\Integration\IntegrationTestCase;
 

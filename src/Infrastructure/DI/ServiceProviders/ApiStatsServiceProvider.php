@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Infrastructure\DI\ServiceProviders;
 
 use App\Application\Middleware\ApiStatsMiddleware;
-use App\Domain\Session\SessionService;
 use App\Domain\Stats\ApiStatRepository;
 use App\Domain\Stats\ApiStatService;
 use App\Infrastructure\DI\Container;
 use App\Infrastructure\DI\ServiceProvider;
 use App\Infrastructure\Logger\Logger;
 use App\Infrastructure\Storage\Stats\PostgreSQLApiStatRepository;
+use App\Modules\Session\Domain\SessionService;
 
 /**
  * @implements ServiceProvider<object>

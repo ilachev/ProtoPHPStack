@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Application\Handlers;
 
-use App\Application\Handlers\HomeHandler;
 use App\Application\Http\JsonResponse;
 use App\Application\Mappers\DataTransferObjectMapper;
-use App\Application\Mappers\HomeMapper;
-use App\Domain\Home\HomeService;
 use App\Infrastructure\Hydrator\LimitedReflectionCache;
 use App\Infrastructure\Hydrator\ReflectionHydrator;
 use App\Infrastructure\Hydrator\SetterProtobufHydration;
+use App\Modules\Home\Domain\HomeService;
+use App\Modules\Home\Transport\Http\HomeHandler;
+use App\Modules\Home\Transport\Mapping\HomeResponseMapper;
 use Nyholm\Psr7\ServerRequest;
 use PHPUnit\Framework\TestCase;
 
@@ -28,7 +28,7 @@ final class HomeHandlerTest extends TestCase
         $hydrator = new ReflectionHydrator($cache, $protobufHydration);
 
         $dtoMapper = new DataTransferObjectMapper($hydrator);
-        $homeMapper = new HomeMapper($dtoMapper);
+        $homeMapper = new HomeResponseMapper($dtoMapper);
         $this->handler = new HomeHandler($homeService, $homeMapper, new JsonResponse());
     }
 

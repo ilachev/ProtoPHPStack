@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Stats;
 
-use App\Application\Client\SessionPayloadFactory;
-use App\Domain\Session\SessionService;
 use App\Infrastructure\Hydrator\JsonFieldAdapter;
 use App\Infrastructure\Storage\Storage;
+use App\Modules\Session\Application\SessionPayloadFactory;
+use App\Modules\Session\Domain\SessionService;
 use Tests\Integration\IntegrationTestCase;
 
 final class ApiStatsIntegrationTest extends IntegrationTestCase

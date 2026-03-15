@@ -6,9 +6,9 @@ namespace App\Application\Middleware;
 
 use App\Application\Http\Middleware;
 use App\Application\Http\RequestHandler;
-use App\Domain\Session\Session;
-use App\Domain\Session\SessionService;
 use App\Infrastructure\Logger\Logger;
+use App\Modules\Session\Domain\Session;
+use App\Modules\Session\Domain\SessionService;
 use Nyholm\Psr7\Response;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;

@@ -4,6 +4,8 @@
 
 A modern PHP API template with Protocol Buffers for schema definition, automatic route generation, and comprehensive testing. Built to run on RoadRunner for high performance.
 
+Current target state for this repository: a production-ready backend template on pure PHP, without framework coupling, evolving toward vertical slices architecture.
+
 ## Features
 
 - Protocol Buffer based API definitions
@@ -13,6 +15,10 @@ A modern PHP API template with Protocol Buffers for schema definition, automatic
 - RoadRunner-powered for high performance and resource efficiency
 - High test coverage and static analysis
 - GitHub Actions CI/CD pipeline
+
+## Documentation
+
+Detailed project documentation for humans and LLM agents starts in [`docs/README.md`](docs/README.md).
 
 ## Setup
 

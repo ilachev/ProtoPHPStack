@@ -7,11 +7,11 @@ namespace App\Application\Middleware;
 use App\Application\Http\Middleware;
 use App\Application\Http\RequestHandler;
 use App\Application\Routing\RouteResult;
-use App\Domain\Session\Session;
-use App\Domain\Session\SessionService;
 use App\Domain\Stats\ApiStat;
 use App\Domain\Stats\ApiStatService;
 use App\Infrastructure\Logger\Logger;
+use App\Modules\Session\Domain\Session;
+use App\Modules\Session\Domain\SessionService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 

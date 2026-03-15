@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Application\Client;
 
-use App\Application\Client\ClientConfig;
-use App\Application\Client\ClientDetector;
-use App\Application\Client\FingerprintClientDetector;
-use App\Domain\Session\Session;
-use App\Domain\Session\SessionRepository;
+use App\Modules\Session\Application\ClientConfig;
+use App\Modules\Session\Application\ClientDetector;
+use App\Modules\Session\Domain\Session;
+use App\Modules\Session\Domain\SessionRepository;
+use App\Modules\Session\Infrastructure\FingerprintClientDetector;
 use Nyholm\Psr7\ServerRequest;
 use PHPUnit\Framework\TestCase;
 

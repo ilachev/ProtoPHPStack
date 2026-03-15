@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Domain\Session;
 
-use App\Domain\Session\Session;
-use App\Domain\Session\SessionRepository;
-use App\Domain\Session\SessionService;
 use App\Infrastructure\Logger\Logger;
+use App\Modules\Session\Domain\Session;
+use App\Modules\Session\Domain\SessionRepository;
+use App\Modules\Session\Domain\SessionService;
 use PHPUnit\Framework\TestCase;
 use Tests\Unit\Infrastructure\Logger\TestLogger;
 
