@@ -10,7 +10,7 @@ use App\Infrastructure\Routing\Generator\RoutesWriter;
 
 // Configuration
 $protoDir = __DIR__ . '/../protos/proto';
-$outputFile = __DIR__ . '/../config/routes.php';
+$outputFile = __DIR__ . '/../config/routes.reference.php';
 
 // Configure service to handler mapping (optional)
 $handlerMapping = [
@@ -23,7 +23,7 @@ $writer = new RoutesWriter($provider, $outputFile);
 
 try {
     $writer->generateRoutesFile();
-    echo "Routes configuration has been successfully generated to {$outputFile}\n";
+    echo "Reference routes configuration has been successfully generated to {$outputFile}\n";
 } catch (Throwable $e) {
     echo "Error generating routes: {$e->getMessage()}\n";
     exit(1);

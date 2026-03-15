@@ -6,6 +6,8 @@ A pure PHP infrastructure-first backend template with Protocol Buffers for trans
 
 Current target state for this repository: a production-ready infrastructure template on pure PHP, without framework coupling, organized around `Platform`, reusable `Capabilities`, and small `Examples`.
 
+Default runtime is infrastructure-only. Reference endpoints live in a separate reference app config and are not loaded by default.
+
 ## Features
 
 - Protocol Buffer based transport contracts
@@ -49,6 +51,9 @@ The application uses RoadRunner for high performance. To run:
 task run
 
 # The API will be available at http://localhost:8080
+
+# Run the separate reference app entrypoint when example endpoints are needed
+php public/reference.php
 
 # To stop all services
 task services:stop

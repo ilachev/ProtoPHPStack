@@ -30,9 +30,12 @@
 ## Главные точки входа
 
 - HTTP entrypoint: `public/index.php`
+- Reference entrypoint: `public/reference.php`
 - Runtime bootstrap: `src/Platform/Runtime/App.php`
-- DI configuration: `config/container.php`
-- Маршруты runtime: `config/routes.php`
+- Default DI configuration: `config/container.php`
+- Reference DI configuration: `config/container.reference.php`
+- Default runtime routes: `config/routes.php`
+- Reference app routes: `config/routes.reference.php`
 - Источник API-контрактов: `protos/proto/app/v1/*.proto`
 - Команды разработки: `taskfile.yaml`
 
@@ -61,6 +64,8 @@ Reference implementations:
 - `Home` — минимальный smoke-test endpoint;
 - `Auth` — reference auth flow поверх session capability.
 
+Examples не должны считаться частью default runtime. Они подключаются только через reference app config.
+
 ### Legacy зоны
 
 - `src/Application`
@@ -81,10 +86,11 @@ Reference implementations:
 
 ## Что реально работает сейчас
 
-- `GET /api/v1/home`
-- `POST /api/v1/auth/login`
-- `POST /api/v1/auth/refresh`
-- `POST /api/v1/auth/logout`
+- default runtime без product endpoints;
+- reference app с `GET /api/v1/home`;
+- reference app с `POST /api/v1/auth/login`;
+- reference app с `POST /api/v1/auth/refresh`;
+- reference app с `POST /api/v1/auth/logout`;
 - создание и обновление анонимных сессий;
 - восстановление сессии по cookie/bearer;
 - fingerprint matching клиента;
@@ -103,11 +109,12 @@ Reference implementations:
 ## Основные инварианты для безопасной разработки
 
 - Не редактировать вручную `protos/gen/*`.
-- Не редактировать вручную `config/routes.php`; файл генерируется из `.proto`.
+- Не редактировать вручную `config/routes.reference.php`; reference routes генерируются из `.proto`.
 - Для нового публичного API сначала правится `.proto`, затем запускается генерация.
 - `Platform` не должен содержать продуктовую политику.
 - Capability должна быть reusable вне конкретного продукта.
 - Example должен быть явно вторичен по отношению к platform/capability-коду.
+- Default runtime не должен зависеть от example handlers или example routes.
 - Handler должен быть тонким адаптером.
 - Преобразования между слоями должны делаться через mapper/hydrator, а не через ad-hoc массивы по всему коду.
 - Для storage по умолчанию используется PostgreSQL, даже если в кодовой базе ещё остались SQLite-артефакты.
@@ -134,12 +141,13 @@ task run
 1. `docs/architecture/request-lifecycle.md`
 2. `src/Platform/Runtime/App.php`
 3. `config/container.php`
-4. `src/Capabilities/*`
-5. `src/Examples/*`
-6. `src/Infrastructure/DI/ServiceProviders/*`
-7. `src/Infrastructure/Storage/*`
-8. `src/Application/*` и `src/Domain/*` только если нужно понять legacy-хвост
-9. `protos/proto/app/v1/*`
+4. `config/container.reference.php`, если нужен reference app
+5. `src/Capabilities/*`
+6. `src/Examples/*`
+7. `src/Infrastructure/DI/ServiceProviders/*`
+8. `src/Infrastructure/Storage/*`
+9. `src/Application/*` и `src/Domain/*` только если нужно понять legacy-хвост
+10. `protos/proto/app/v1/*`
 
 ## Главные текущие зоны риска
 

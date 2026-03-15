@@ -95,6 +95,15 @@ Pipeline собирается в `App::createPipeline()` и сейчас вып�
 
 Именно поэтому `Auth` пока должен трактоваться как example-first код.
 
+## Default runtime vs reference runtime
+
+Это теперь важно фиксировать явно:
+
+- `config/container.php` и `config/routes.php` описывают infrastructure-only runtime;
+- `config/container.reference.php` и `config/routes.reference.php` поднимают reference app поверх core runtime.
+
+Следствие: examples остаются в репозитории, но не должны быть обязательной частью bootstrap по умолчанию.
+
 ## Legacy-слой
 
 В проекте всё ещё остаются старые каталоги, которые нужно интерпретировать осторожно.
@@ -143,11 +152,11 @@ Pipeline собирается в `App::createPipeline()` и сейчас вып�
 Routing остаётся двухфазным:
 
 1. `.proto` и HTTP annotations задают transport surface;
-2. `config/routes.php` генерируется из proto и используется runtime router-ом.
+2. `config/routes.reference.php` генерируется из proto и используется reference runtime-ом.
 
 Источник истины для публичного API по-прежнему в `protos/proto/app/v1/*`.
 
-При этом обработчики теперь физически находятся не в `Modules`, а в `Examples` и дальше могут появляться в `Capabilities`, если capability действительно экспортирует HTTP endpoints.
+При этом default runtime использует пустой `config/routes.php`, а reference handlers живут в `Examples`.
 
 ## Storage
 

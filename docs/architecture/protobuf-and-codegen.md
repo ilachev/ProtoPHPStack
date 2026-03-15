@@ -74,7 +74,7 @@ task proto:gen:routes
 
 Результат:
 
-- `config/routes.php`
+- `config/routes.reference.php`
 
 Генерация routes основана на `google.api.http` annotations в `.proto`.
 
@@ -114,7 +114,7 @@ task proto:gen:all
 - читает `.proto` файлы;
 - извлекает `service`, `rpc`, `option (google.api.http)`;
 - строит массив route definitions;
-- пишет `config/routes.php`.
+- пишет `config/routes.reference.php` для reference app.
 
 Handler resolution сейчас завязана на naming convention:
 
@@ -163,7 +163,7 @@ Handler resolution сейчас завязана на naming convention:
 1. Править `.proto` в `protos/proto/app/v1`.
 2. Перегенерировать артефакты.
 3. Обновить handler/mapper/runtime implementation.
-4. Проверить, что `config/routes.php` и `docs/api.swagger.json` согласованы с кодом.
+4. Проверить, что `config/routes.reference.php` и `docs/api.swagger.json` согласованы с кодом.
 
 ### Если меняется внутренняя доменная модель, связанная с protobuf mapping
 
