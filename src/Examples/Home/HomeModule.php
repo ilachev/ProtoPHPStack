@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Examples\Home;
 
-use App\Application\Mappers\DataTransferObjectMapper;
 use App\Examples\ExampleModule;
 use App\Examples\Home\Domain\HomeService;
 use App\Examples\Home\Transport\Http\HomeHandler;
 use App\Examples\Home\Transport\Mapping\HomeResponseMapper;
 use App\Infrastructure\DI\Container;
+use App\Platform\DataMapping\DataTransferObjectMapper;
 use App\Platform\Http\JsonResponse;
 
 /**

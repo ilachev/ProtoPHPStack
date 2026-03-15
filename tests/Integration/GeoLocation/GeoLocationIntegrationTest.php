@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Integration\GeoLocation;
 
-use App\Application\Client\GeoLocationConfig;
-use App\Application\Client\GeoLocationService;
+use App\Capabilities\Session\Application\GeoLocationConfig;
+use App\Capabilities\Session\Application\GeoLocationService;
 use Tests\Integration\IntegrationTestCase;
 
 final class GeoLocationIntegrationTest extends IntegrationTestCase
@@ -26,46 +26,43 @@ final class GeoLocationIntegrationTest extends IntegrationTestCase
         $geoLocationConfig = $this->container->get(GeoLocationConfig::class);
         $this->geoLocationConfig = $geoLocationConfig;
 
-        // Проверяем наличие базы данных
+        // Skip the suite when the GeoIP database is not available locally.
         if (!file_exists($this->geoLocationConfig->dbPath)) {
             self::markTestSkipped(
-                "База данных геолокации не найдена по пути: {$this->geoLocationConfig->dbPath}",
+                "GeoIP database not found at {$this->geoLocationConfig->dbPath}",
             );
         }
     }
 
     /**
-     * Проверяет, что сервис геолокации корректно определяет местоположение по IP-адресу.
+     * Ensures the service returns location data for known public IP addresses.
      */
     public function testGeoLocationServiceReturnsLocationData(): void
     {
-        // Тестовые IP-адреса
+        // Public IPs with stable geolocation records.
         $testIps = [
-            '8.8.8.8',        // Google DNS (США)
-            '77.88.55.77',    // Яндекс (Россия)
-            '195.82.146.214', // Mail.ru (Россия)
+            '8.8.8.8',
+            '77.88.55.77',
+            '195.82.146.214',
         ];
 
         foreach ($testIps as $ip) {
             $location = $this->geoLocationService->getLocationByIp($ip);
 
-            // Проверяем, что получили данные о местоположении
-            self::assertNotNull($location, "Не удалось определить геолокацию для IP: {$ip}");
+            self::assertNotNull($location, "Expected geolocation data for IP {$ip}");
 
-            // Проверяем, что основные поля заполнены
-            self::assertNotEmpty($location->country, "Страна не определена для IP: {$ip}");
-            self::assertNotEmpty($location->countryCode, "Код страны не определен для IP: {$ip}");
+            self::assertNotEmpty($location->country, "Country should be present for IP {$ip}");
+            self::assertNotEmpty($location->countryCode, "Country code should be present for IP {$ip}");
 
-            // Координаты должны быть в разумных пределах
-            self::assertGreaterThanOrEqual(-90, $location->lat, "Широта должна быть >= -90 для IP: {$ip}");
-            self::assertLessThanOrEqual(90, $location->lat, "Широта должна быть <= 90 для IP: {$ip}");
-            self::assertGreaterThanOrEqual(-180, $location->lon, "Долгота должна быть >= -180 для IP: {$ip}");
-            self::assertLessThanOrEqual(180, $location->lon, "Долгота должна быть <= 180 для IP: {$ip}");
+            self::assertGreaterThanOrEqual(-90, $location->lat, "Latitude should be >= -90 for IP {$ip}");
+            self::assertLessThanOrEqual(90, $location->lat, "Latitude should be <= 90 for IP {$ip}");
+            self::assertGreaterThanOrEqual(-180, $location->lon, "Longitude should be >= -180 for IP {$ip}");
+            self::assertLessThanOrEqual(180, $location->lon, "Longitude should be <= 180 for IP {$ip}");
         }
     }
 
     /**
-     * Проверяет, что сервис геолокации возвращает Easter egg для локальных IP-адресов.
+     * Ensures local addresses return the deterministic placeholder payload.
      */
     public function testGeoLocationServiceReturnsEasterEggForLocalIps(): void
     {
@@ -80,41 +77,41 @@ final class GeoLocationIntegrationTest extends IntegrationTestCase
 
         foreach ($localIps as $ip) {
             $location = $this->geoLocationService->getLocationByIp($ip);
-            self::assertNotNull($location, "Локальный IP {$ip} должен возвращать Easter egg");
-            self::assertEquals('Developer Land 🚀', $location->country, "Страна должна быть Developer Land для IP: {$ip}");
-            self::assertEquals('DEV', $location->countryCode, "Код страны должен быть DEV для IP: {$ip}");
-            self::assertEquals('Local Environment 💻', $location->region, "Регион должен содержать Easter egg для IP: {$ip}");
-            self::assertEquals('Localhost City 🏠', $location->city, "Город должен содержать Easter egg для IP: {$ip}");
-            self::assertEquals('UTC+Coffee ☕', $location->timezone, "Временная зона должна содержать Easter egg для IP: {$ip}");
+            self::assertNotNull($location, "Local IP {$ip} should return placeholder geolocation data");
+            self::assertEquals('Developer Land 🚀', $location->country, "Country should be Developer Land for IP {$ip}");
+            self::assertEquals('DEV', $location->countryCode, "Country code should be DEV for IP {$ip}");
+            self::assertEquals('Local Environment 💻', $location->region, "Region should contain the placeholder value for IP {$ip}");
+            self::assertEquals('Localhost City 🏠', $location->city, "City should contain the placeholder value for IP {$ip}");
+            self::assertEquals('UTC+Coffee ☕', $location->timezone, "Timezone should contain the placeholder value for IP {$ip}");
         }
     }
 
     /**
-     * Проверяет, что сервис геолокации корректно определяет страну для известных IP-адресов.
+     * Ensures the service resolves expected country codes for known IP addresses.
      */
     public function testGeoLocationServiceReturnsCorrectCountry(): void
     {
-        // Тестовые IP-адреса с ожидаемыми странами
+        // Stable public IPs with expected country codes.
         $testCases = [
-            ['8.8.8.8', 'US'],        // Google DNS (США)
-            ['77.88.55.77', 'RU'],    // Яндекс (Россия)
-            ['104.16.85.20', 'US'],   // Cloudflare (США)
+            ['8.8.8.8', 'US'],
+            ['77.88.55.77', 'RU'],
+            ['104.16.85.20', 'US'],
         ];
 
         foreach ($testCases as [$ip, $expectedCountryCode]) {
             $location = $this->geoLocationService->getLocationByIp($ip);
 
-            self::assertNotNull($location, "Не удалось определить геолокацию для IP: {$ip}");
+            self::assertNotNull($location, "Expected geolocation data for IP {$ip}");
             self::assertEquals(
                 $expectedCountryCode,
                 $location->countryCode,
-                "Неверно определена страна для IP: {$ip}",
+                "Unexpected country code for IP {$ip}",
             );
         }
     }
 
     /**
-     * Проверяет, что сервис геолокации корректно обрабатывает невалидные IP-адреса.
+     * Ensures invalid IPs do not produce geolocation data.
      */
     public function testGeoLocationServiceHandlesInvalidIps(): void
     {
@@ -126,9 +123,8 @@ final class GeoLocationIntegrationTest extends IntegrationTestCase
         ];
 
         foreach ($invalidIps as $ip) {
-            // Не должно быть исключений при обработке невалидных IP
             $location = $this->geoLocationService->getLocationByIp($ip);
-            self::assertNull($location, "Невалидный IP {$ip} должен возвращать null");
+            self::assertNull($location, "Invalid IP {$ip} should return null");
         }
     }
 }

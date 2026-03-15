@@ -15,7 +15,7 @@
 - минимальное и понятное runtime-ядро;
 - нейтральную архитектурную основу без framework coupling;
 - набор reusable capabilities;
-- reference implementations как исполняемую документацию;
+- example implementations как исполняемую документацию;
 - структуру, понятную человеку и LLM.
 
 ## Что это означает practically
@@ -32,7 +32,7 @@
 
 - `Platform` primitives;
 - reusable capabilities;
-- маленькие examples/reference modules.
+- маленькие example modules.
 
 И не должны жить:
 
@@ -81,7 +81,7 @@ Vertical slices по-прежнему полезны, но не как "срез
 
 - `src/Platform/*` — HTTP kernel, routing, bootstrap, storage abstractions, cache, logging, console/runtime support;
 - `src/Capabilities/*` — reusable возможности вроде `Session`, `Auth primitives`, `Observability`, `RateLimit`, `Idempotency`;
-- `src/Examples/*` — reference implementations, демонстрирующие, как capabilities собираются в продукт;
+- `src/Examples/*` — example implementations, демонстрирующие, как capabilities собираются в продукт;
 - `src/Shared/*` — действительно небольшие общие контракты и support utilities;
 - `protos/*` — transport contracts, если protobuf-first сохраняется;
 - `tools/*` — build-time/codegen tooling.
@@ -94,7 +94,7 @@ Vertical slices по-прежнему полезны, но не как "срез
 - micro-framework с бесконечным API surface;
 - свалкой utility-классов;
 - коллекцией случайных demo-сценариев;
-- шаблоном, в котором reference code неотличим от core runtime.
+- шаблоном, в котором example code неотличим от core runtime.
 
 ## Принципы проектирования
 
@@ -108,7 +108,7 @@ Vertical slices по-прежнему полезны, но не как "срез
 
 ### 3. Examples are not core
 
-`Home`, demo auth flow и похожие вещи допустимы только как reference code, а не как смысл проекта.
+`Home`, demo auth flow и похожие вещи допустимы только как example code, а не как смысл проекта.
 
 ### 4. Small platform core
 
@@ -138,11 +138,11 @@ LLM должна сразу понимать:
 - `Platform` runtime;
 - `Session` как сильную capability;
 - `ApiStats` как потенциальную observability capability;
-- `Auth` и `Home` как candidate reference implementations.
+- `Auth` и `Home` как candidate example implementations.
 
 Но репозиторий ещё надо дочистить от product bias:
 
 1. согласовать документацию под infrastructure-first модель;
 2. удерживать явное разделение `Platform / Capabilities / Examples`;
-3. понижать demo/product-specific код до reference implementation;
+3. понижать demo/product-specific код до example implementation;
 4. дочищать legacy-слои, которые всё ещё тянут проект обратно в product-first модель.

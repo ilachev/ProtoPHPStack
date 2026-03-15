@@ -6,7 +6,7 @@ namespace App\Examples\Home\Transport\Mapping;
 
 use App\Api\V1\HomeData;
 use App\Api\V1\HomeResponse;
-use App\Application\Mappers\DataTransferObjectMapper;
+use App\Platform\DataMapping\DataTransferObjectMapper;
 
 final readonly class HomeResponseMapper
 {

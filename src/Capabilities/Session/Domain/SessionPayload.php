@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Capabilities\Session\Domain;
 
-use App\Application\Client\GeoLocationData;
+use App\Capabilities\Session\Application\GeoLocationData;
 use ProtoPhpGen\Attributes\ProtoField;
 use ProtoPhpGen\Attributes\ProtoMapping;
 

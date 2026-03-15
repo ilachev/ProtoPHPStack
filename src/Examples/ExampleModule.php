@@ -7,7 +7,7 @@ namespace App\Examples;
 use App\Infrastructure\DI\ServiceProvider;
 
 /**
- * Marker interface for reference examples registered on top of platform and capabilities.
+ * Marker interface for example modules registered on top of platform and capabilities.
  *
  * @template T of object
  * @extends ServiceProvider<T>

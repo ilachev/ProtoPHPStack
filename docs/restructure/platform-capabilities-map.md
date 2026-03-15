@@ -55,7 +55,7 @@ Capability — это reusable building block.
 
 ## Что считать `Example`
 
-Example — это reference implementation, показывающая использование платформы и capabilities.
+Example — это example implementation, показывающая использование платформы и capabilities.
 
 ### Текущие кандидаты
 
@@ -76,7 +76,7 @@ Examples допустимы, но должны быть явно вторичн�
 
 ### Текущие зоны риска
 
-- остатки top-level `src/Domain`, `src/Application`, `src/Infrastructure` как архитектурных центров;
+- `src/Infrastructure`, если он снова начнёт играть роль архитектурного центра;
 - `User` как будто это core domain template;
 - любые compatibility layers, существующие только ради старой структуры;
 - unclear hydrator/tooling code без зафиксированной роли.
@@ -86,7 +86,7 @@ Examples допустимы, но должны быть явно вторичн�
 Сейчас репозиторий уже использует явные каталоги:
 
 - reusable код живёт в `src/Capabilities/*`;
-- reference code живёт в `src/Examples/*`;
+- example code живёт в `src/Examples/*`;
 - runtime core живёт в `src/Platform/*`.
 
 Это нужно считать рабочей моделью проекта, а не только архитектурным намерением.

@@ -134,7 +134,7 @@ final readonly class ProtoRouteProvider implements RouteProvider
             return $this->handlerMapping[$key];
         }
 
-        // Apply reference-app naming convention: HomeService::Home -> Examples\Home\Transport\Http\HomeHandler
+        // Apply the example-module naming convention: HomeService::Home -> Examples\Home\Transport\Http\HomeHandler
         $handlerName = str_replace('Service', 'Handler', $serviceName);
         $moduleName = str_replace('Service', '', $serviceName);
 

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Capabilities\Session\Domain;
 
-use App\Domain\Entity;
+use App\Platform\Persistence\Entity;
 use ProtoPhpGen\Attributes\ProtoField;
 use ProtoPhpGen\Attributes\ProtoMapping;
 

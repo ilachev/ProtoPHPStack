@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Capabilities\ApiStats\Domain;
 
-use App\Domain\Entity;
+use App\Platform\Persistence\Entity;
 
 final readonly class ApiStat implements Entity
 {

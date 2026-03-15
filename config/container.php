@@ -6,12 +6,12 @@ use App\Capabilities\ApiStats\ApiStatsModule;
 use App\Capabilities\Capability;
 use App\Capabilities\Session\SessionModule;
 use App\Infrastructure\DI\Container;
-use App\Infrastructure\DI\ServiceProviders\ApplicationServiceProvider;
 use App\Infrastructure\DI\ServiceProviders\CacheServiceProvider;
 use App\Infrastructure\DI\ServiceProviders\CoreServiceProvider;
 use App\Infrastructure\DI\ServiceProviders\GeoLocationServiceProvider;
 use App\Infrastructure\DI\ServiceProviders\HydratorServiceProvider;
 use App\Infrastructure\DI\ServiceProviders\MigrationServiceProvider;
+use App\Infrastructure\DI\ServiceProviders\PlatformSupportServiceProvider;
 use App\Infrastructure\DI\ServiceProviders\RoutingServiceProvider;
 use App\Infrastructure\DI\ServiceProviders\StorageServiceProvider;
 
@@ -23,7 +23,7 @@ return static function (Container $container): void {
         new GeoLocationServiceProvider(),
         new MigrationServiceProvider(),
         new RoutingServiceProvider(),
-        new ApplicationServiceProvider(),
+        new PlatformSupportServiceProvider(),
         new HydratorServiceProvider(),
     ];
 
@@ -41,6 +41,6 @@ return static function (Container $container): void {
         $capability->register($container);
     }
 
-    // Set container reference
+    // Expose the container for components that resolve it explicitly.
     $container->set(Container::class, static fn() => $container);
 };

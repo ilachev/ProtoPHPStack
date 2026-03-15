@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Capabilities\Session;
 
-use App\Application\Client\GeoLocationService;
 use App\Capabilities\Capability;
 use App\Capabilities\Session\Application\ClientConfig;
 use App\Capabilities\Session\Application\ClientDetector;
+use App\Capabilities\Session\Application\GeoLocationService;
 use App\Capabilities\Session\Application\SessionPayloadFactory;
 use App\Capabilities\Session\Domain\SessionConfig;
 use App\Capabilities\Session\Domain\SessionRepository;

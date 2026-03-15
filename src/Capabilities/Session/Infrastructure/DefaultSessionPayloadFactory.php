@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Capabilities\Session\Infrastructure;
 
-use App\Application\Client\GeoLocationService;
+use App\Capabilities\Session\Application\GeoLocationService;
 use App\Capabilities\Session\Application\SessionPayloadFactory;
 use App\Capabilities\Session\Domain\SessionPayload;
 use Psr\Http\Message\ServerRequestInterface;

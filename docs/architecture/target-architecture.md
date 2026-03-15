@@ -8,13 +8,7 @@
 
 - `Platform` — runtime core;
 - `Capabilities` — reusable building blocks;
-- `Examples` — reference implementations.
-
-Вместо старой верхнеуровневой модели:
-
-- `src/Domain`
-- `src/Application`
-- `src/Infrastructure`
+- `Examples` — example implementations.
 
 целевая структура должна двигаться к виду:
 
@@ -98,7 +92,7 @@ Capability отличается от product feature тем, что её мож�
 Там допустимы:
 
 - demo endpoints;
-- reference auth flow;
+- example auth flow;
 - минимальный sample API;
 - integration examples, показывающие сборку capabilities в продукт.
 
@@ -193,7 +187,7 @@ LLM должна быстро отвечать на вопросы:
 
 ### 2. `Auth` должен быть разделён
 
-В template можно оставить только auth primitives и reference flow.
+В template можно оставить только auth primitives и example flow.
 Конкретный login policy не должен быть смыслом core template.
 
 ### 3. `ApiStats` — candidate observability capability
@@ -203,7 +197,7 @@ LLM должна быстро отвечать на вопросы:
 
 ### 4. `Home` — только example
 
-`Home` полезен как smoke-test/reference endpoint, но не как архитектурный центр.
+`Home` полезен как smoke-test/example endpoint, но не как архитектурный центр.
 
 ### 5. `User` не должен быть top-level core domain
 
@@ -240,11 +234,11 @@ Bootstrap
 - `src/Platform/*` — runtime core;
 - `src/Capabilities/Session` — reusable session capability;
 - `src/Capabilities/ApiStats` — candidate observability capability;
-- `src/Examples/Home` — smoke-test reference endpoint;
-- `src/Examples/Auth` — reference auth flow поверх capability-слоя.
+- `src/Examples/Home` — smoke-test example endpoint;
+- `src/Examples/Auth` — example auth flow поверх capability-слоя.
 
 Следующий уровень работы теперь не "переименовать `Modules`", а дочистить границы:
 
 - отделить auth primitives от example auth flow;
-- решить судьбу top-level legacy-папок `src/Domain`, `src/Application`, `src/Infrastructure`;
+- довести `src/Infrastructure` до более узких и понятных support-ролей;
 - привести onboarding и текущую архитектурную документацию к новой физической структуре.

@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\GeoLocation;
 
-use App\Application\Client\GeoLocationConfig;
-use App\Application\Client\GeoLocationData;
-use App\Application\Client\GeoLocationService;
+use App\Capabilities\Session\Application\GeoLocationConfig;
+use App\Capabilities\Session\Application\GeoLocationData;
+use App\Capabilities\Session\Application\GeoLocationService;
 use App\Infrastructure\Cache\CacheService;
 use App\Infrastructure\Logger\Logger;
 use IP2Location\Database;
 
 /**
- * Реализация сервиса геолокации с использованием официальной библиотеки IP2Location.
+ * Geolocation service backed by the official IP2Location database.
  */
 final readonly class IP2LocationGeoLocationService implements GeoLocationService
 {
@@ -27,14 +27,12 @@ final readonly class IP2LocationGeoLocationService implements GeoLocationService
     }
 
     /**
-     * Получает информацию о геолокации по IP-адресу.
-     *
-     * @param string $ip IP-адрес для определения геолокации
-     * @return GeoLocationData|null Данные о геолокации или null, если не удалось определить
+     * Looks up geolocation data for an IP address.
+     * @return GeoLocationData|null Geolocation data or null when the lookup fails
      */
     public function getLocationByIp(string $ip): ?GeoLocationData
     {
-        // Возвращаем Easter egg для локальных и приватных IP-адресов
+        // Return deterministic placeholder data for local and private addresses.
         if ($this->isLocalIp($ip) || $ip === 'unknown') {
             return new GeoLocationData(
                 country: 'Developer Land 🚀',
@@ -48,7 +46,7 @@ final readonly class IP2LocationGeoLocationService implements GeoLocationService
             );
         }
 
-        // Проверяем кеш
+        // Reuse cached lookups to avoid repeated database reads.
         $cacheKey = "geo_ip:{$ip}";
         if ($this->cache->isAvailable() && $this->cache->has($cacheKey)) {
             $cachedData = $this->cache->get($cacheKey);
@@ -58,11 +56,11 @@ final readonly class IP2LocationGeoLocationService implements GeoLocationService
         }
 
         try {
-            // Получаем данные из библиотеки IP2Location
+            // Read the full record from the IP2Location database.
             /** @var array<string, string|float|null> $record */
             $record = $this->db->lookup($ip, Database::ALL);
 
-            // Проверяем, что получены валидные данные
+            // Abort when the upstream database does not have meaningful country data.
             if (!isset($record['countryCode'], $record['countryName'])
                 || $record['countryCode'] === '-'
                 || $record['countryName'] === '-'
@@ -74,7 +72,7 @@ final readonly class IP2LocationGeoLocationService implements GeoLocationService
             }
 
             try {
-                // Преобразуем null в пустые строки для всех строковых полей
+                // Normalize nullable scalar fields into stable DTO values.
                 $geoData = new GeoLocationData(
                     country: (string) $record['countryName'],
                     countryCode: (string) $record['countryCode'],
@@ -86,7 +84,7 @@ final readonly class IP2LocationGeoLocationService implements GeoLocationService
                     timezone: isset($record['timeZone']) ? (string) $record['timeZone'] : '',
                 );
 
-                // Кешируем данные
+                // Cache successful lookups for subsequent requests.
                 if ($this->cache->isAvailable()) {
                     $this->cache->set($cacheKey, $geoData, $this->config->cacheTtl);
                 }
@@ -112,26 +110,24 @@ final readonly class IP2LocationGeoLocationService implements GeoLocationService
     }
 
     /**
-     * Проверяет, является ли IP-адрес локальным или приватным.
+     * Returns true when the IP address is local or private.
      *
-     * @param string $ip IP-адрес для проверки
-     * @return bool true, если IP локальный или приватный
+     * @param string $ip IP address to validate
      */
     private function isLocalIp(string $ip): bool
     {
-        // Проверка на localhost
+        // Handle loopback addresses first.
         if ($ip === '127.0.0.1' || $ip === '::1') {
             return true;
         }
 
-        // Проверка на приватные диапазоны IPv4
+        // Check private IPv4 ranges.
         if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
             $longIp = ip2long($ip);
             if ($longIp === false) {
-                return true; // Невалидный IP считаем локальным
+                return true;
             }
 
-            // Проверка на приватные диапазоны
             // 10.0.0.0/8
             if (($longIp & 0xFF000000) === 0x0A000000) {
                 return true;
@@ -146,7 +142,7 @@ final readonly class IP2LocationGeoLocationService implements GeoLocationService
             }
         }
 
-        // Проверка на приватные IPv6 (упрощенно)
+        // Check common private IPv6 ranges.
         if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
             // fc00::/7 - Unique Local Addresses
             if (strpos($ip, 'fc') === 0 || strpos($ip, 'fd') === 0) {

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\DI\ServiceProviders;
 
-use App\Application\Client\GeoLocationConfig;
-use App\Application\Client\GeoLocationService;
+use App\Capabilities\Session\Application\GeoLocationConfig;
+use App\Capabilities\Session\Application\GeoLocationService;
 use App\Infrastructure\Cache\CacheService;
 use App\Infrastructure\Config\ProjectPath;
 use App\Infrastructure\DI\Container;

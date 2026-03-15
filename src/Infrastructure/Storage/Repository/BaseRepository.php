@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Storage\Repository;
 
-use App\Domain\Entity;
-use App\Domain\EntityRepository;
 use App\Infrastructure\Hydrator\Hydrator;
 use App\Infrastructure\Storage\Query\QueryFactory;
 use App\Infrastructure\Storage\Storage;
+use App\Platform\Persistence\Entity;
+use App\Platform\Persistence\EntityRepository;
 
 /**
  * Base implementation of EntityRepository that can be used for any entity.

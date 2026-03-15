@@ -5,11 +5,11 @@ declare(strict_types=1);
 
 require __DIR__ . '/../vendor/autoload.php';
 
-use App\Application\Client\GeoLocationConfig;
+use App\Capabilities\Session\Application\GeoLocationConfig;
 use App\Infrastructure\Console\UpdateGeoIPCommand;
 use App\Infrastructure\DI\Container;
 use App\Infrastructure\DI\DIContainer;
-use Psr\Log\LoggerInterface;
+use App\Infrastructure\Logger\Logger;
 
 /** @var callable(Container<object>): void $containerConfig */
 $containerConfig = require __DIR__ . '/../config/container.php';
@@ -18,10 +18,10 @@ $container = new DIContainer();
 $containerConfig($container);
 
 $config = $container->get(GeoLocationConfig::class);
-$logger = $container->get(LoggerInterface::class);
+$logger = $container->get(Logger::class);
 $command = new UpdateGeoIPCommand($config, $logger);
 
-// Выполняем команду
+// Execute the update command.
 $command->execute();
 
 echo "Обновление базы данных геолокации завершено.\n";

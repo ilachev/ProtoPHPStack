@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Console;
 
-use App\Application\Client\GeoLocationConfig;
+use App\Capabilities\Session\Application\GeoLocationConfig;
 use App\Infrastructure\Logger\Logger;
 
 /**
- * Команда для обновления базы данных геолокации IP2Location.
+ * Updates the local IP2Location geolocation database.
  */
 final readonly class UpdateGeoIPCommand
 {
@@ -18,20 +18,20 @@ final readonly class UpdateGeoIPCommand
     ) {}
 
     /**
-     * Выполняет обновление базы данных геолокации.
+     * Executes the database update flow.
      */
     public function execute(): void
     {
         $this->logger->info('Starting GeoIP database update');
 
-        // Проверяем наличие токена
+        // Skip the update when the download token is not configured.
         if (empty($this->config->downloadToken)) {
             $this->logger->error('IP2Location download token is not set');
 
             return;
         }
 
-        // Создаем директорию для базы данных, если она не существует
+        // Ensure the database directory exists before downloading the archive.
         $dbDir = \dirname($this->config->dbPath);
         if (!is_dir($dbDir) && !mkdir($dbDir, 0o755, true)) {
             $this->logger->error('Failed to create directory for GeoIP database', [
@@ -41,33 +41,33 @@ final readonly class UpdateGeoIPCommand
             return;
         }
 
-        // Формируем URL для скачивания
+        // Build the upstream download URL from the configured credentials.
         $downloadUrl = $this->config->getDownloadUrl();
         $this->logger->info('Downloading GeoIP database', [
             'url' => $downloadUrl,
             'database_code' => $this->config->databaseCode,
         ]);
 
-        // Временный файл для скачивания
+        // Store the downloaded archive and extracted payload in temporary files first.
         $tempFile = $this->config->dbPath . '.tmp';
         $zipFile = $this->config->dbPath . '.zip';
 
         try {
-            // Скачиваем файл
+            // Download the archive before extraction.
             $this->downloadFile($downloadUrl, $zipFile);
             $this->logger->info('Downloaded GeoIP database archive', [
                 'size' => filesize($zipFile),
             ]);
 
-            // Распаковываем архив
+            // Extract the database into a temporary file.
             $this->extractDatabase($zipFile, $dbDir, $tempFile);
 
-            // Проверяем, что файл существует и имеет ненулевой размер
+            // Reject empty or missing extracted files before swapping them in place.
             if (!file_exists($tempFile) || filesize($tempFile) === 0) {
                 throw new \RuntimeException('Extracted database file is empty or does not exist');
             }
 
-            // Переименовываем временный файл в целевой
+            // Replace the active database after a successful extraction.
             if (file_exists($this->config->dbPath)) {
                 unlink($this->config->dbPath);
             }
@@ -78,7 +78,7 @@ final readonly class UpdateGeoIPCommand
                 'size' => filesize($this->config->dbPath),
             ]);
 
-            // Удаляем временные файлы
+            // Remove temporary artifacts after a successful update.
             if (file_exists($zipFile)) {
                 unlink($zipFile);
             }
@@ -88,7 +88,7 @@ final readonly class UpdateGeoIPCommand
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            // Удаляем временные файлы в случае ошибки
+            // Best-effort cleanup for partially downloaded or extracted artifacts.
             if (file_exists($tempFile)) {
                 unlink($tempFile);
             }
@@ -99,11 +99,11 @@ final readonly class UpdateGeoIPCommand
     }
 
     /**
-     * Скачивает файл по URL.
+     * Downloads a file from the upstream endpoint.
      *
-     * @param string $url URL для скачивания
-     * @param string $destination Путь для сохранения файла
-     * @throws \RuntimeException Если не удалось скачать файл
+     * @param string $url Download URL
+     * @param string $destination Target file path
+     * @throws \RuntimeException When the download fails
      */
     private function downloadFile(string $url, string $destination): void
     {
@@ -113,7 +113,7 @@ final readonly class UpdateGeoIPCommand
                 'header' => [
                     'User-Agent: PHP/' . PHP_VERSION,
                 ],
-                'timeout' => 120, // 2 минуты
+                'timeout' => 120,
                 'follow_location' => 1,
                 'max_redirects' => 3,
             ],
@@ -132,12 +132,12 @@ final readonly class UpdateGeoIPCommand
     }
 
     /**
-     * Извлекает базу данных из ZIP-архива.
+     * Extracts the BIN database file from the downloaded ZIP archive.
      *
-     * @param string $zipFile Путь к ZIP-архиву
-     * @param string $extractDir Директория для распаковки
-     * @param string $targetFile Путь для сохранения извлеченного файла
-     * @throws \RuntimeException Если не удалось распаковать архив
+     * @param string $zipFile ZIP archive path
+     * @param string $extractDir Extraction directory
+     * @param string $targetFile Extracted BIN target path
+     * @throws \RuntimeException When extraction fails
      */
     private function extractDatabase(string $zipFile, string $extractDir, string $targetFile): void
     {
@@ -146,7 +146,7 @@ final readonly class UpdateGeoIPCommand
             throw new \RuntimeException('Failed to open ZIP archive: ' . $zipFile);
         }
 
-        // Создаем временную директорию для распаковки
+        // Use an isolated extraction directory to avoid partial state leaks.
         $tempDir = $extractDir . '/temp_' . uniqid();
         if (!is_dir($tempDir) && !mkdir($tempDir, 0o755, true)) {
             $zip->close();
@@ -154,7 +154,7 @@ final readonly class UpdateGeoIPCommand
             throw new \RuntimeException('Failed to create temporary directory for extraction');
         }
 
-        // Распаковываем архив
+        // Extract the archive into the isolated directory.
         if (!$zip->extractTo($tempDir)) {
             $zip->close();
             $this->removeDirectory($tempDir);
@@ -163,7 +163,7 @@ final readonly class UpdateGeoIPCommand
         }
         $zip->close();
 
-        // Ищем BIN-файл в распакованной директории
+        // Locate the first BIN file produced by the archive.
         $binFiles = glob($tempDir . '/*.BIN');
         if (empty($binFiles)) {
             $this->removeDirectory($tempDir);
@@ -171,21 +171,21 @@ final readonly class UpdateGeoIPCommand
             throw new \RuntimeException('No BIN files found in the extracted archive');
         }
 
-        // Копируем первый найденный BIN-файл в целевой файл
+        // Copy the extracted BIN file to the requested target path.
         if (!copy($binFiles[0], $targetFile)) {
             $this->removeDirectory($tempDir);
 
             throw new \RuntimeException('Failed to copy extracted BIN file to target location');
         }
 
-        // Удаляем временную директорию
+        // Remove the temporary extraction directory once the copy succeeds.
         $this->removeDirectory($tempDir);
     }
 
     /**
-     * Рекурсивно удаляет директорию и все ее содержимое.
+     * Removes a directory recursively.
      *
-     * @param string $dir Путь к директории
+     * @param string $dir Directory path
      */
     private function removeDirectory(string $dir): void
     {

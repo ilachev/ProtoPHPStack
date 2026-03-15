@@ -8,10 +8,10 @@
 
 - `src/Platform` — runtime core;
 - `src/Capabilities` — reusable building blocks;
-- `src/Examples` — reference implementations;
-- top-level `src/Application`, `src/Domain`, `src/Infrastructure` — legacy-слой, который ещё не дочищен полностью.
+- `src/Examples` — example implementations;
+- `src/Infrastructure` — support/tooling слой.
 
-То есть основная проблема больше не в отсутствии целевой структуры, а в сосуществовании новой и старой модели.
+То есть основная проблема больше не в отсутствии целевой структуры, а в том, что `Infrastructure` всё ещё совмещает несколько разных подролей.
 
 ## `Platform`
 
@@ -66,7 +66,7 @@ Pipeline собирается в `App::createPipeline()` и сейчас вып�
 
 ## `Examples`
 
-В `src/Examples` сейчас лежит reference code, который помогает понять сборку template.
+В `src/Examples` сейчас лежит example code, который помогает понять сборку template.
 
 ### `src/Examples/Home`
 
@@ -81,7 +81,7 @@ Pipeline собирается в `App::createPipeline()` и сейчас вып�
 
 ### `src/Examples/Auth`
 
-Текущий auth flow уже работает как reference implementation:
+Текущий auth flow уже работает как example implementation:
 
 - login;
 - refresh;
@@ -104,31 +104,7 @@ Pipeline собирается в `App::createPipeline()` и сейчас вып�
 
 Следствие: examples остаются в репозитории, но не должны быть обязательной частью runtime surface.
 
-## Legacy-слой
-
-В проекте всё ещё остаются старые каталоги, которые нужно интерпретировать осторожно.
-
-### `src/Application`
-
-Там живут:
-
-- mapper-ы;
-- часть client/geolocation abstractions;
-- исторические application services, ещё не перенесённые в capabilities/examples/platform.
-
-Этот каталог больше не должен рассматриваться как главный архитектурный слой проекта.
-
-### `src/Domain`
-
-Там остаются старые domain-модели, включая `User`.
-
-Это уже не canonical structure template. Всё, что находится здесь, должно быть либо:
-
-- перенесено в capability/example;
-- оставлено как временный legacy;
-- удалено, если не имеет ценности.
-
-### `src/Infrastructure`
+## `src/Infrastructure`
 
 Этот каталог всё ещё содержит много технических частей:
 
@@ -145,7 +121,7 @@ Pipeline собирается в `App::createPipeline()` и сейчас вып�
 
 - platform-support кода;
 - tooling/runtime glue;
-- legacy-кода до полной перегруппировки.
+- support-кода, который ещё не до конца разведен между runtime и tooling.
 
 ## Routing и protobuf
 
@@ -171,11 +147,9 @@ Storage стратегия остаётся PostgreSQL-first.
 
 ## Главные текущие противоречия
 
-### 1. Новая структура уже есть, но legacy ещё силён
+### 1. `Infrastructure` ещё слишком широкий
 
-Это главный факт текущего состояния.
-
-Нельзя больше описывать проект только через `Domain/Application/Infrastructure`, но и полностью игнорировать эти папки пока нельзя.
+Сейчас он совмещает storage, service providers, hydrator, routing generation и console support.
 
 ### 2. `Auth` ещё не разделён на primitive и example policy
 

@@ -97,7 +97,7 @@ task proto:gen:mappers
 
 - код в `gen/Infrastructure/Hydrator`
 
-Эта часть основана не только на `.proto`, но и на PHP attributes в domain/application моделях.
+Эта часть основана не только на `.proto`, но и на PHP attributes в capability/example/platform моделях.
 
 ## Текущий flow генерации
 
@@ -127,16 +127,16 @@ task proto:gen:all
 
 ## Custom mapping через атрибуты
 
-Некоторые domain/application классы размечены атрибутами:
+Некоторые capability/example классы размечены атрибутами:
 
 - `ProtoMapping`
 - `ProtoField`
 
 Примеры:
 
-- `src/Domain/Session/Session.php`
-- `src/Domain/User/User.php`
-- `src/Application/Client/GeoLocationData.php`
+- `src/Capabilities/Session/Domain/Session.php`
+- `src/Capabilities/Session/Application/GeoLocationData.php`
+- `src/Examples/Auth/Domain/AuthUser.php`
 
 Эти атрибуты нужны для генераторов и маппинга между внутренними моделями и protobuf message classes.
 

@@ -12,7 +12,7 @@
 - PostgreSQL как основном хранилище;
 - Redis/RoadRunner KV для кеша;
 - маленький framework-free runtime core;
-- разделение на `Platform`, `Capabilities` и `Examples`.
+- разделение на `Platform`, `Capabilities`, `Examples` и infrastructure support.
 
 Проект не должен трактоваться как готовый продукт. Это шаблон плюс небольшой набор example implementations, которые показывают, как собирать backend из platform runtime и reusable capabilities.
 
@@ -64,13 +64,17 @@ Example implementations:
 
 Examples не должны считаться частью default runtime. Они остаются как примерный слой и не участвуют в основном bootstrap по умолчанию.
 
-### Legacy зоны
+### `src/Infrastructure`
 
-- `src/Application`
-- `src/Domain`
-- `src/Infrastructure`
+Infrastructure support:
 
-Эти каталоги всё ещё используются, но уже не являются правильной mental model для нового кода. Их нужно читать как переходный слой.
+- DI service providers;
+- storage adapters и migrations;
+- cache, logger и console glue;
+- routing/codegen support;
+- hydrator/runtime integration.
+
+Это не старая "главная архитектура", а технический support layer вокруг `Platform` и `Capabilities`.
 
 ### `protos`
 
@@ -140,12 +144,12 @@ task run
 5. `src/Examples/*`
 6. `src/Infrastructure/DI/ServiceProviders/*`
 7. `src/Infrastructure/Storage/*`
-8. `src/Application/*` и `src/Domain/*` только если нужно понять legacy-хвост
+8. `src/Infrastructure/*` когда нужен DI/storage/tooling support
 9. `protos/proto/app/v1/*` и `protos/proto/examples/v1/*`
 
 ## Главные текущие зоны риска
 
-- Legacy-каталоги всё ещё создают шум и могут сбить LLM с правильной mental model.
+- `Infrastructure` всё ещё совмещает support runtime и tooling glue.
 - `Auth` пока не разделён на capability primitives и example flow.
 - Часть кода ориентирована на PostgreSQL-only стратегию, но SQLite-слой ещё присутствует.
 - В репозитории уже есть незавершённый переход к code-generating hydrator, но он пока не является основным runtime-механизмом.

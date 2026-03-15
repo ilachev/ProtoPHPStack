@@ -60,7 +60,7 @@
 
 1. `Session` — capability;
 2. `ApiStats` -> `Observability` capability, если останется generic;
-3. `Auth` — capability primitives плюс reference flow;
+3. `Auth` — capability primitives плюс example flow;
 4. всё, что не reusable, не должно оставаться capability.
 
 Критерий успеха:
@@ -69,7 +69,7 @@
 
 ## Этап 5. Понизить examples до examples
 
-Следующие вещи должны быть явно отнесены к reference code:
+Следующие вещи должны быть явно отнесены к example code:
 
 - `Home`;
 - demo auth endpoint flow;
@@ -100,7 +100,7 @@ Examples не должны быть обязательной частью core r
 
 ## Этап 8. Финализировать example layer
 
-В репозитории должен остаться минимальный набор reference implementations:
+В репозитории должен остаться минимальный набор example implementations:
 
 - smoke-test endpoint;
 - session example;
@@ -128,7 +128,7 @@ Examples не должны быть обязательной частью core r
 - examples отделены от core;
 - runtime не зависит от framework;
 - transport contracts и runtime согласованы;
-- документация объясняет не только "как устроено сейчас", но и "что является core, а что reference";
+- документация объясняет не только "как устроено сейчас", но и "что является core, а что example";
 - `task verify` остаётся основным quality gate.
 
 ## Практический следующий шаг
