@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\DI;
 
-use App\Application\Handlers\HandlerFactoryInterface;
-use App\Application\Handlers\HandlerInterface;
+use App\Platform\Http\Handler\HandlerFactoryInterface;
+use App\Platform\Http\Handler\HandlerInterface;
 
 final readonly class ContainerHandlerFactory implements HandlerFactoryInterface
 {

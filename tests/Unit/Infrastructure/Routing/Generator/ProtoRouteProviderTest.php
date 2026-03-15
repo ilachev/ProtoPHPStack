@@ -74,7 +74,7 @@ final class ProtoRouteProviderTest extends TestCase
         self::assertCount(1, $routes);
         self::assertEquals('GET', $routes[0]['method']);
         self::assertEquals('/api/v1/test', $routes[0]['path']);
-        self::assertEquals('App\Application\Handlers\TestHandler', $routes[0]['handler']);
+        self::assertEquals('App\Modules\Test\Transport\Http\TestHandler', $routes[0]['handler']);
         self::assertArrayHasKey('operation_id', $routes[0]);
         $operationId = $routes[0]['operation_id'] ?? null;
         self::assertEquals('TestService.TestMethod', $operationId);
@@ -104,7 +104,7 @@ final class ProtoRouteProviderTest extends TestCase
         $this->createProtoFile("{$this->tempDir}/custom.proto", $protoContent);
 
         $handlerMapping = [
-            'CustomService.CustomMethod' => 'App\Application\Handlers\SpecialHandler',
+            'CustomService.CustomMethod' => 'App\Modules\Custom\Transport\Http\SpecialHandler',
         ];
 
         $provider = new ProtoRouteProvider($this->tempDir, $handlerMapping);
@@ -113,7 +113,7 @@ final class ProtoRouteProviderTest extends TestCase
         self::assertCount(1, $routes);
         self::assertEquals('POST', $routes[0]['method']);
         self::assertEquals('/api/v1/custom', $routes[0]['path']);
-        self::assertEquals('App\Application\Handlers\SpecialHandler', $routes[0]['handler']);
+        self::assertEquals('App\Modules\Custom\Transport\Http\SpecialHandler', $routes[0]['handler']);
     }
 
     public function testGetRoutesWithMultipleHttpMethods(): void
@@ -154,13 +154,13 @@ final class ProtoRouteProviderTest extends TestCase
         $provider = new ProtoRouteProvider($this->tempDir);
         $routes = $provider->getRoutes();
 
-        // ожидаем, что в текущей реализации по этом паттерну будут найдены не все методы
+        // Current parser is expected to find at least one route for this pattern.
         self::assertGreaterThan(0, \count($routes));
 
         $httpMethods = array_column($routes, 'method');
         $paths = array_column($routes, 'path');
 
-        // Проверяем только то, что маршруты найдены
+        // Only assert that routes were discovered.
         self::assertNotEmpty($httpMethods);
         self::assertNotEmpty($paths);
     }

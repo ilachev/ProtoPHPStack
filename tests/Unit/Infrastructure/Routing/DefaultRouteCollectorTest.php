@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Infrastructure\Routing;
 
-use App\Infrastructure\Routing\DefaultRouteCollector;
+use App\Platform\Routing\DefaultRouteCollector;
 use PHPUnit\Framework\TestCase;
 
 final class DefaultRouteCollectorTest extends TestCase

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\DI\ServiceProviders;
 
-use App\Application\Handlers\HandlerFactoryInterface;
 use App\Infrastructure\DI\Container;
 use App\Infrastructure\DI\ContainerHandlerFactory;
 use App\Infrastructure\DI\DIContainer;
@@ -12,6 +11,7 @@ use App\Infrastructure\DI\ServiceProvider;
 use App\Infrastructure\Logger\Logger;
 use App\Infrastructure\Logger\ReadableOutputLogger;
 use App\Infrastructure\Logger\RoadRunnerLogger;
+use App\Platform\Http\Handler\HandlerFactoryInterface;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\Http\Message\ServerRequestFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;

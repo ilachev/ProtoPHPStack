@@ -35,7 +35,7 @@ final readonly class RoutesWriter
     {
         $routesCode = [];
         $imports = [
-            'App\Application\Handlers\HandlerInterface',
+            'App\Platform\Http\Handler\HandlerInterface',
         ];
 
         foreach ($routes as $route) {

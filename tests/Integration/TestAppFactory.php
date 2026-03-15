@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
-use App\Infrastructure\App;
+use App\Platform\Runtime\App;
 
 /**
  * Factory class to provide a single App instance across all integration tests.

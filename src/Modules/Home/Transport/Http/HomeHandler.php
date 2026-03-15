@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Modules\Home\Transport\Http;
 
-use App\Application\Handlers\AbstractJsonHandler;
-use App\Application\Http\JsonResponse;
 use App\Modules\Home\Domain\HomeService;
 use App\Modules\Home\Transport\Mapping\HomeResponseMapper;
+use App\Platform\Http\Handler\AbstractJsonHandler;
+use App\Platform\Http\JsonResponse;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 

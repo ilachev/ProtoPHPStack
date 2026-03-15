@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Application\Middleware;
 
-use App\Application\Http\RequestHandler;
 use App\Application\Middleware\ApiStatsMiddleware;
-use App\Application\Routing\RouteResult;
-use App\Application\Routing\RouteStatus;
 use App\Domain\Stats\ApiStat;
 use App\Domain\Stats\ApiStatService;
 use App\Modules\Session\Domain\Session;
 use App\Modules\Session\Domain\SessionRepository;
 use App\Modules\Session\Domain\SessionService;
+use App\Platform\Http\RequestHandler;
+use App\Platform\Routing\RouteResult;
+use App\Platform\Routing\RouteStatus;
 use Nyholm\Psr7\Response;
 use Nyholm\Psr7\ServerRequest;
 use PHPUnit\Framework\TestCase;
@@ -38,7 +38,7 @@ final class ApiStatsMiddlewareTest extends TestCase
         $this->repository = new TestApiStatRepository();
         $this->statService = new ApiStatService($this->repository);
 
-        // Создаем тестовое хранилище сессий
+        // Create a test session repository.
         $testSessionRepository = new class implements SessionRepository {
             public function findById(string $id): Session
             {
@@ -71,7 +71,7 @@ final class ApiStatsMiddlewareTest extends TestCase
             }
         };
 
-        // Создаем реальный экземпляр SessionService
+        // Create a real SessionService instance.
         $this->logger = new TestLogger();
         $this->sessionService = new SessionService($testSessionRepository, $this->logger);
 
@@ -80,7 +80,7 @@ final class ApiStatsMiddlewareTest extends TestCase
 
     public function testProcessWithSessionId(): void
     {
-        // Используем валидный формат ID сессии (32 hex символа)
+        // Use a valid session ID format (32 hex characters).
         $sessionId = '0123456789abcdef0123456789abcdef';
         $routeName = 'test.route';
         $routePath = '/test/path';
@@ -109,15 +109,15 @@ final class ApiStatsMiddlewareTest extends TestCase
             }
         };
 
-        // До выполнения middleware репозиторий должен быть пустым
+        // Repository must be empty before middleware execution.
         self::assertEmpty($this->repository->stats);
 
         $result = $this->middleware->process($request, $handler);
 
-        // Проверяем, что middleware пропустил запрос и вернул ответ
+        // Ensure middleware passed the request through.
         self::assertSame($response, $result);
 
-        // Проверяем, что статистика была сохранена
+        // Ensure API stats were saved.
         self::assertCount(1, $this->repository->stats);
 
         self::assertNotEmpty($this->repository->stats);
@@ -128,7 +128,7 @@ final class ApiStatsMiddlewareTest extends TestCase
         self::assertSame($method, $stat->method);
         self::assertSame($statusCode, $stat->statusCode);
         self::assertGreaterThan(0, $stat->executionTime);
-        // Проверяем, что время запроса установлено
+        // Ensure request time was recorded.
         self::assertGreaterThan(0, $stat->requestTime);
     }
 
@@ -153,16 +153,16 @@ final class ApiStatsMiddlewareTest extends TestCase
 
         $result = $this->middleware->process($request, $handler);
 
-        // Проверяем, что middleware пропустил запрос и вернул ответ
+        // Ensure middleware passed the request through.
         self::assertSame($response, $result);
 
-        // Проверяем, что статистика НЕ была сохранена (нет sessionId)
+        // Ensure stats were not saved because sessionId is missing.
         self::assertEmpty($this->repository->stats);
     }
 
     public function testProcessWithoutRouteResult(): void
     {
-        // Используем валидный формат ID сессии (32 hex символа)
+        // Use a valid session ID format (32 hex characters).
         $sessionId = '0123456789abcdef0123456789abcdef';
         $path = '/no-route-result';
         $method = 'GET';
@@ -189,10 +189,10 @@ final class ApiStatsMiddlewareTest extends TestCase
 
         $result = $this->middleware->process($request, $handler);
 
-        // Проверяем, что middleware пропустил запрос и вернул ответ
+        // Ensure middleware passed the request through.
         self::assertSame($response, $result);
 
-        // Проверяем, что статистика была сохранена с URI путем вместо имени маршрута
+        // Ensure stats use the raw URI path when route metadata is missing.
         self::assertCount(1, $this->repository->stats);
 
         self::assertNotEmpty($this->repository->stats);

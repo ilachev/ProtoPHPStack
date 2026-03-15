@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use App\Infrastructure\App;
 use App\Infrastructure\Console\MigrateCommand;
 use App\Infrastructure\Storage\Migration\MigrationService;
 use App\Infrastructure\Storage\Storage;
+use App\Platform\Runtime\App;
 use Tests\Integration\TestAppFactory;
 
 require_once __DIR__ . '/../../vendor/autoload.php';

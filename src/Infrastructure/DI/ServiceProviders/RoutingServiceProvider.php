@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\DI\ServiceProviders;
 
-use App\Application\Routing\RouteDefinition;
-use App\Application\Routing\RouteDefinitionInterface;
-use App\Application\Routing\RouterInterface;
 use App\Infrastructure\Config\ProjectPath;
 use App\Infrastructure\DI\Container;
 use App\Infrastructure\DI\ServiceProvider;
-use App\Infrastructure\Routing\Router;
+use App\Platform\Routing\RouteDefinition;
+use App\Platform\Routing\RouteDefinitionInterface;
+use App\Platform\Routing\Router;
+use App\Platform\Routing\RouterInterface;
 
 /**
  * @implements ServiceProvider<object>

@@ -4,24 +4,24 @@ declare(strict_types=1);
 
 namespace App\Application\Middleware;
 
-use App\Application\Http\Middleware;
-use App\Application\Http\RequestHandler;
 use App\Infrastructure\Logger\Logger;
 use App\Modules\Session\Domain\Session;
 use App\Modules\Session\Domain\SessionService;
+use App\Platform\Http\Middleware;
+use App\Platform\Http\RequestHandler;
 use Nyholm\Psr7\Response;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 final readonly class AuthMiddleware implements Middleware
 {
-    // Пути, требующие аутентифицированного пользователя
+    // Paths that require an authenticated user.
     private const array PROTECTED_PATHS = [
         '/api/v1/user/',
         '/api/v1/admin/',
     ];
     private const string COOKIE_NAME = 'session';
-    private const int COOKIE_TTL = 86400; // 24 часа
+    private const int COOKIE_TTL = 86400; // 24 hours
 
     public function __construct(
         private SessionService $sessionService,
@@ -32,7 +32,7 @@ final readonly class AuthMiddleware implements Middleware
         ServerRequestInterface $request,
         RequestHandler $handler,
     ): ResponseInterface {
-        // Пытаемся найти существующую сессию
+        // Try to resolve an existing session first.
         $sessionId = $this->extractSessionId($request);
         $session = null;
 
@@ -40,9 +40,9 @@ final readonly class AuthMiddleware implements Middleware
             $session = $this->sessionService->validateSession($sessionId);
         }
 
-        // Если нет сессии, создаем анонимную
+        // Create an anonymous session when the request has no valid session.
         if ($session === null) {
-            // Но сначала проверяем, является ли путь защищенным
+            // Protected paths require an existing authenticated session.
             $path = $request->getUri()->getPath();
 
             foreach (self::PROTECTED_PATHS as $protectedPath) {
@@ -57,7 +57,7 @@ final readonly class AuthMiddleware implements Middleware
                 }
             }
 
-            // Если путь не защищенный, создаем анонимную сессию
+            // Public paths receive an anonymous session automatically.
             $payload = json_encode(['ip' => $request->getServerParams()['REMOTE_ADDR'] ?? 'unknown']);
             if ($payload === false) {
                 $payload = '{}';
@@ -72,7 +72,7 @@ final readonly class AuthMiddleware implements Middleware
             $this->logger->info('Created anonymous session', ['session_id' => $session->id]);
         }
 
-        // Добавляем сессию в атрибуты запроса
+        // Attach session data to request attributes for downstream handlers.
         $request = $request->withAttribute('session', $session);
 
         if ($session->userId !== null) {
@@ -82,14 +82,14 @@ final readonly class AuthMiddleware implements Middleware
             $request = $request->withAttribute('isAuthenticated', false);
         }
 
-        // Обрабатываем запрос
+        // Delegate request processing to the next handler.
         $response = $handler->handle($request);
 
-        // Обновляем сессию и устанавливаем cookie
+        // Refresh session metadata and propagate the session cookie.
         if ($response->getStatusCode() < 400) {
             $session = $this->sessionService->refreshSession($session->id);
 
-            // Добавляем cookie с сессией
+            // Attach the refreshed session cookie.
             if ($session !== null) {
                 $response = $this->addSessionCookie($response, $session);
             }
@@ -103,13 +103,13 @@ final readonly class AuthMiddleware implements Middleware
      */
     private function extractSessionId(ServerRequestInterface $request): ?string
     {
-        // Пытаемся извлечь токен из заголовка Authorization
+        // Prefer bearer token authentication when present.
         $authHeader = $request->getHeaderLine('Authorization');
         if (str_starts_with($authHeader, 'Bearer ')) {
             return substr($authHeader, 7);
         }
 
-        // Пытаемся извлечь токен из куки
+        // Fallback to cookie-based session lookup.
         $cookies = $request->getCookieParams();
 
         $cookieValue = $cookies[self::COOKIE_NAME] ?? null;

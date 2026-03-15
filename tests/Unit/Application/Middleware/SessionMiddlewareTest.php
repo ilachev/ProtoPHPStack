@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Application\Middleware;
 
-use App\Application\Http\RequestHandler;
 use App\Infrastructure\Hydrator\JsonFieldAdapter;
 use App\Modules\Session\Application\ClientDetector;
 use App\Modules\Session\Application\ClientIdentity;
@@ -15,6 +14,7 @@ use App\Modules\Session\Domain\SessionPayload;
 use App\Modules\Session\Domain\SessionRepository;
 use App\Modules\Session\Domain\SessionService;
 use App\Modules\Session\Transport\Http\SessionMiddleware;
+use App\Platform\Http\RequestHandler;
 use Nyholm\Psr7\Response;
 use Nyholm\Psr7\ServerRequest;
 use PHPUnit\Framework\TestCase;
@@ -75,14 +75,14 @@ final class SessionMiddlewareTest extends TestCase
             'use_fingerprint' => false,
         ]);
 
-        // Create test session payload
+        // Create test session payload.
         $sessionPayload = $this->createTestSessionPayload('Test Agent');
 
-        // Use concrete implementations for testing
+        // Use concrete implementations for testing.
         $sessionPayloadFactory = new TestSessionPayloadFactoryImpl($sessionPayload);
         $jsonAdapter = new TestJsonFieldAdapterImpl();
 
-        // Создаем тестовую реализацию ClientDetector
+        // Create a test ClientDetector implementation.
         $clientDetector = new TestClientDetectorImpl([]);
 
         $this->middleware = new SessionMiddleware(
@@ -103,10 +103,10 @@ final class SessionMiddlewareTest extends TestCase
 
         $response = $this->middleware->process($request, $this->handler);
 
-        // Проверяем, что была создана новая сессия
+        // Ensure a new session was created.
         self::assertCount(1, $this->repository->sessions);
 
-        // Проверяем, что в атрибутах запроса есть сессия
+        // Ensure the request contains the session attribute.
         $processedRequest = $this->handler->lastRequest;
         self::assertNotNull($processedRequest);
 
@@ -114,7 +114,7 @@ final class SessionMiddlewareTest extends TestCase
         self::assertInstanceOf(Session::class, $session);
         self::assertNull($session->userId);
 
-        // Проверяем логирование создания сессии
+        // Ensure session creation was logged.
         self::assertGreaterThanOrEqual(1, \count($this->logger->logs));
 
         $sessionCreatedMessage = false;
@@ -127,7 +127,7 @@ final class SessionMiddlewareTest extends TestCase
 
         self::assertTrue($sessionCreatedMessage, 'Log should contain "Created new session" message');
 
-        // Проверяем cookie в ответе
+        // Ensure the response contains a session cookie.
         self::assertTrue($response->hasHeader('Set-Cookie'));
         $cookie = $response->getHeaderLine('Set-Cookie');
         self::assertStringContainsString('session=', $cookie);
@@ -136,7 +136,7 @@ final class SessionMiddlewareTest extends TestCase
 
     public function testUsesExistingSessionFromCookie(): void
     {
-        // Создаем сессию в репозитории
+        // Seed an existing session in the repository.
         $existingSession = new Session(
             id: 'existing-session-id',
             userId: 1,
@@ -147,7 +147,7 @@ final class SessionMiddlewareTest extends TestCase
         );
         $this->repository->sessions['existing-session-id'] = $existingSession;
 
-        // Создаем запрос с cookie
+        // Build a request that carries the session cookie.
         $request = new ServerRequest('GET', '/');
         $request = $request->withCookieParams(['session' => 'existing-session-id']);
 
@@ -155,17 +155,17 @@ final class SessionMiddlewareTest extends TestCase
 
         $response = $this->middleware->process($request, $this->handler);
 
-        // Проверяем, что существующая сессия получена и не создана новая
+        // Ensure the existing session was reused without creating a new one.
         self::assertCount(1, $this->repository->sessions);
 
-        // Проверяем атрибуты запроса
+        // Ensure request attributes contain the existing session.
         $processedRequest = $this->handler->lastRequest;
         self::assertNotNull($processedRequest);
 
         $session = $processedRequest->getAttribute('session');
         self::assertSame($existingSession, $session);
 
-        // Проверяем cookie в ответе
+        // Ensure the response cookie points to the reused session.
         self::assertTrue($response->hasHeader('Set-Cookie'));
         $cookie = $response->getHeaderLine('Set-Cookie');
         self::assertStringContainsString('session=existing-session-id', $cookie);
@@ -173,7 +173,7 @@ final class SessionMiddlewareTest extends TestCase
 
     public function testUsesExistingSessionFromBearerToken(): void
     {
-        // Создаем сессию в репозитории
+        // Seed an existing session in the repository.
         $existingSession = new Session(
             id: 'token-session-id',
             userId: 1,
@@ -184,7 +184,7 @@ final class SessionMiddlewareTest extends TestCase
         );
         $this->repository->sessions['token-session-id'] = $existingSession;
 
-        // Создаем запрос с заголовком Authorization
+        // Build a request with a bearer token.
         $request = new ServerRequest('GET', '/');
         $request = $request->withHeader('Authorization', 'Bearer token-session-id');
 
@@ -192,17 +192,17 @@ final class SessionMiddlewareTest extends TestCase
 
         $response = $this->middleware->process($request, $this->handler);
 
-        // Проверяем, что существующая сессия получена и не создана новая
+        // Ensure the existing session was reused without creating a new one.
         self::assertCount(1, $this->repository->sessions);
 
-        // Проверяем атрибуты запроса
+        // Ensure request attributes contain the existing session.
         $processedRequest = $this->handler->lastRequest;
         self::assertNotNull($processedRequest);
 
         $session = $processedRequest->getAttribute('session');
         self::assertSame($existingSession, $session);
 
-        // Проверяем cookie в ответе
+        // Ensure the response cookie points to the reused session.
         self::assertTrue($response->hasHeader('Set-Cookie'));
         $cookie = $response->getHeaderLine('Set-Cookie');
         self::assertStringContainsString('session=token-session-id', $cookie);
@@ -210,18 +210,18 @@ final class SessionMiddlewareTest extends TestCase
 
     public function testCreatesNewSessionWhenExistingSessionIsInvalid(): void
     {
-        // Создаем просроченную сессию в репозитории
+        // Seed an expired session in the repository.
         $expiredSession = new Session(
             id: 'invalid-session-id',
             userId: 1,
             payload: '{}',
-            expiresAt: time() - 100, // В прошлом
+            expiresAt: time() - 100, // Already expired.
             createdAt: time() - 200,
             updatedAt: time() - 100,
         );
         $this->repository->sessions['invalid-session-id'] = $expiredSession;
 
-        // Создаем запрос с cookie
+        // Build a request that carries the expired session cookie.
         $request = new ServerRequest('GET', '/');
         $request = $request->withCookieParams(['session' => 'invalid-session-id']);
 
@@ -229,10 +229,10 @@ final class SessionMiddlewareTest extends TestCase
 
         $response = $this->middleware->process($request, $this->handler);
 
-        // Проверяем, что была создана новая сессия
-        self::assertCount(2, $this->repository->sessions); // Просроченная + новая
+        // Ensure a fresh session was created.
+        self::assertCount(2, $this->repository->sessions); // Expired + new.
 
-        // Проверяем атрибуты запроса
+        // Ensure request attributes contain the fresh session.
         $processedRequest = $this->handler->lastRequest;
         self::assertNotNull($processedRequest);
 
@@ -241,7 +241,7 @@ final class SessionMiddlewareTest extends TestCase
         self::assertNotSame($expiredSession, $session);
         self::assertNull($session->userId);
 
-        // Проверяем cookie в ответе
+        // Ensure the response cookie points to the new session.
         self::assertTrue($response->hasHeader('Set-Cookie'));
         $cookie = $response->getHeaderLine('Set-Cookie');
         self::assertStringContainsString('session=', $cookie);
@@ -255,16 +255,16 @@ final class SessionMiddlewareTest extends TestCase
 
         $response = $this->middleware->process($request, $this->handler);
 
-        // Проверяем, что была создана сессия
+        // Ensure a session was created.
         self::assertCount(1, $this->repository->sessions);
 
-        // Проверяем, что в ответе нет cookie
+        // Error responses must not refresh session cookies.
         self::assertFalse($response->hasHeader('Set-Cookie'));
     }
 
     public function testReusesSimilarSessionWhenFingerprintMatches(): void
     {
-        // 1. Включаем fingerprinting в конфиге
+        // 1. Enable fingerprint matching in the config.
         $configWithFingerprint = SessionConfig::fromArray([
             'cookie_name' => 'session',
             'cookie_ttl' => 86400,
@@ -272,7 +272,7 @@ final class SessionMiddlewareTest extends TestCase
             'use_fingerprint' => true,
         ]);
 
-        // 2. Создаем существующую сессию с известным fingerprint
+        // 2. Seed an existing session with a known fingerprint.
         $existingSession = new Session(
             id: 'existing-fingerprint-session-id',
             userId: 42,
@@ -283,17 +283,17 @@ final class SessionMiddlewareTest extends TestCase
         );
         $this->repository->sessions['existing-fingerprint-session-id'] = $existingSession;
 
-        // 3. Создаем ClientIdentity на основе существующей сессии
+        // 3. Build ClientIdentity from the existing session.
         $existingIdentity = new ClientIdentity(
             id: 'existing-fingerprint-session-id',
             ipAddress: '127.0.0.1',
             userAgent: 'Test Agent',
         );
 
-        // 4. Создаем тестовую реализацию ClientDetector, которая будет возвращать наше совпадение
+        // 4. Prepare a test ClientDetector that returns the matching client.
         $clientDetector = new TestClientDetectorImpl([$existingIdentity]);
 
-        // 5. Создаем новый middleware с этими зависимостями
+        // 5. Build middleware with fingerprint-aware dependencies.
         /** @var SessionPayloadFactory $sessionPayloadFactory */
         $sessionPayloadFactory = $this->middleware->getContext('sessionPayloadFactory');
 
@@ -309,17 +309,17 @@ final class SessionMiddlewareTest extends TestCase
             $clientDetector,
         );
 
-        // 6. Создаем запрос без cookie, но с совпадающим fingerprint
+        // 6. Create a request without cookies but with a matching fingerprint.
         $request = new ServerRequest('GET', '/');
         $this->handler->response = new Response();
 
-        // 7. Запускаем middleware
+        // 7. Run middleware.
         $response = $fingerprintMiddleware->process($request, $this->handler);
 
-        // 8. Проверяем, что не была создана новая сессия
+        // 8. Ensure no new session was created.
         self::assertCount(1, $this->repository->sessions);
 
-        // 9. Проверяем, что в атрибутах запроса используется существующая сессия
+        // 9. Ensure request attributes reference the existing session.
         $processedRequest = $this->handler->lastRequest;
         self::assertNotNull($processedRequest);
 
@@ -328,7 +328,7 @@ final class SessionMiddlewareTest extends TestCase
         self::assertSame($existingSession, $session);
         self::assertSame(42, $session->userId);
 
-        // 10. Проверяем cookie в ответе
+        // 10. Ensure the response cookie points to the reused session.
         self::assertTrue($response->hasHeader('Set-Cookie'));
         $cookie = $response->getHeaderLine('Set-Cookie');
         self::assertStringContainsString('session=existing-fingerprint-session-id', $cookie);
@@ -351,7 +351,7 @@ final class TestRequestHandler implements RequestHandler
 
 
 /**
- * Тестовый репозиторий для тестирования SessionMiddleware.
+ * Test repository for SessionMiddleware.
  */
 final class TestSessionRepository implements SessionRepository
 {

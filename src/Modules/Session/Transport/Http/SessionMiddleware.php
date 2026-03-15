@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Session\Transport\Http;
 
-use App\Application\Http\Middleware;
-use App\Application\Http\RequestHandler;
 use App\Infrastructure\Hydrator\JsonFieldAdapter;
 use App\Infrastructure\Logger\Logger;
 use App\Modules\Session\Application\ClientDetector;
@@ -13,6 +11,8 @@ use App\Modules\Session\Application\SessionPayloadFactory;
 use App\Modules\Session\Domain\Session;
 use App\Modules\Session\Domain\SessionConfig;
 use App\Modules\Session\Domain\SessionService;
+use App\Platform\Http\Middleware;
+use App\Platform\Http\RequestHandler;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 

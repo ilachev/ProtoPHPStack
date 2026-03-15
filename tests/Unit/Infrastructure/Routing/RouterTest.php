@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Infrastructure\Routing;
 
-use App\Application\Routing\RouteDefinitionInterface;
-use App\Infrastructure\Routing\DefaultRouteCollector;
-use App\Infrastructure\Routing\Router;
+use App\Platform\Routing\DefaultRouteCollector;
+use App\Platform\Routing\RouteDefinitionInterface;
+use App\Platform\Routing\Router;
 use Nyholm\Psr7\ServerRequest;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -22,7 +22,7 @@ final class RouterTest extends TestCase
     {
         $this->routeDefinition = $this->createMock(RouteDefinitionInterface::class);
 
-        // Set up the route definition mock to add routes to the collector
+        // Set up the route definition mock to add routes to the collector.
         $this->routeDefinition
             ->method('defineRoutes')
             ->willReturnCallback(static function (DefaultRouteCollector $collector): void {
@@ -62,10 +62,10 @@ final class RouterTest extends TestCase
 
         $result = $this->router->dispatch($request);
 
-        // Test method not allowed
+        // Assert method not allowed.
         self::assertEquals(405, $result->getStatusCode());
 
-        // For method not allowed, getHandler throws an exception
+        // Accessing handler for method-not-allowed must throw.
         $this->expectException(\RuntimeException::class);
         $result->getHandler();
     }
@@ -92,7 +92,7 @@ final class RouterTest extends TestCase
 
     public function testDispatchWithMultipleParameters(): void
     {
-        // Set up a new route definition with a route that has multiple parameters
+        // Set up a route definition with multiple path parameters.
         $routeDefinition = $this->createMock(RouteDefinitionInterface::class);
         $routeDefinition
             ->method('defineRoutes')

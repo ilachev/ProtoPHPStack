@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Application\Middleware;
 
-use App\Application\Http\Middleware;
-use App\Application\Http\RequestHandler;
-use App\Application\Routing\RouteResult;
 use App\Domain\Stats\ApiStat;
 use App\Domain\Stats\ApiStatService;
 use App\Infrastructure\Logger\Logger;
 use App\Modules\Session\Domain\Session;
 use App\Modules\Session\Domain\SessionService;
+use App\Platform\Http\Middleware;
+use App\Platform\Http\RequestHandler;
+use App\Platform\Routing\RouteResult;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -29,46 +29,46 @@ final readonly class ApiStatsMiddleware implements Middleware
     ): ResponseInterface {
         $startTime = hrtime(true);
 
-        // Получаем сессию из запроса (добавляется в SessionMiddleware)
+        // SessionMiddleware attaches the current session to the request.
         /** @var Session|null $session */
         $session = $request->getAttribute('session');
         $sessionId = $session?->id;
 
-        // Для тестов разрешаем также использовать sessionId напрямую, если сессия не найдена
+        // Tests may pass sessionId directly when a full session object is unavailable.
         if ($sessionId === null && $request->getAttribute('sessionId') !== null) {
             $sessionIdAttr = $request->getAttribute('sessionId');
             $sessionId = \is_string($sessionIdAttr) ? $sessionIdAttr : null;
         }
 
-        // Обработка запроса
+        // Let the request complete before recording metrics.
         $response = $handler->handle($request);
 
-        // Вычисление времени выполнения запроса
+        // Measure end-to-end request duration in milliseconds.
         $executionTime = (hrtime(true) - $startTime) / 1_000_000;
 
-        // Получаем информацию о маршруте
+        // Resolve route metadata captured by routing middleware.
         /** @var RouteResult|null $routeResult */
         $routeResult = $request->getAttribute(RouteResult::class);
-        $route = $request->getUri()->getPath(); // По умолчанию используем путь из URI
+        $route = $request->getUri()->getPath(); // Fallback to the raw URI path.
 
-        // Если найден маршрут и он валидный, используем его handler
+        // Prefer the resolved handler name when routing succeeded.
         if ($routeResult !== null && $routeResult->isFound()) {
             $route = $routeResult->getHandler();
         }
 
-        // Проверяем наличие сессии
+        // Stats are tied to a session and skipped otherwise.
         if ($sessionId === null) {
             $this->logger->debug('ApiStatsMiddleware: Skipping stats - no sessionId');
 
             return $response;
         }
 
-        // В тестовом режиме (с атрибутом sessionId) пропускаем проверку существования сессии
+        // Explicit test sessionId bypasses repository validation.
         $isTestMode = $request->getAttribute('sessionId') !== null;
 
-        // Если не тестовый режим, проверяем существование сессии
+        // Production flow validates that the session still exists.
         if (!$isTestMode) {
-            // Проверяем, существует ли сессия в БД с помощью SessionService
+            // SessionService is the source of truth for active sessions.
             $validSession = $this->sessionService->validateSession($sessionId);
 
             if ($validSession === null) {
@@ -87,7 +87,7 @@ final readonly class ApiStatsMiddleware implements Middleware
             'test_mode' => $isTestMode,
         ]);
 
-        // Создаем объект статистики API вызова
+        // Persist a normalized API call record.
         $stat = new ApiStat(
             id: null,
             sessionId: $sessionId,
@@ -98,8 +98,7 @@ final readonly class ApiStatsMiddleware implements Middleware
             requestTime: time(),
         );
 
-        // Сохраняем статистику напрямую
-        // В реальном высоконагруженном проекте здесь можно использовать очередь задач
+        // Save stats synchronously for now; a queue can be introduced later if needed.
         $this->statsService->saveApiCall($stat);
 
         return $response;

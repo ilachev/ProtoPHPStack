@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Application\Handlers;
 
-use App\Application\Http\JsonResponse;
 use App\Application\Mappers\DataTransferObjectMapper;
 use App\Infrastructure\Hydrator\LimitedReflectionCache;
 use App\Infrastructure\Hydrator\ReflectionHydrator;
@@ -12,6 +11,7 @@ use App\Infrastructure\Hydrator\SetterProtobufHydration;
 use App\Modules\Home\Domain\HomeService;
 use App\Modules\Home\Transport\Http\HomeHandler;
 use App\Modules\Home\Transport\Mapping\HomeResponseMapper;
+use App\Platform\Http\JsonResponse;
 use Nyholm\Psr7\ServerRequest;
 use PHPUnit\Framework\TestCase;
 

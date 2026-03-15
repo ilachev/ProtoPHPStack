@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Application\Routing;
 
-use App\Application\Routing\RouteResult;
-use App\Application\Routing\RouteStatus;
+use App\Platform\Routing\RouteResult;
+use App\Platform\Routing\RouteStatus;
 use PHPUnit\Framework\TestCase;
 
 final class RouteResultTest extends TestCase

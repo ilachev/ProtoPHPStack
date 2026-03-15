@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Modules\Home;
 
-use App\Application\Http\JsonResponse;
 use App\Application\Mappers\DataTransferObjectMapper;
 use App\Infrastructure\DI\Container;
-use App\Modules\Module;
 use App\Modules\Home\Domain\HomeService;
 use App\Modules\Home\Transport\Http\HomeHandler;
 use App\Modules\Home\Transport\Mapping\HomeResponseMapper;
+use App\Modules\Module;
+use App\Platform\Http\JsonResponse;
 
 /**
  * @implements Module<object>
