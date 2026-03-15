@@ -33,16 +33,13 @@ src/
     Session/
     Auth/
     Observability/
+  Examples/
+    Home/
+    Auth/
   Shared/
     Contract/
     Support/
-examples/
-  MinimalApi/
-  AuthExample/
-  SessionExample/
 ```
-
-Пока код не переименован, текущий `src/Modules` должен трактоваться как transitional area, где постепенно будут разделены `Capabilities` и `Examples`.
 
 ## Что такое `Platform`
 
@@ -230,9 +227,24 @@ Bootstrap
 
 Перед активным переносом кода должны быть согласованы:
 
-- судьба `src/Modules` как переходной зоны;
 - целевые роли `Platform`, `Capabilities`, `Examples`, `Shared`;
 - судьба protobuf-first pipeline;
 - судьба SQLite;
 - судьба hydrator/tooling слоя;
 - что именно из текущего кода считается capability, а что example.
+
+## Текущее состояние репозитория
+
+Физическое разделение уже начато и должно считаться каноническим:
+
+- `src/Platform/*` — runtime core;
+- `src/Capabilities/Session` — reusable session capability;
+- `src/Capabilities/ApiStats` — candidate observability capability;
+- `src/Examples/Home` — smoke-test reference endpoint;
+- `src/Examples/Auth` — reference auth flow поверх capability-слоя.
+
+Следующий уровень работы теперь не "переименовать `Modules`", а дочистить границы:
+
+- отделить auth primitives от example auth flow;
+- решить судьбу top-level legacy-папок `src/Domain`, `src/Application`, `src/Infrastructure`;
+- привести onboarding и текущую архитектурную документацию к новой физической структуре.

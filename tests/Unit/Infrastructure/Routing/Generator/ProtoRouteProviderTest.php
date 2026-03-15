@@ -74,7 +74,7 @@ final class ProtoRouteProviderTest extends TestCase
         self::assertCount(1, $routes);
         self::assertEquals('GET', $routes[0]['method']);
         self::assertEquals('/api/v1/test', $routes[0]['path']);
-        self::assertEquals('App\Modules\Test\Transport\Http\TestHandler', $routes[0]['handler']);
+        self::assertEquals('App\Examples\Test\Transport\Http\TestHandler', $routes[0]['handler']);
         self::assertArrayHasKey('operation_id', $routes[0]);
         $operationId = $routes[0]['operation_id'] ?? null;
         self::assertEquals('TestService.TestMethod', $operationId);
@@ -104,7 +104,7 @@ final class ProtoRouteProviderTest extends TestCase
         $this->createProtoFile("{$this->tempDir}/custom.proto", $protoContent);
 
         $handlerMapping = [
-            'CustomService.CustomMethod' => 'App\Modules\Custom\Transport\Http\SpecialHandler',
+            'CustomService.CustomMethod' => 'App\Examples\Custom\Transport\Http\SpecialHandler',
         ];
 
         $provider = new ProtoRouteProvider($this->tempDir, $handlerMapping);
@@ -113,7 +113,7 @@ final class ProtoRouteProviderTest extends TestCase
         self::assertCount(1, $routes);
         self::assertEquals('POST', $routes[0]['method']);
         self::assertEquals('/api/v1/custom', $routes[0]['path']);
-        self::assertEquals('App\Modules\Custom\Transport\Http\SpecialHandler', $routes[0]['handler']);
+        self::assertEquals('App\Examples\Custom\Transport\Http\SpecialHandler', $routes[0]['handler']);
     }
 
     public function testGetRoutesWithMultipleHttpMethods(): void

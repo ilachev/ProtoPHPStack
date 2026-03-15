@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Application\Middleware;
 
+use App\Capabilities\Session\Application\ClientDetector;
+use App\Capabilities\Session\Application\ClientIdentity;
+use App\Capabilities\Session\Application\SessionPayloadFactory;
+use App\Capabilities\Session\Domain\Session;
+use App\Capabilities\Session\Domain\SessionConfig;
+use App\Capabilities\Session\Domain\SessionPayload;
+use App\Capabilities\Session\Domain\SessionRepository;
+use App\Capabilities\Session\Domain\SessionService;
+use App\Capabilities\Session\Transport\Http\SessionMiddleware;
+use App\Capabilities\Session\Transport\Http\SessionResponseHeaders;
 use App\Infrastructure\Hydrator\JsonFieldAdapter;
-use App\Modules\Session\Application\ClientDetector;
-use App\Modules\Session\Application\ClientIdentity;
-use App\Modules\Session\Application\SessionPayloadFactory;
-use App\Modules\Session\Domain\Session;
-use App\Modules\Session\Domain\SessionConfig;
-use App\Modules\Session\Domain\SessionPayload;
-use App\Modules\Session\Domain\SessionRepository;
-use App\Modules\Session\Domain\SessionService;
-use App\Modules\Session\Transport\Http\SessionMiddleware;
-use App\Modules\Session\Transport\Http\SessionResponseHeaders;
 use App\Platform\Http\RequestHandler;
 use Nyholm\Psr7\Response;
 use Nyholm\Psr7\ServerRequest;

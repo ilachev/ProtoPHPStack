@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Tests\Unit\Application\Handlers;
 
 use App\Application\Mappers\DataTransferObjectMapper;
+use App\Examples\Home\Domain\HomeService;
+use App\Examples\Home\Transport\Http\HomeHandler;
+use App\Examples\Home\Transport\Mapping\HomeResponseMapper;
 use App\Infrastructure\Hydrator\LimitedReflectionCache;
 use App\Infrastructure\Hydrator\ReflectionHydrator;
 use App\Infrastructure\Hydrator\SetterProtobufHydration;
-use App\Modules\Home\Domain\HomeService;
-use App\Modules\Home\Transport\Http\HomeHandler;
-use App\Modules\Home\Transport\Mapping\HomeResponseMapper;
 use App\Platform\Http\JsonResponse;
 use Nyholm\Psr7\ServerRequest;
 use PHPUnit\Framework\TestCase;

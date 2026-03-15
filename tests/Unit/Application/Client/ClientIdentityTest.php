@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Application\Client;
 
-use App\Modules\Session\Application\ClientIdentity;
-use App\Modules\Session\Domain\Session;
+use App\Capabilities\Session\Application\ClientIdentity;
+use App\Capabilities\Session\Domain\Session;
 use PHPUnit\Framework\TestCase;
 
 final class ClientIdentityTest extends TestCase

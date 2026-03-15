@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Domain\Home;
 
-use App\Modules\Home\Domain\HomeService;
+use App\Examples\Home\Domain\HomeService;
 use PHPUnit\Framework\TestCase;
 
 final class HomeServiceTest extends TestCase

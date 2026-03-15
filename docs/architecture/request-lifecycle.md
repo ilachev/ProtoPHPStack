@@ -31,13 +31,13 @@ server:
 
 ## 2. Инициализация `App`
 
-`src/Infrastructure/App.php` делает следующее:
+`src/Platform/Runtime/App.php` делает следующее:
 
 1. загружает `config/container.php`;
 2. создаёт `DIContainer`;
 3. регистрирует сервисы через service providers;
 4. получает `PSR7Worker`;
-5. собирает middleware pipeline.
+5. собирает middleware pipeline из platform middleware и capability middleware.
 
 При старте приложения также вызывается полная очистка кеша через `CacheService`.
 
@@ -131,7 +131,7 @@ Pipeline в проекте рекурсивный. Каждый middleware по�
 
 1. handler вызывает `HomeService`;
 2. получает domain result;
-3. передаёт данные в `HomeMapper`;
+3. передаёт данные в `HomeResponseMapper`;
 4. mapper строит protobuf response model;
 5. `JsonResponse` отдаёт JSON.
 
@@ -152,5 +152,5 @@ Response возвращается обратно через цепочку middl
 
 - Сессия создаётся до routing и handler.
 - Route selection происходит не по контроллерам, а по сгенерированному route config.
-- Не every `.proto` endpoint реально имеет законченный handler.
+- Handler-ы теперь физически живут в `src/Examples/*` и дальше могут появляться в `src/Capabilities/*`, если capability действительно экспортирует HTTP endpoints.
 - Long-running runtime требует осторожности с кешами, статикой и состоянием сервисов.

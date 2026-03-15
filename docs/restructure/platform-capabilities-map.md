@@ -81,15 +81,15 @@ Examples допустимы, но должны быть явно вторичн�
 - любые compatibility layers, существующие только ради старой структуры;
 - unclear hydrator/tooling code без зафиксированной роли.
 
-## Transition policy для текущего `src/Modules`
+## Текущее физическое разделение
 
-На текущем этапе `src/Modules` — это переходная зона.
+Сейчас репозиторий уже использует явные каталоги:
 
-До окончательного переименования:
+- reusable код живёт в `src/Capabilities/*`;
+- reference code живёт в `src/Examples/*`;
+- runtime core живёт в `src/Platform/*`.
 
-- reusable pieces внутри `src/Modules` можно трактовать как будущие `Capabilities`;
-- demo-oriented pieces внутри `src/Modules` нужно трактовать как будущие `Examples`;
-- нельзя считать сам факт нахождения в `src/Modules` доказательством, что код — core template.
+Это нужно считать рабочей моделью проекта, а не только архитектурным намерением.
 
 ## Решения, которые уже можно применять
 

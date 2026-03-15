@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use App\Modules\Auth\Transport\Http\AuthHandler;
-use App\Modules\Home\Transport\Http\HomeHandler;
+use App\Examples\Auth\Transport\Http\AuthHandler;
+use App\Examples\Home\Transport\Http\HomeHandler;
 use App\Platform\Http\Handler\HandlerInterface;
 
 /**

@@ -81,12 +81,10 @@ Vertical slices по-прежнему полезны, но не как "срез
 
 - `src/Platform/*` — HTTP kernel, routing, bootstrap, storage abstractions, cache, logging, console/runtime support;
 - `src/Capabilities/*` — reusable возможности вроде `Session`, `Auth primitives`, `Observability`, `RateLimit`, `Idempotency`;
+- `src/Examples/*` — reference implementations, демонстрирующие, как capabilities собираются в продукт;
 - `src/Shared/*` — действительно небольшие общие контракты и support utilities;
-- `examples/*` — reference implementations, демонстрирующие, как capabilities собираются в продукт;
 - `protos/*` — transport contracts, если protobuf-first сохраняется;
 - `tools/*` — build-time/codegen tooling.
-
-Пока код не переименован, текущий `src/Modules` должен рассматриваться как переходный контейнер, а не как финальная форма архитектуры.
 
 ## Не-цели
 
@@ -145,6 +143,6 @@ LLM должна сразу понимать:
 Но репозиторий ещё надо дочистить от product bias:
 
 1. согласовать документацию под infrastructure-first модель;
-2. явно разделить `Platform / Capabilities / Examples`;
-3. понизить demo/product-specific код до reference implementation;
-4. только потом продолжать физическую реструктуризацию каталогов.
+2. удерживать явное разделение `Platform / Capabilities / Examples`;
+3. понижать demo/product-specific код до reference implementation;
+4. дочищать legacy-слои, которые всё ещё тянут проект обратно в product-first модель.

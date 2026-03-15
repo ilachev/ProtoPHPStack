@@ -2,6 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Capabilities\ApiStats\ApiStatsModule;
+use App\Capabilities\Capability;
+use App\Capabilities\Session\SessionModule;
+use App\Examples\Auth\AuthModule;
+use App\Examples\ExampleModule;
+use App\Examples\Home\HomeModule;
 use App\Infrastructure\DI\Container;
 use App\Infrastructure\DI\ServiceProviders\ApplicationServiceProvider;
 use App\Infrastructure\DI\ServiceProviders\CacheServiceProvider;
@@ -11,11 +17,6 @@ use App\Infrastructure\DI\ServiceProviders\HydratorServiceProvider;
 use App\Infrastructure\DI\ServiceProviders\MigrationServiceProvider;
 use App\Infrastructure\DI\ServiceProviders\RoutingServiceProvider;
 use App\Infrastructure\DI\ServiceProviders\StorageServiceProvider;
-use App\Modules\ApiStats\ApiStatsModule;
-use App\Modules\Auth\AuthModule;
-use App\Modules\Home\HomeModule;
-use App\Modules\Module;
-use App\Modules\Session\SessionModule;
 
 return static function (Container $container): void {
     $platformProviders = [
@@ -29,20 +30,28 @@ return static function (Container $container): void {
         new HydratorServiceProvider(),
     ];
 
-    /** @var list<Module<object>> $modules */
-    $modules = [
+    /** @var list<Capability<object>> $capabilities */
+    $capabilities = [
         new ApiStatsModule(),
+        new SessionModule(),
+    ];
+
+    /** @var list<ExampleModule<object>> $examples */
+    $examples = [
         new AuthModule(),
         new HomeModule(),
-        new SessionModule(),
     ];
 
     foreach ($platformProviders as $provider) {
         $provider->register($container);
     }
 
-    foreach ($modules as $provider) {
-        $provider->register($container);
+    foreach ($capabilities as $capability) {
+        $capability->register($container);
+    }
+
+    foreach ($examples as $example) {
+        $example->register($container);
     }
 
     // Set container reference

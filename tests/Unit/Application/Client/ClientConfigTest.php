@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Application\Client;
 
-use App\Modules\Session\Application\ClientConfig;
+use App\Capabilities\Session\Application\ClientConfig;
 use PHPUnit\Framework\TestCase;
 
 final class ClientConfigTest extends TestCase

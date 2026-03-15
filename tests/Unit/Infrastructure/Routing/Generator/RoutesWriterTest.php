@@ -30,13 +30,13 @@ final class RoutesWriterTest extends TestCase
             [
                 'method' => 'GET',
                 'path' => '/api/v1/test',
-                'handler' => 'App\Modules\Test\Transport\Http\TestHandler',
+                'handler' => 'App\Examples\Test\Transport\Http\TestHandler',
                 'operation_id' => 'TestService.TestMethod',
             ],
             [
                 'method' => 'POST',
                 'path' => '/api/v1/users',
-                'handler' => 'App\Modules\User\Transport\Http\UserHandler',
+                'handler' => 'App\Examples\User\Transport\Http\UserHandler',
                 'operation_id' => 'UserService.CreateUser',
             ],
         ];
@@ -59,12 +59,12 @@ final class RoutesWriterTest extends TestCase
         self::assertStringContainsString('// TestService.TestMethod', $content);
         self::assertStringContainsString("'method' => 'GET'", $content);
         self::assertStringContainsString("'path' => '/api/v1/test'", $content);
-        self::assertStringContainsString('\'handler\' => App\Modules\Test\Transport\Http\TestHandler::class', $content);
+        self::assertStringContainsString('\'handler\' => App\Examples\Test\Transport\Http\TestHandler::class', $content);
 
         self::assertStringContainsString('// UserService.CreateUser', $content);
         self::assertStringContainsString("'method' => 'POST'", $content);
         self::assertStringContainsString("'path' => '/api/v1/users'", $content);
-        self::assertStringContainsString('\'handler\' => App\Modules\User\Transport\Http\UserHandler::class', $content);
+        self::assertStringContainsString('\'handler\' => App\Examples\User\Transport\Http\UserHandler::class', $content);
 
         $generatedRoutes = require $this->tempFile;
         self::assertIsArray($generatedRoutes);
@@ -74,13 +74,13 @@ final class RoutesWriterTest extends TestCase
         $route0 = $generatedRoutes[0];
         self::assertEquals('GET', $route0['method']);
         self::assertEquals('/api/v1/test', $route0['path']);
-        self::assertSame('App\Modules\Test\Transport\Http\TestHandler', $route0['handler']);
+        self::assertSame('App\Examples\Test\Transport\Http\TestHandler', $route0['handler']);
 
         /** @var array{method: string, path: string, handler: class-string} $route1 */
         $route1 = $generatedRoutes[1];
         self::assertEquals('POST', $route1['method']);
         self::assertEquals('/api/v1/users', $route1['path']);
-        self::assertSame('App\Modules\User\Transport\Http\UserHandler', $route1['handler']);
+        self::assertSame('App\Examples\User\Transport\Http\UserHandler', $route1['handler']);
     }
 
     public function testGenerateRoutesFileWithEmptyRoutes(): void
@@ -111,7 +111,7 @@ final class RoutesWriterTest extends TestCase
             [
                 'method' => 'GET',
                 'path' => '/api/v1/test',
-                'handler' => 'App\Modules\Test\Transport\Http\TestHandler',
+                'handler' => 'App\Examples\Test\Transport\Http\TestHandler',
                 // No operation_id
             ],
         ];

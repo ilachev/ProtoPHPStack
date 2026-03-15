@@ -2,75 +2,27 @@
 
 ## Архитектурный стиль
 
-Проект задуман как Clean Architecture с разделением на три слоя:
+Проект уже частично перестроен под infrastructure-first модель.
 
-- `Domain` — бизнес-модели и доменные сервисы.
-- `Application` — orchestration, handlers, middleware, mappers.
-- `Infrastructure` — HTTP runtime, storage, DI, routing, cache, logging, code generation.
+Фактическая верхнеуровневая раскладка сейчас такая:
 
-На практике архитектура ближе к "чистому ядру + плотный infrastructure shell", потому что большая часть текущей функциональности относится к инфраструктуре API-шаблона.
+- `src/Platform` — runtime core;
+- `src/Capabilities` — reusable building blocks;
+- `src/Examples` — reference implementations;
+- top-level `src/Application`, `src/Domain`, `src/Infrastructure` — legacy-слой, который ещё не дочищен полностью.
 
-## Слой Domain
+То есть основная проблема больше не в отсутствии целевой структуры, а в сосуществовании новой и старой модели.
 
-Содержит простые readonly-сущности и сервисы.
+## `Platform`
 
-### `Domain/Home`
+В `src/Platform` уже сосредоточено runtime-ядро:
 
-Минимальный демонстрационный use case: вернуть приветственное сообщение.
+- HTTP abstractions и handler contracts;
+- middleware pipeline;
+- route handler resolving;
+- runtime bootstrap в `Platform\Runtime\App`.
 
-### `Domain/Session`
-
-Самая зрелая бизнес-подсистема проекта.
-
-Содержит:
-
-- `Session` — доменную модель сессии;
-- `SessionConfig` — конфигурацию сессионной подсистемы;
-- `SessionRepository` — контракт доступа к данным;
-- `SessionService` — создание, валидация, refresh, cleanup.
-
-### `Domain/Stats`
-
-Хранит метрики HTTP-вызовов:
-
-- `ApiStat`;
-- `ApiStatRepository`;
-- `ApiStatService`.
-
-### `Domain/User`
-
-Минимальная заготовка пользователя:
-
-- `User`;
-- `UserRepository`;
-- `UserService`.
-
-Слой ещё не интегрирован в полноценный auth flow.
-
-## Слой Application
-
-Этот слой связывает HTTP-мир, доменные сервисы и response models.
-
-### Handlers
-
-На текущий момент полноценно реализован только `HomeHandler`.
-
-Назначение handler:
-
-- получить уже подготовленный request context;
-- вызвать domain service;
-- отдать response через mapper и `JsonResponse`.
-
-Handler не должен:
-
-- сам управлять DI;
-- напрямую работать с БД;
-- принимать инфраструктурные решения;
-- содержать сложную бизнес-логику.
-
-### Middleware pipeline
-
-Пайплайн собирается в `App::createPipeline()` и выполняется в таком порядке:
+Pipeline собирается в `App::createPipeline()` и сейчас выполняется в таком порядке:
 
 1. `ErrorHandlerMiddleware`
 2. `RequestMetricsMiddleware`
@@ -81,127 +33,146 @@ Handler не должен:
 
 Это означает:
 
-- сессия создаётся или восстанавливается до routing/handler;
-- статистика может использовать session context;
-- маршрутизация определяет handler уже после подготовки request context;
-- логирование фактически оборачивает dispatch handler-а в конце цепочки.
+- session capability подготавливает request context до handler;
+- observability capability может использовать session context;
+- routing и dispatch остаются concern-ами platform runtime.
 
-### Client subsystem
+## `Capabilities`
 
-В `src/Application/Client` сосредоточена логика, связанная с "отпечатком" запроса:
+Сейчас в репозитории выделены две capability-зоны.
 
-- извлечение признаков клиента из request headers;
-- построение payload для сессии;
-- определение похожих клиентов;
-- геолокация по IP через abstraction `GeoLocationService`.
+### `src/Capabilities/Session`
 
-Это важная подсистема, но она смешивает прикладные и технические concerns. При реструктуризации её стоит оформить как отдельный bounded module.
+Это наиболее зрелый reusable building block.
 
-### Mappers
+Внутри уже есть собственная вертикаль:
 
-`DataTransferObjectMapper` и специализированные mapper-ы используются как официальная точка преобразования domain data в transport model.
+- `Domain` — модель сессии, конфиг, repository contract, service;
+- `Application` — client detection и payload factory contracts;
+- `Infrastructure` — persistence adapters, fingerprint detector, payload factory implementation;
+- `Transport/Http` — capability middleware и HTTP coordination.
 
-Это соответствует целям проекта:
+### `src/Capabilities/ApiStats`
 
-- не смешивать domain и transport;
-- не пробрасывать protobuf message classes в domain;
-- держать conversion logic централизованно.
+Это candidate observability capability.
 
-## Слой Infrastructure
+Сейчас он даёт:
 
-### `Infrastructure/App`
+- repository contract и service для записи статистики;
+- PostgreSQL persistence adapter;
+- `ApiStatsMiddleware`, который интегрируется в platform pipeline.
 
-Главный runtime bootstrap:
+Смысл этой части нужно ещё дочистить: либо окончательно оформить как generic observability capability, либо упростить.
 
-- создаёт контейнер;
-- загружает service providers;
-- создаёт RoadRunner worker;
-- собирает pipeline;
-- запускает request loop.
+## `Examples`
 
-### DI
+В `src/Examples` сейчас лежит reference code, который помогает понять сборку template.
 
-Проект использует собственный контейнер `DIContainer`:
+### `src/Examples/Home`
 
-- поддерживает `bind(interface, implementation)`;
-- поддерживает factory definitions через `set`;
-- умеет рекурсивно резолвить зависимости через reflection;
-- кеширует singleton-like инстансы;
-- проверяет циклические зависимости.
+Минимальный smoke-test endpoint:
 
-Контейнер небольшой, но критический: почти вся сборка runtime завязана на него.
+- handler;
+- domain service;
+- response mapper;
+- module registration.
 
-### Routing
+Это демонстрационный код, а не часть core template.
 
-Routing разделён на два этапа:
+### `src/Examples/Auth`
 
-1. генерация `config/routes.php` из `.proto`;
-2. runtime dispatch через `Infrastructure\Routing\Router`.
+Текущий auth flow уже работает как reference implementation:
 
-Это не "авто-discovery" контроллеров. Источник маршрутов — proto annotations.
+- login;
+- refresh;
+- logout;
+- integration с session capability.
 
-### Storage
+Но этот код пока не отделён на:
 
-Storage слой включает:
+- reusable auth primitives;
+- demo policy уровня "email/password login flow".
 
-- абстракцию `Storage`;
-- реализации `PostgreSQLStorage` и `SQLiteStorage`;
-- query factories/builders;
-- repositories;
-- migrations.
+Именно поэтому `Auth` пока должен трактоваться как example-first код.
 
-Фактическая стратегия проекта — PostgreSQL-first. SQLite остаётся как legacy/compatibility слой и потенциальный кандидат на удаление при реструктуризации.
+## Legacy-слой
 
-### Cache
+В проекте всё ещё остаются старые каталоги, которые нужно интерпретировать осторожно.
 
-Кеш реализован через RoadRunner KV и Redis:
+### `src/Application`
 
-- runtime configuration в `.rr.yaml`;
-- приложение использует `CacheService`;
-- сессии и геолокация используют кеш как технический ускоритель.
+Там живут:
 
-### Hydrator
+- mapper-ы;
+- часть client/geolocation abstractions;
+- исторические application services, ещё не перенесённые в capabilities/examples/platform.
 
-В проекте одновременно присутствуют:
+Этот каталог больше не должен рассматриваться как главный архитектурный слой проекта.
 
-- reflection-based hydrator, который сейчас зарегистрирован как основной;
-- заготовка для code-generating hydrator.
+### `src/Domain`
 
-Это важный маркер незавершённой эволюции проекта. Перед реструктуризацией надо определить, какой hydrator остаётся основным и зачем.
+Там остаются старые domain-модели, включая `User`.
 
-## Реальные зависимости между слоями
+Это уже не canonical structure template. Всё, что находится здесь, должно быть либо:
 
-Желаемая зависимость:
+- перенесено в capability/example;
+- оставлено как временный legacy;
+- удалено, если не имеет ценности.
 
-`Infrastructure -> Application -> Domain`
+### `src/Infrastructure`
 
-Фактическая картина сложнее:
+Этот каталог всё ещё содержит много технических частей:
 
-- Domain размечен атрибутами `ProtoMapping`/`ProtoField`, то есть знает о генераторе;
-- Application зависит от transport-ориентированных mapper-ов и protobuf адаптации;
-- Infrastructure содержит часть логики, которая влияет на прикладное поведение.
+- DI container и service providers;
+- storage;
+- migrations;
+- cache;
+- logger;
+- routing generation;
+- hydrator;
+- geolocation adapters.
 
-Это не катастрофа, но это уже сигнал, что проекту нужна явная модульная перегруппировка.
+Сейчас это не один связный "слой инфраструктуры", а смесь:
 
-## Главные архитектурные противоречия
+- platform-support кода;
+- tooling/runtime glue;
+- legacy-кода до полной перегруппировки.
 
-### 1. Шаблон и демо-приложение смешаны
+## Routing и protobuf
 
-Репозиторий одновременно хочет быть:
+Routing остаётся двухфазным:
 
-- reusable API template;
-- конкретным сервисом с home/auth/session/statistics.
+1. `.proto` и HTTP annotations задают transport surface;
+2. `config/routes.php` генерируется из proto и используется runtime router-ом.
 
-Эти цели нужно разделить.
+Источник истины для публичного API по-прежнему в `protos/proto/app/v1/*`.
 
-### 2. Контракты и реализация расходятся
+При этом обработчики теперь физически находятся не в `Modules`, а в `Examples` и дальше могут появляться в `Capabilities`, если capability действительно экспортирует HTTP endpoints.
 
-`AuthService` описан в proto/OpenAPI/routes, но runtime-реализация не завершена.
+## Storage
 
-### 3. Генераторы и runtime тесно соседствуют
+Storage стратегия остаётся PostgreSQL-first.
 
-`tools/protoc-php-gen`, proto domain mapping и hydrator generation уже влияют на архитектуру, но не оформлены как отдельный "tooling layer".
+В коде всё ещё существует SQLite-слой, но его нужно считать legacy/compatibility нагрузкой, а не опорой архитектуры.
 
-### 4. PostgreSQL-first стратегия не доведена до конца
+Репозитории capability-уровня должны жить рядом со своей capability, а generic storage/runtime support — в platform/infrastructure support зоне.
 
-В документах и инструкциях PostgreSQL объявлен основным вариантом, но SQLite слой и миграции всё ещё существуют.
+## Главные текущие противоречия
+
+### 1. Новая структура уже есть, но legacy ещё силён
+
+Это главный факт текущего состояния.
+
+Нельзя больше описывать проект только через `Domain/Application/Infrastructure`, но и полностью игнорировать эти папки пока нельзя.
+
+### 2. `Auth` ещё не разделён на primitive и example policy
+
+Из-за этого в example-слое всё ещё лежит код, который частично выглядит как reusable capability.
+
+### 3. Tooling и runtime support ещё не разведены до конца
+
+Hydrator/codegen/routing generation живут рядом с runtime support кодом и требуют дальнейшего упорядочивания.
+
+### 4. PostgreSQL-first стратегия ещё не доведена до конца
+
+SQLite всё ещё присутствует, а значит репозиторий пока не до конца последователен в своём storage baseline.

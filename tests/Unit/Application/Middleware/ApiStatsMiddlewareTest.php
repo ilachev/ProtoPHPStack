@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Application\Middleware;
 
-use App\Modules\ApiStats\Domain\ApiStat;
-use App\Modules\ApiStats\Domain\ApiStatService;
-use App\Modules\ApiStats\Transport\Http\ApiStatsMiddleware;
-use App\Modules\Session\Domain\Session;
-use App\Modules\Session\Domain\SessionRepository;
-use App\Modules\Session\Domain\SessionService;
+use App\Capabilities\ApiStats\Domain\ApiStat;
+use App\Capabilities\ApiStats\Domain\ApiStatService;
+use App\Capabilities\ApiStats\Transport\Http\ApiStatsMiddleware;
+use App\Capabilities\Session\Domain\Session;
+use App\Capabilities\Session\Domain\SessionRepository;
+use App\Capabilities\Session\Domain\SessionService;
 use App\Platform\Http\RequestHandler;
 use App\Platform\Routing\RouteResult;
 use App\Platform\Routing\RouteStatus;

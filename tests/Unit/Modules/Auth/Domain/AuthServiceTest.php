@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Auth\Domain;
 
-use App\Modules\Auth\Domain\AuthService;
-use App\Modules\Auth\Domain\AuthUser;
-use App\Modules\Auth\Domain\AuthUserRepository;
-use App\Modules\Auth\Domain\RefreshTokenSessionRepository;
-use App\Modules\Session\Domain\Session;
-use App\Modules\Session\Domain\SessionConfig;
-use App\Modules\Session\Domain\SessionRepository;
-use App\Modules\Session\Domain\SessionService;
+use App\Capabilities\Session\Domain\Session;
+use App\Capabilities\Session\Domain\SessionConfig;
+use App\Capabilities\Session\Domain\SessionRepository;
+use App\Capabilities\Session\Domain\SessionService;
+use App\Examples\Auth\Domain\AuthService;
+use App\Examples\Auth\Domain\AuthUser;
+use App\Examples\Auth\Domain\AuthUserRepository;
+use App\Examples\Auth\Domain\RefreshTokenSessionRepository;
 use PHPUnit\Framework\TestCase;
 use Tests\Unit\Infrastructure\Logger\TestLogger;
 

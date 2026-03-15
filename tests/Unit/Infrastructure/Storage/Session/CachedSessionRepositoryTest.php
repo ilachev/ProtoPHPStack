@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Infrastructure\Storage\Session;
 
+use App\Capabilities\Session\Domain\Session;
+use App\Capabilities\Session\Domain\SessionRepository;
+use App\Capabilities\Session\Infrastructure\Persistence\CachedSessionRepository;
 use App\Infrastructure\Cache\CacheConfig;
 use App\Infrastructure\Cache\CacheService;
 use App\Infrastructure\Cache\FallbackStorage;
 use App\Infrastructure\Cache\RoadRunnerCacheService;
-use App\Modules\Session\Domain\Session;
-use App\Modules\Session\Domain\SessionRepository;
-use App\Modules\Session\Infrastructure\Persistence\CachedSessionRepository;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Tests\Unit\Infrastructure\Cache\MockStorage;

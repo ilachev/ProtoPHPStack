@@ -14,7 +14,7 @@ $outputFile = __DIR__ . '/../config/routes.php';
 
 // Configure service to handler mapping (optional)
 $handlerMapping = [
-    'HomeService.Home' => 'App\Modules\Home\Transport\Http\HomeHandler::class',
+    'HomeService.Home' => 'App\Examples\Home\Transport\Http\HomeHandler::class',
 ];
 
 // Generate routes

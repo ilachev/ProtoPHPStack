@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Platform\Runtime;
 
+use App\Capabilities\ApiStats\Transport\Http\ApiStatsMiddleware;
+use App\Capabilities\Session\Transport\Http\SessionMiddleware;
 use App\Infrastructure\Cache\CacheService;
 use App\Infrastructure\DI\Container;
 use App\Infrastructure\DI\DIContainer;
 use App\Infrastructure\Logger\Logger;
-use App\Modules\ApiStats\Transport\Http\ApiStatsMiddleware;
-use App\Modules\Session\Transport\Http\SessionMiddleware;
 use App\Platform\Http\Middleware\{
     ErrorHandlerMiddleware,
     HttpLoggingMiddleware,

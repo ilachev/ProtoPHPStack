@@ -15,7 +15,7 @@ final class HydratorCodeGenerator
     /**
      * Generates the PHP source code for a hydrator for the given class name.
      *
-     * @param string $originalClassName The FQCN of the class to hydrate (e.g., App\Modules\Session\Domain\Session).
+     * @param string $originalClassName The FQCN of the class to hydrate (e.g., App\Capabilities\Session\Domain\Session).
      * @param string $generatedClassName the FQCN of the class to be generated
      * @return string the generated PHP code
      * @throws \ReflectionException

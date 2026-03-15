@@ -1,0 +1,15 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Examples;
+
+use App\Infrastructure\DI\ServiceProvider;
+
+/**
+ * Marker interface for reference examples registered on top of platform and capabilities.
+ *
+ * @template T of object
+ * @extends ServiceProvider<T>
+ */
+interface ExampleModule extends ServiceProvider {}
