@@ -63,64 +63,6 @@ final class ApiStatsIntegrationTest extends IntegrationTestCase
     }
 
     /**
-     * Проверяет, что при обращении к API создается запись в api_stats.
-     */
-    public function testApiStatsRecordingForHomeEndpoint(): void
-    {
-        // Создаем сессию перед запросом, чтобы был client_id
-        $request = $this->createRequest(
-            'GET',
-            '/api/v1/home',
-            ['User-Agent' => 'PHPUnit Test Browser'],
-        );
-
-        $sessionPayload = $this->sessionPayloadFactory->createFromRequest($request);
-        $payload = $this->jsonAdapter->serialize($sessionPayload);
-
-        $session = $this->sessionService->createSession(
-            userId: null,
-            payload: $payload,
-        );
-
-        $sessionId = $session->id;
-
-        // Выполняем запрос с сессией
-        $this->createRequest(
-            'GET',
-            '/api/v1/home',
-            ['User-Agent' => 'PHPUnit Test Browser'],
-        )->withAttribute('session', $session);
-
-        // Создаем фейковую cookie с сессией
-        $cookies = ['session' => $sessionId];
-        $response = $this->makeRequest(
-            'GET',
-            '/api/v1/home',
-            ['User-Agent' => 'PHPUnit Test Browser'],
-            null,
-            $cookies,
-        );
-
-        // Проверяем, что получили успешный ответ
-        self::assertEquals(200, $response->getStatusCode(), 'Запрос должен быть успешным');
-
-        // Проверяем, что в таблице api_stats появилась запись
-        $stats = $this->storage->query('SELECT * FROM api_stats WHERE session_id = :session_id', [
-            'session_id' => $sessionId,
-        ]);
-
-        self::assertNotEmpty($stats, 'В таблице api_stats должна появиться запись о запросе');
-
-        // Проверяем данные записи
-        $record = $stats[0];
-        self::assertEquals('/api/v1/home', $record['route'], 'Маршрут должен соответствовать запросу');
-        self::assertEquals('GET', $record['method'], 'HTTP метод должен соответствовать запросу');
-        self::assertEquals(200, $record['status_code'], 'Статус код должен быть 200');
-        self::assertNotNull($record['execution_time'], 'Время выполнения должно быть записано');
-        self::assertNotNull($record['request_time'], 'Время запроса должно быть записано');
-    }
-
-    /**
      * Проверяет запись статистики для несуществующего маршрута (404).
      */
     public function testApiStatsRecordingForNonExistentRoute(): void

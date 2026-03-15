@@ -41,8 +41,6 @@ server:
 
 При старте приложения также вызывается полная очистка кеша через `CacheService`.
 
-Для reference app используется тот же runtime, но с `config/container.reference.php`.
-
 Это поведение влияет на bootstrap semantics и должно быть отдельно пересмотрено при реструктуризации: полная очистка кеша при запуске может быть приемлема для template/demo режима, но не всегда подходит для production-like сценария.
 
 ## 3. Получение запроса
@@ -154,5 +152,5 @@ Response возвращается обратно через цепочку middl
 
 - Сессия создаётся до routing и handler.
 - Route selection происходит не по контроллерам, а по сгенерированному route config.
-- Default runtime не должен зависеть от `src/Examples/*`; reference handlers подключаются отдельным config.
+- Default runtime не должен зависеть от `src/Examples/*`.
 - Long-running runtime требует осторожности с кешами, статикой и состоянием сервисов.

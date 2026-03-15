@@ -13,17 +13,24 @@
 
 ## Где лежат proto-файлы
 
-### Публичный API
+### Core API
 
 `protos/proto/app/v1`
 
 Содержит:
 
 - `api.proto` — общие transport structures;
-- `home.proto` — home endpoint и его модели;
-- `auth.proto` — auth endpoints и их модели;
 - `session.proto` — session-related transport models;
 - `users.proto` — user transport model.
+
+### Example API
+
+`protos/proto/examples/v1`
+
+Содержит:
+
+- `home.proto` — smoke-test endpoint и его модели;
+- `auth.proto` — example auth flow и его модели.
 
 ### Доменные proto-описания
 
@@ -52,7 +59,7 @@ task proto:gen:sdk
 
 Эти файлы нельзя редактировать вручную.
 
-### 2. OpenAPI
+### 2. Core OpenAPI
 
 Команда:
 
@@ -74,9 +81,9 @@ task proto:gen:routes
 
 Результат:
 
-- `config/routes.reference.php`
+- `config/routes.php`
 
-Генерация routes основана на `google.api.http` annotations в `.proto`.
+Генерация routes основана на `google.api.http` annotations в core `.proto`.
 
 ### 4. Mapper/hydrator generation
 
@@ -111,19 +118,12 @@ task proto:gen:all
 
 Файл `bin/generate-routes.php` создаёт `ProtoRouteProvider`, который:
 
-- читает `.proto` файлы;
+- читает core `.proto` файлы;
 - извлекает `service`, `rpc`, `option (google.api.http)`;
 - строит массив route definitions;
-- пишет `config/routes.reference.php` для reference app.
+- пишет `config/routes.php` для core runtime.
 
-Handler resolution сейчас завязана на naming convention:
-
-- `HomeService` -> `HomeHandler`
-- `AuthService` -> `AuthHandler`
-
-Следствие: если `.proto` описывает сервис, а handler не реализован, generated route всё равно появится.
-
-Это одна из причин текущего рассогласования между контрактом и runtime.
+Поскольку core surface сейчас не содержит HTTP services с `google.api.http`, результатом генерации является пустой `config/routes.php`.
 
 ## Custom mapping через атрибуты
 
@@ -160,10 +160,10 @@ Handler resolution сейчас завязана на naming convention:
 
 ### Если меняется публичный API
 
-1. Править `.proto` в `protos/proto/app/v1`.
+1. Править `.proto` в нужной зоне: `protos/proto/app/v1` для core или `protos/proto/examples/v1` для examples.
 2. Перегенерировать артефакты.
 3. Обновить handler/mapper/runtime implementation.
-4. Проверить, что `config/routes.reference.php` и `docs/api.swagger.json` согласованы с кодом.
+4. Проверить, что core артефакты согласованы с кодом.
 
 ### Если меняется внутренняя доменная модель, связанная с protobuf mapping
 

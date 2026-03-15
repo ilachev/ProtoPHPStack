@@ -9,13 +9,11 @@ use App\Infrastructure\Routing\Generator\ProtoRouteProvider;
 use App\Infrastructure\Routing\Generator\RoutesWriter;
 
 // Configuration
-$protoDir = __DIR__ . '/../protos/proto';
-$outputFile = __DIR__ . '/../config/routes.reference.php';
+$protoDir = __DIR__ . '/../protos/proto/app';
+$outputFile = __DIR__ . '/../config/routes.php';
 
-// Configure service to handler mapping (optional)
-$handlerMapping = [
-    'HomeService.Home' => 'App\Examples\Home\Transport\Http\HomeHandler::class',
-];
+// Core template surface intentionally has no example-specific handler mapping.
+$handlerMapping = [];
 
 // Generate routes
 $provider = new ProtoRouteProvider($protoDir, $handlerMapping);
@@ -23,7 +21,7 @@ $writer = new RoutesWriter($provider, $outputFile);
 
 try {
     $writer->generateRoutesFile();
-    echo "Reference routes configuration has been successfully generated to {$outputFile}\n";
+    echo "Routes configuration has been successfully generated to {$outputFile}\n";
 } catch (Throwable $e) {
     echo "Error generating routes: {$e->getMessage()}\n";
     exit(1);

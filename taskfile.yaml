@@ -59,7 +59,7 @@ tasks:
       - "{{.PHP}} vendor/bin/phpunit --colors=never {{.CLI_ARGS}}"
 
   proto:gen:sdk:
-    desc: Generate PHP SDK classes from proto files
+    desc: Generate PHP SDK classes from core and example proto files
     cmds:
       - rm -rf {{.SDK_GEN_DIR}}/*
       - >
@@ -67,20 +67,21 @@ tasks:
         --php_out={{.SDK_GEN_DIR}}
         --php_opt=aggregate_metadata
         {{.PROTO_DIR}}/app/v1/*.proto
+        {{.PROTO_DIR}}/examples/v1/*.proto
         {{.PROTO_DIR}}/google/api/*.proto
 
   proto:gen:docs:
-    desc: Generate OpenAPI spec from proto files
+    desc: Generate OpenAPI spec for the core template surface
     cmds:
-      - rm -rf {{.DOCS_GEN_DIR}}/*
+      - rm -f {{.DOCS_GEN_DIR}}/api.swagger.json
       - >
         protoc -I={{.PROTO_DIR}}
         --openapiv2_out=logtostderr=true:{{.DOCS_GEN_DIR}}
         --openapiv2_opt=json_names_for_fields=true,allow_merge=true,merge_file_name=api
         {{.PROTO_DIR}}/app/v1/*.proto
-       
+
   proto:gen:routes:
-    desc: Generate routes from proto definitions
+    desc: Generate routes for the core template surface
     deps: [ var, install ]
     cmds:
       - "{{.PHP}} bin/generate-routes.php"

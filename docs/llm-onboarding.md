@@ -14,7 +14,7 @@
 - маленький framework-free runtime core;
 - разделение на `Platform`, `Capabilities` и `Examples`.
 
-Проект не должен трактоваться как готовый продукт. Это шаблон плюс небольшой набор reference implementations, которые показывают, как собирать backend из platform runtime и reusable capabilities.
+Проект не должен трактоваться как готовый продукт. Это шаблон плюс небольшой набор example implementations, которые показывают, как собирать backend из platform runtime и reusable capabilities.
 
 ## Какая теперь официальная цель
 
@@ -30,13 +30,11 @@
 ## Главные точки входа
 
 - HTTP entrypoint: `public/index.php`
-- Reference entrypoint: `public/reference.php`
 - Runtime bootstrap: `src/Platform/Runtime/App.php`
 - Default DI configuration: `config/container.php`
-- Reference DI configuration: `config/container.reference.php`
 - Default runtime routes: `config/routes.php`
-- Reference app routes: `config/routes.reference.php`
-- Источник API-контрактов: `protos/proto/app/v1/*.proto`
+- Core API contracts: `protos/proto/app/v1/*.proto`
+- Example API contracts: `protos/proto/examples/v1/*.proto`
 - Команды разработки: `taskfile.yaml`
 
 ## Быстрая карта каталогов
@@ -59,12 +57,12 @@ Reusable building blocks:
 
 ### `src/Examples`
 
-Reference implementations:
+Example implementations:
 
 - `Home` — минимальный smoke-test endpoint;
-- `Auth` — reference auth flow поверх session capability.
+- `Auth` — example auth flow поверх session capability.
 
-Examples не должны считаться частью default runtime. Они подключаются только через reference app config.
+Examples не должны считаться частью default runtime. Они остаются как примерный слой и не участвуют в основном bootstrap по умолчанию.
 
 ### Legacy зоны
 
@@ -76,7 +74,8 @@ Examples не должны считаться частью default runtime. Он
 
 ### `protos`
 
-- `protos/proto/app/v1` — публичные API-контракты.
+- `protos/proto/app/v1` — core API-контракты шаблона.
+- `protos/proto/examples/v1` — example API-контракты примеров.
 - `protos/proto/app/domain` — proto-описания доменных сущностей и custom options.
 - `protos/gen` — сгенерированные PHP-классы protobuf.
 
@@ -87,10 +86,6 @@ Examples не должны считаться частью default runtime. Он
 ## Что реально работает сейчас
 
 - default runtime без product endpoints;
-- reference app с `GET /api/v1/home`;
-- reference app с `POST /api/v1/auth/login`;
-- reference app с `POST /api/v1/auth/refresh`;
-- reference app с `POST /api/v1/auth/logout`;
 - создание и обновление анонимных сессий;
 - восстановление сессии по cookie/bearer;
 - fingerprint matching клиента;
@@ -109,7 +104,7 @@ Examples не должны считаться частью default runtime. Он
 ## Основные инварианты для безопасной разработки
 
 - Не редактировать вручную `protos/gen/*`.
-- Не редактировать вручную `config/routes.reference.php`; reference routes генерируются из `.proto`.
+- Не редактировать вручную `config/routes.php`; core routes генерируются из `protos/proto/app/v1`.
 - Для нового публичного API сначала правится `.proto`, затем запускается генерация.
 - `Platform` не должен содержать продуктовую политику.
 - Capability должна быть reusable вне конкретного продукта.
@@ -141,13 +136,12 @@ task run
 1. `docs/architecture/request-lifecycle.md`
 2. `src/Platform/Runtime/App.php`
 3. `config/container.php`
-4. `config/container.reference.php`, если нужен reference app
-5. `src/Capabilities/*`
-6. `src/Examples/*`
-7. `src/Infrastructure/DI/ServiceProviders/*`
-8. `src/Infrastructure/Storage/*`
-9. `src/Application/*` и `src/Domain/*` только если нужно понять legacy-хвост
-10. `protos/proto/app/v1/*`
+4. `src/Capabilities/*`
+5. `src/Examples/*`
+6. `src/Infrastructure/DI/ServiceProviders/*`
+7. `src/Infrastructure/Storage/*`
+8. `src/Application/*` и `src/Domain/*` только если нужно понять legacy-хвост
+9. `protos/proto/app/v1/*` и `protos/proto/examples/v1/*`
 
 ## Главные текущие зоны риска
 
