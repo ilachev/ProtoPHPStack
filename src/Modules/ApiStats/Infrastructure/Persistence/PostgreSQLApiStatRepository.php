@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace App\Infrastructure\Storage\Stats;
+namespace App\Modules\ApiStats\Infrastructure\Persistence;
 
-use App\Domain\Stats\ApiStat;
-use App\Domain\Stats\ApiStatRepository;
 use App\Infrastructure\Hydrator\Hydrator;
 use App\Infrastructure\Storage\Query\QueryFactory;
 use App\Infrastructure\Storage\Repository\AbstractRepository;
 use App\Infrastructure\Storage\Storage;
+use App\Modules\ApiStats\Domain\ApiStat;
+use App\Modules\ApiStats\Domain\ApiStatRepository;
 
 /**
  * PostgreSQL implementation of the API stats repository.

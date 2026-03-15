@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Domain\Stats;
 
-use App\Domain\Stats\ApiStat;
-use App\Domain\Stats\ApiStatRepository;
-use App\Domain\Stats\ApiStatService;
+use App\Modules\ApiStats\Domain\ApiStat;
+use App\Modules\ApiStats\Domain\ApiStatRepository;
+use App\Modules\ApiStats\Domain\ApiStatService;
 use PHPUnit\Framework\TestCase;
 
 final class ApiStatServiceTest extends TestCase
@@ -218,7 +218,7 @@ final class ApiStatServiceTest extends TestCase
 }
 
 /**
- * Тестовый репозиторий для тестирования ApiStatService.
+ * Test repository for ApiStatService.
  */
 final class TestApiStatRepository implements ApiStatRepository
 {

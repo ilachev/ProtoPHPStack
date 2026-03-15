@@ -126,9 +126,24 @@ final readonly class SessionMiddleware implements Middleware
         $request = $request->withAttribute('session', $session);
         $response = $handler->handle($request);
 
+        $activeSessionId = $response->getHeaderLine(SessionResponseHeaders::ACTIVE_SESSION_ID);
+        $destroySession = $response->getHeaderLine(SessionResponseHeaders::DESTROY_SESSION) === '1';
+        $response = $this->stripSessionControlHeaders($response);
+
+        if ($destroySession) {
+            return $this->expireSessionCookie($response);
+        }
+
+        if ($activeSessionId !== '') {
+            $activeSession = $this->sessionService->validateSession($activeSessionId);
+            if ($activeSession !== null) {
+                $session = $activeSession;
+            }
+        }
+
         if ($response->getStatusCode() < 400) {
-            $this->sessionService->refreshSession($session->id, $this->config->sessionTtl);
-            $response = $this->addSessionCookie($response, $session);
+            $refreshedSession = $this->sessionService->refreshSession($session->id, $this->config->sessionTtl);
+            $response = $this->addSessionCookie($response, $refreshedSession ?? $session);
         }
 
         return $response;
@@ -164,5 +179,23 @@ final readonly class SessionMiddleware implements Middleware
                 $expires,
             ),
         );
+    }
+
+    private function expireSessionCookie(ResponseInterface $response): ResponseInterface
+    {
+        return $response->withAddedHeader(
+            'Set-Cookie',
+            \sprintf(
+                '%s=deleted; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax',
+                $this->config->cookieName,
+            ),
+        );
+    }
+
+    private function stripSessionControlHeaders(ResponseInterface $response): ResponseInterface
+    {
+        return $response
+            ->withoutHeader(SessionResponseHeaders::ACTIVE_SESSION_ID)
+            ->withoutHeader(SessionResponseHeaders::DESTROY_SESSION);
     }
 }

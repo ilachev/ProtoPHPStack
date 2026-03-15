@@ -1,12 +1,16 @@
 # Целевая архитектура
 
-Этот документ описывает target state проекта: `production-ready` backend template на чистом PHP с vertical slices архитектурой.
+Этот документ описывает target state проекта как infrastructure-first шаблона.
 
 ## Главный принцип
 
-Код организуется по feature slices, а не по техническим слоям верхнего уровня.
+Репозиторий делится не на "продуктовые фичи внутри шаблона", а на три уровня:
 
-Вместо:
+- `Platform` — runtime core;
+- `Capabilities` — reusable building blocks;
+- `Examples` — reference implementations.
+
+Вместо старой верхнеуровневой модели:
 
 - `src/Domain`
 - `src/Application`
@@ -16,172 +20,197 @@
 
 ```text
 src/
-  Modules/
-    Home/
-    Session/
-    Auth/
-    User/
   Platform/
     Http/
     Routing/
+    Runtime/
     Storage/
     Cache/
     Logging/
-    Bootstrap/
-    Testing/
+    Console/
+    Config/
+  Capabilities/
+    Session/
+    Auth/
+    Observability/
   Shared/
     Contract/
     Support/
+examples/
+  MinimalApi/
+  AuthExample/
+  SessionExample/
 ```
 
-Это не догма по названиям каталогов, а модель разделения ответственности.
+Пока код не переименован, текущий `src/Modules` должен трактоваться как transitional area, где постепенно будут разделены `Capabilities` и `Examples`.
 
-## Что такое slice
+## Что такое `Platform`
 
-Slice — это автономная feature-область, которая содержит всё нужное для своей логики:
+`Platform` — это код, без которого не работает runtime, но который не выражает продуктовую политику.
 
-- входные сценарии;
-- доменные модели;
-- application services/use cases;
-- transport adapters;
-- repository contracts;
-- infrastructure adapters, если они специфичны именно для этой feature.
-
-## Пример целевой структуры slice
-
-```text
-src/Modules/Session/
-  Domain/
-    Session.php
-    SessionRepository.php
-    SessionService.php
-  Application/
-    CreateSession.php
-    RefreshSession.php
-    ValidateSession.php
-  Transport/
-    Http/
-      SessionMiddleware.php
-      SessionCookieWriter.php
-    Mapping/
-      SessionResponseMapper.php
-  Infrastructure/
-    Persistence/
-      PostgreSqlSessionRepository.php
-```
-
-Важно: slice не обязан иметь все подкаталоги. Он должен иметь только те, которые реально нужны.
-
-## Что остаётся в `Platform`
-
-В `Platform` должно жить только то, что общее для всех slices и не выражает продуктовую логику:
+Там должно жить только общее:
 
 - bootstrap приложения;
 - request/response abstractions;
-- pipeline executor;
+- middleware pipeline executor;
 - router runtime;
+- container wiring;
 - low-level storage abstractions;
-- connection factories;
-- logging;
 - cache;
+- logging;
 - error normalization;
 - console runtime;
-- code generation runtime support, если он нужен приложению.
+- runtime support для generated code.
 
-Если код можно назвать "feature-specific", ему не место в `Platform`.
+Если код звучит как "конкретный сценарий продукта", ему не место в `Platform`.
+
+## Что такое `Capabilities`
+
+`Capabilities` — это reusable возможности шаблона.
+
+Они допускают свою внутреннюю вертикальную структуру и могут содержать:
+
+- domain contracts;
+- use cases;
+- HTTP adapters;
+- persistence adapters;
+- capability-specific middleware;
+- tests и примеры использования.
+
+Capability отличается от product feature тем, что её можно использовать в разных продуктах без переписывания смысла.
+
+Хорошие кандидаты:
+
+- `Session`
+- `Auth primitives`
+- `Observability`
+- `Rate limiting`
+- `Idempotency`
+
+Плохие кандидаты:
+
+- `Home`
+- `User profile page`
+- `Billing portal`
+- `Login by email/password` как единственный смысл auth-подсистемы
+
+## Что такое `Examples`
+
+`Examples` нужны как исполняемая документация.
+
+Там допустимы:
+
+- demo endpoints;
+- reference auth flow;
+- минимальный sample API;
+- integration examples, показывающие сборку capabilities в продукт.
+
+Но examples не должны маскироваться под core runtime.
 
 ## Что остаётся в `Shared`
 
-`Shared` допустим только для двух случаев:
+`Shared` допустим только для:
 
-- действительно общие контракты;
-- небольшие support utilities, не принадлежащие одной feature.
+- действительно общих контрактов;
+- маленьких support utilities;
+- value objects, не принадлежащих одной capability.
 
-`Shared` не должен становиться новой свалкой.
+`Shared` не должен превращаться в новую свалку legacy-кода.
+
+## Внутренняя структура capability
+
+Capability остаётся slice-oriented.
+
+Пример:
+
+```text
+src/Capabilities/Session/
+  Domain/
+  Application/
+  Transport/
+    Http/
+  Infrastructure/
+    Persistence/
+```
+
+Это означает: vertical slices полезны, но их предметом должны быть reusable capabilities, а не продуктовая предметная область шаблона.
 
 ## HTTP модель
 
-Целевой шаблон должен использовать простой HTTP pipeline без framework coupling.
+Целевой шаблон по-прежнему должен использовать простой HTTP pipeline без framework coupling.
 
 Подход:
 
 - минимальные interfaces для request handler и middleware;
-- router как платформенный сервис;
-- feature handlers/use cases вызываются через thin transport adapter;
-- нормализация ошибок и логирование выполняются platform middleware.
+- router как platform service;
+- capability handlers подключаются как thin transport adapters;
+- platform middleware занимается только runtime concerns;
+- capability middleware занимается только своей reusable capability.
 
 ## Storage модель
 
 Целевая стратегия:
 
-- PostgreSQL — основной и единственный production storage backend;
-- repository contracts определяются внутри slice;
-- конкретные PostgreSQL repositories реализуются либо внутри slice, либо в `Platform/Storage`, если это truly generic механизм;
-- SQLite слой должен быть либо явно признан dev-only fallback, либо удалён.
+- PostgreSQL — основной production backend;
+- generic storage abstractions живут в `Platform`;
+- capability-specific repositories живут внутри capability;
+- SQLite допустим только как явно вторичный dev/test fallback или удаляется.
 
 ## Routing модель
 
-Есть два допустимых направления:
+Предпочтительное направление на текущем этапе:
 
-### Вариант A. protobuf-first остаётся
+- сохранить `protobuf-first`;
+- но трактовать protobuf как transport contract layer, а не как признак продуктового домена.
 
-Тогда:
+Иными словами:
 
-- `.proto` остаются источником истины для публичного API;
-- route generation сохраняется;
-- transport contracts и runtime маршруты связаны формально.
-
-### Вариант B. runtime routes становятся handwritten
-
-Тогда:
-
-- protobuf остаётся только как transport/schema layer, если вообще остаётся;
-- routing перестаёт зависеть от code generation.
-
-На текущем этапе предпочтительнее сохранить `protobuf-first`, но привести его в согласованное состояние.
+- `.proto` описывают API surface;
+- `Platform` исполняет маршрутизацию;
+- `Capabilities` и `Examples` поставляют handlers.
 
 ## Code generation и tooling
 
-Tooling должно быть отделено от runtime.
+Tooling должно быть отделено от runtime:
 
-Целевое разделение:
+- `tools/*` — build-time/codegen;
+- `src/Platform/*` — только runtime;
+- generated code, нужный runtime, должен быть явно документирован.
 
-- `tools/*` — генераторы, build-time scripts, proto tooling;
-- `src/Platform/*` — только runtime code, который реально участвует в обработке запросов.
+## Как должна мыслить LLM
 
-Если generated code нужен runtime, это должно быть явно отражено в документации и структуре.
+LLM должна быстро отвечать на вопросы:
 
-## Как должен выглядеть новый slice для LLM
+1. это platform code, capability code или example code;
+2. это reusable primitive или продуктовая политика;
+3. это надо обобщить, вынести в example или удалить;
+4. какие части нужно затронуть, чтобы добавить новую capability.
 
-LLM должна иметь возможность добавить новую feature примерно по такой схеме:
+Если ответ требует чтения половины репозитория, структура ещё недостаточно ясна.
 
-1. создать `src/Modules/<FeatureName>`;
-2. добавить transport contract;
-3. добавить use case;
-4. добавить handler/HTTP adapter;
-5. добавить repository contract и implementation;
-6. зарегистрировать slice в bootstrap;
-7. добавить tests этого slice.
+## Архитектурные решения, которые уже можно принять
 
-Если для добавления одной feature нужно трогать весь репозиторий, шаблон ещё не достиг целевого состояния.
+### 1. `Session` — capability
 
-## Архитектурные решения, которые стоит принять заранее
+Это reusable building block, а не домен продукта.
 
-### 1. Session — это slice, а не глобальная инфраструктура
+### 2. `Auth` должен быть разделён
 
-Сессии влияют на весь HTTP runtime, но их поведение — это feature policy, а не purely technical detail.
+В template можно оставить только auth primitives и reference flow.
+Конкретный login policy не должен быть смыслом core template.
 
-### 2. Auth должен быть отдельным slice
+### 3. `ApiStats` — candidate observability capability
 
-Сейчас auth размазан между proto, routes и заготовками. В target architecture auth должен стать полноценным модулем.
+Если он выражается как generic request stats, он остаётся.
+Если он завязан на продуктовые сценарии, его надо упростить.
 
-### 3. Home должен остаться только демонстрационным slice
+### 4. `Home` — только example
 
-Он полезен как reference implementation, но не должен диктовать структуру всего проекта.
+`Home` полезен как smoke-test/reference endpoint, но не как архитектурный центр.
 
-### 4. DI не должна диктовать форму приложения
+### 5. `User` не должен быть top-level core domain
 
-Контейнер — это platform utility. Архитектура должна оставаться понятной даже без чтения реализации контейнера.
+Если нужен `User`, то только как часть example или отдельного продукта поверх шаблона.
 
 ## Целевой bootstrap flow
 
@@ -189,19 +218,21 @@ LLM должна иметь возможность добавить новую f
 Bootstrap
   -> load config
   -> create platform services
-  -> register modules
+  -> register capabilities
+  -> optionally register examples
   -> assemble router/pipeline
   -> start runtime
 ```
 
-Идея в том, чтобы модуль регистрировал себя как slice, а не вручную протаскивался через десятки разрозненных service providers.
+Важно: examples не должны быть обязательной частью runtime-ядра.
 
-## Definition of Ready для начала переноса кода
+## Definition of Ready для дальнейшей миграции
 
-Перед активной миграцией кода нужно, чтобы были согласованы:
+Перед активным переносом кода должны быть согласованы:
 
-- названия верхнеуровневых каталогов;
-- роль `Modules`, `Platform`, `Shared`;
+- судьба `src/Modules` как переходной зоны;
+- целевые роли `Platform`, `Capabilities`, `Examples`, `Shared`;
 - судьба protobuf-first pipeline;
 - судьба SQLite;
-- судьба текущего hydrator/tooling слоя.
+- судьба hydrator/tooling слоя;
+- что именно из текущего кода считается capability, а что example.

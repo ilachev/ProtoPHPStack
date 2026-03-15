@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Application\Middleware;
+namespace App\Modules\ApiStats\Transport\Http;
 
-use App\Domain\Stats\ApiStat;
-use App\Domain\Stats\ApiStatService;
 use App\Infrastructure\Logger\Logger;
+use App\Modules\ApiStats\Domain\ApiStat;
+use App\Modules\ApiStats\Domain\ApiStatService;
 use App\Modules\Session\Domain\Session;
 use App\Modules\Session\Domain\SessionService;
 use App\Platform\Http\Middleware;

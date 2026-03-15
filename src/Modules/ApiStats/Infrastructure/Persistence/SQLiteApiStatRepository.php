@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Infrastructure\Storage\Stats;
+namespace App\Modules\ApiStats\Infrastructure\Persistence;
 
-use App\Domain\Stats\ApiStat;
-use App\Domain\Stats\ApiStatRepository;
 use App\Infrastructure\Storage\Repository\AbstractRepository;
+use App\Modules\ApiStats\Domain\ApiStat;
+use App\Modules\ApiStats\Domain\ApiStatRepository;
 
 final class SQLiteApiStatRepository extends AbstractRepository implements ApiStatRepository
 {

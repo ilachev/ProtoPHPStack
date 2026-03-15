@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Stats;
+namespace App\Modules\ApiStats\Domain;
 
 use App\Domain\Entity;
 

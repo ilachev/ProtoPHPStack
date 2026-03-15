@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Application\Middleware;
+namespace App\Modules\Auth\Transport\Http;
 
 use App\Infrastructure\Logger\Logger;
 use App\Modules\Session\Domain\Session;

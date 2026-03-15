@@ -14,6 +14,7 @@ use App\Modules\Session\Domain\SessionPayload;
 use App\Modules\Session\Domain\SessionRepository;
 use App\Modules\Session\Domain\SessionService;
 use App\Modules\Session\Transport\Http\SessionMiddleware;
+use App\Modules\Session\Transport\Http\SessionResponseHeaders;
 use App\Platform\Http\RequestHandler;
 use Nyholm\Psr7\Response;
 use Nyholm\Psr7\ServerRequest;
@@ -333,6 +334,66 @@ final class SessionMiddlewareTest extends TestCase
         $cookie = $response->getHeaderLine('Set-Cookie');
         self::assertStringContainsString('session=existing-fingerprint-session-id', $cookie);
     }
+
+    public function testUsesActiveSessionIdFromResponseHeaders(): void
+    {
+        $currentSession = new Session(
+            id: 'current-session-id',
+            userId: null,
+            payload: '{}',
+            expiresAt: time() + 3600,
+            createdAt: time() - 100,
+            updatedAt: time() - 50,
+        );
+        $targetSession = new Session(
+            id: 'target-session-id',
+            userId: 77,
+            payload: '{}',
+            expiresAt: time() + 3600,
+            createdAt: time() - 100,
+            updatedAt: time() - 50,
+        );
+
+        $this->repository->sessions[$currentSession->id] = $currentSession;
+        $this->repository->sessions[$targetSession->id] = $targetSession;
+
+        $request = new ServerRequest('GET', '/');
+        $request = $request->withCookieParams(['session' => $currentSession->id]);
+
+        $this->handler->response = (new Response())
+            ->withHeader(SessionResponseHeaders::ACTIVE_SESSION_ID, $targetSession->id);
+
+        $response = $this->middleware->process($request, $this->handler);
+
+        self::assertFalse($response->hasHeader(SessionResponseHeaders::ACTIVE_SESSION_ID));
+        self::assertTrue($response->hasHeader('Set-Cookie'));
+        self::assertStringContainsString('session=target-session-id', $response->getHeaderLine('Set-Cookie'));
+    }
+
+    public function testDestroysSessionCookieWhenResponseRequestsDeletion(): void
+    {
+        $existingSession = new Session(
+            id: 'session-to-destroy',
+            userId: 42,
+            payload: '{}',
+            expiresAt: time() + 3600,
+            createdAt: time() - 100,
+            updatedAt: time() - 50,
+        );
+        $this->repository->sessions[$existingSession->id] = $existingSession;
+
+        $request = new ServerRequest('GET', '/');
+        $request = $request->withCookieParams(['session' => $existingSession->id]);
+
+        $this->handler->response = (new Response())
+            ->withHeader(SessionResponseHeaders::DESTROY_SESSION, '1');
+
+        $response = $this->middleware->process($request, $this->handler);
+
+        self::assertFalse($response->hasHeader(SessionResponseHeaders::DESTROY_SESSION));
+        self::assertTrue($response->hasHeader('Set-Cookie'));
+        self::assertStringContainsString('session=deleted', $response->getHeaderLine('Set-Cookie'));
+    }
 }
 
 final class TestRequestHandler implements RequestHandler
@@ -348,7 +409,6 @@ final class TestRequestHandler implements RequestHandler
         return $this->response;
     }
 }
-
 
 /**
  * Test repository for SessionMiddleware.
@@ -425,7 +485,7 @@ final readonly class TestSessionPayloadFactoryImpl implements SessionPayloadFact
 }
 
 /**
- * Тестовая имплементация JsonFieldAdapter.
+ * Test JsonFieldAdapter implementation.
  */
 final readonly class TestJsonFieldAdapterImpl implements JsonFieldAdapter
 {
@@ -435,12 +495,7 @@ final readonly class TestJsonFieldAdapterImpl implements JsonFieldAdapter
     }
 
     /**
-     * Десериализует JSON в объект указанного класса.
-     *
-     * @param string $jsonValue JSON для десериализации
-     * @param string $targetClass Имя класса, в который нужно десериализовать
-     * @param callable|null $fieldTransformer Опциональный трансформер полей
-     * @return object Результат десериализации
+     * Deserializes JSON into the requested object type.
      */
     public function deserialize(string $jsonValue, string $targetClass, ?callable $fieldTransformer = null): object
     {
@@ -466,7 +521,7 @@ final readonly class TestJsonFieldAdapterImpl implements JsonFieldAdapter
     }
 
     /**
-     * Безопасно десериализует JSON.
+     * Deserializes JSON and falls back to the provided default value on failure.
      */
     public function tryDeserialize(string $jsonValue, string $targetClass, object $defaultValue, ?callable $fieldTransformer = null): object
     {
@@ -484,12 +539,12 @@ final readonly class TestJsonFieldAdapterImpl implements JsonFieldAdapter
 }
 
 /**
- * Тестовая имплементация ClientDetector.
+ * Test ClientDetector implementation.
  */
 final readonly class TestClientDetectorImpl implements ClientDetector
 {
     /**
-     * @param array<ClientIdentity> $similarClients Клиенты, которые будут возвращены
+     * @param array<ClientIdentity> $similarClients clients that should be returned
      */
     public function __construct(
         private array $similarClients = [],

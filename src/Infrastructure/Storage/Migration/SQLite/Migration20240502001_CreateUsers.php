@@ -13,6 +13,7 @@ final readonly class Migration20240502001_CreateUsers extends AbstractMigration
         return <<<'SQL'
                 CREATE TABLE users (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    email TEXT NOT NULL UNIQUE,
                     password_hash TEXT NOT NULL,
                     created_at INTEGER NOT NULL,
                     updated_at INTEGER NOT NULL

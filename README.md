@@ -2,17 +2,18 @@
 
 [![CI](https://github.com/ilachev/base-api-template/actions/workflows/ci.yml/badge.svg)](https://github.com/ilachev/base-api-template/actions/workflows/ci.yml)
 
-A modern PHP API template with Protocol Buffers for schema definition, automatic route generation, and comprehensive testing. Built to run on RoadRunner for high performance.
+A pure PHP infrastructure-first backend template with Protocol Buffers for transport contracts, automatic route generation, and a small RoadRunner-based runtime core.
 
-Current target state for this repository: a production-ready backend template on pure PHP, without framework coupling, evolving toward vertical slices architecture.
+Current target state for this repository: a production-ready infrastructure template on pure PHP, without framework coupling, organized around `Platform`, reusable `Capabilities`, and small `Examples`.
 
 ## Features
 
-- Protocol Buffer based API definitions
+- Protocol Buffer based transport contracts
 - Automatic route generation from proto files
 - OpenAPI documentation generation
-- Clean architecture with separation of concerns
-- RoadRunner-powered for high performance and resource efficiency
+- Small framework-free runtime core
+- RoadRunner-powered execution model
+- Capability-oriented architecture for reusable backend building blocks
 - High test coverage and static analysis
 - GitHub Actions CI/CD pipeline
 

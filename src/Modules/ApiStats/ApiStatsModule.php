@@ -2,37 +2,33 @@
 
 declare(strict_types=1);
 
-namespace App\Infrastructure\DI\ServiceProviders;
+namespace App\Modules\ApiStats;
 
-use App\Application\Middleware\ApiStatsMiddleware;
-use App\Domain\Stats\ApiStatRepository;
-use App\Domain\Stats\ApiStatService;
 use App\Infrastructure\DI\Container;
-use App\Infrastructure\DI\ServiceProvider;
 use App\Infrastructure\Logger\Logger;
-use App\Infrastructure\Storage\Stats\PostgreSQLApiStatRepository;
+use App\Modules\ApiStats\Domain\ApiStatRepository;
+use App\Modules\ApiStats\Domain\ApiStatService;
+use App\Modules\ApiStats\Infrastructure\Persistence\PostgreSQLApiStatRepository;
+use App\Modules\ApiStats\Transport\Http\ApiStatsMiddleware;
+use App\Modules\Module;
 use App\Modules\Session\Domain\SessionService;
 
 /**
- * @implements ServiceProvider<object>
+ * @implements Module<object>
  */
-final readonly class ApiStatsServiceProvider implements ServiceProvider
+final readonly class ApiStatsModule implements Module
 {
     public function register(Container $container): void
     {
-        // PostgreSQL implementation for ApiStatRepository
         $container->bind(PostgreSQLApiStatRepository::class, PostgreSQLApiStatRepository::class);
 
-        // ApiStat Repository
         $container->set(
             ApiStatRepository::class,
             static fn(Container $container): ApiStatRepository => $container->get(PostgreSQLApiStatRepository::class),
         );
 
-        // ApiStat Service
         $container->bind(ApiStatService::class, ApiStatService::class);
 
-        // ApiStats Middleware
         $container->set(
             ApiStatsMiddleware::class,
             static function (Container $container): ApiStatsMiddleware {
