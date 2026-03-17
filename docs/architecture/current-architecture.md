@@ -2,7 +2,7 @@
 
 ## Архитектурный стиль
 
-Проект уже частично перестроен под infrastructure-first модель.
+Проект уже частично перестроен в сторону набора reusable backend-блоков.
 
 Фактическая верхнеуровневая раскладка сейчас такая:
 
@@ -11,7 +11,7 @@
 - `src/Examples` — example implementations;
 - `src/Infrastructure` — support/tooling слой.
 
-То есть основная проблема больше не в отсутствии целевой структуры, а в том, что `Infrastructure` всё ещё совмещает несколько разных подролей.
+Проблема сейчас не в отсутствии структуры как таковой, а в том, что проект всё ещё местами описан и организован слишком тяжёлым архитектурным языком.
 
 ## `Platform`
 
@@ -41,11 +41,11 @@ Pipeline собирается в `App::createPipeline()` и сейчас вып�
 
 ## `Capabilities`
 
-Сейчас в репозитории выделены две capability-зоны.
+Сейчас в репозитории выделены две зоны reusable-блоков.
 
 ### `src/Capabilities/Session`
 
-Это наиболее зрелый reusable building block.
+Это наиболее зрелый reusable блок.
 
 Внутри уже есть собственная вертикаль:
 
@@ -56,7 +56,7 @@ Pipeline собирается в `App::createPipeline()` и сейчас вып�
 
 ### `src/Capabilities/ApiStats`
 
-Это candidate observability capability.
+Это candidate observability block.
 
 Сейчас он даёт:
 
@@ -64,7 +64,7 @@ Pipeline собирается в `App::createPipeline()` и сейчас вып�
 - PostgreSQL persistence adapter;
 - `ApiStatsMiddleware`, который интегрируется в platform pipeline.
 
-Смысл этой части нужно ещё дочистить: либо окончательно оформить как generic observability capability, либо упростить.
+Смысл этой части нужно ещё дочистить: либо окончательно оформить как generic observability block, либо упростить.
 
 ## `Examples`
 
@@ -101,7 +101,7 @@ Pipeline собирается в `App::createPipeline()` и сейчас вып�
 
 Это теперь важно фиксировать явно:
 
-- `config/container.php` и `config/routes.php` описывают infrastructure-only runtime;
+- `config/container.php` и `config/routes.php` описывают основной runtime;
 - `src/Examples/*` остаётся в репозитории как примерный слой, но не должен быть частью bootstrap по умолчанию.
 
 Следствие: examples остаются в репозитории, но не должны быть обязательной частью runtime surface.
@@ -137,9 +137,9 @@ Routing остаётся двухфазным:
 
 ## Storage
 
-Storage стратегия остаётся PostgreSQL-first.
+`PostgreSQL` остаётся основным storage adapter рантайма.
 
-В коде всё ещё существует SQLite-слой, но его нужно считать legacy/compatibility нагрузкой, а не опорой архитектуры.
+При этом default quality gate не должен требовать поднятую БД, а database-specific код должен оставаться локализованным в storage adapter-слое.
 
 Репозитории capability-уровня должны жить рядом со своей capability, а generic storage/runtime support — в `Platform`.
 
@@ -157,6 +157,6 @@ Storage стратегия остаётся PostgreSQL-first.
 
 Routing generation и часть support/tooling кода всё ещё живут рядом и требуют дальнейшего упорядочивания.
 
-### 4. PostgreSQL-first стратегия ещё не доведена до конца
+### 4. Storage adapters ещё не до конца упрощены
 
-SQLite всё ещё присутствует, а значит репозиторий пока не до конца последователен в своём storage baseline.
+В репозитории всё ещё есть лишние качания между `PostgreSQL` как основным runtime adapter и попыткой сделать storage полностью автономным.

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Capabilities\Session\Infrastructure\Persistence;
 
 use App\Capabilities\Session\Domain\Session;
-use App\Capabilities\Session\Infrastructure\Persistence\SQLiteSessionRepository;
+use App\Capabilities\Session\Infrastructure\Persistence\SqlSessionRepository;
 use App\Platform\Hydration\Hydrator;
 use App\Platform\Hydration\LimitedReflectionCache;
 use App\Platform\Hydration\ReflectionHydrator;
@@ -14,9 +14,9 @@ use App\Platform\Storage\Query\QueryBuilderFactory;
 use App\Platform\Storage\Storage;
 use PHPUnit\Framework\TestCase;
 
-final class SQLiteSessionRepositoryTest extends TestCase
+final class SqlSessionRepositoryTest extends TestCase
 {
-    private SQLiteSessionRepository $repository;
+    private SqlSessionRepository $repository;
 
     private InMemoryTestStorage $storage;
 
@@ -32,7 +32,7 @@ final class SQLiteSessionRepositoryTest extends TestCase
         $this->hydrator = new ReflectionHydrator($cache, $protobufHydration);
         $this->queryBuilderFactory = new QueryBuilderFactory();
 
-        $this->repository = new SQLiteSessionRepository(
+        $this->repository = new SqlSessionRepository(
             $this->storage,
             $this->hydrator,
             $this->queryBuilderFactory,
@@ -235,9 +235,15 @@ final class InMemoryTestStorage implements Storage
                     $results = array_filter($results, static fn($row) => isset($row[$column]) && $row[$column] === $params[$paramName]);
                 }
 
-                // Parse expires_at condition for deleteExpired
-                if (preg_match('/expires_at\s*<\s*:current_time/i', $whereClause)) {
-                    $results = array_filter($results, static fn($row) => isset($row['expires_at']) && $row['expires_at'] < $params['current_time']);
+                // Parse simple less-than condition
+                if (preg_match('/(\w+)\s*<\s*:(\w+)/i', $whereClause, $condMatches)) {
+                    $column = $condMatches[1];
+                    $paramName = $condMatches[2];
+
+                    $results = array_filter(
+                        $results,
+                        static fn($row) => isset($row[$column]) && $row[$column] < $params[$paramName],
+                    );
                 }
             }
 
@@ -315,11 +321,14 @@ final class InMemoryTestStorage implements Storage
                             static fn($row) => !isset($row[$column]) || $row[$column] !== $params[$paramName],
                         );
                         $this->tables[$tableName] = array_values($this->tables[$tableName]);
-                    } elseif (preg_match('/WHERE\s+expires_at\s+<\s+:current_time/i', $sql)) {
-                        // Handle deleteExpired
+                    } elseif (preg_match('/WHERE\s+(\w+)\s+<\s+:(\w+)/i', $sql, $whereMatches)) {
+                        $column = $whereMatches[1];
+                        $paramName = $whereMatches[2];
+
+                        // Handle generic less-than delete conditions
                         $this->tables[$tableName] = array_filter(
                             $this->tables[$tableName],
-                            static fn($row) => !isset($row['expires_at']) || $row['expires_at'] >= $params['current_time'],
+                            static fn($row) => !isset($row[$column]) || $row[$column] >= $params[$paramName],
                         );
                         $this->tables[$tableName] = array_values($this->tables[$tableName]);
                     }

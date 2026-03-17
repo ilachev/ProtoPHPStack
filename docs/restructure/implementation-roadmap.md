@@ -1,13 +1,13 @@
 # Roadmap реализации шаблона
 
-Этот документ описывает путь от текущего состояния к infrastructure-first template.
+Этот документ описывает путь от текущего состояния к набору простых reusable backend-блоков.
 
 ## Общая стратегия
 
-Цель не "добавить ещё несколько модулей", а убрать product bias из шаблона и оставить только:
+Цель не "построить ещё одну архитектурную систему", а убрать product bias из шаблона и оставить только:
 
 - platform core;
-- reusable capabilities;
+- reusable blocks;
 - examples как исполняемую документацию.
 
 Каждый этап должен уменьшать архитектурный шум, а не увеличивать его.
@@ -16,7 +16,7 @@
 
 Нужно:
 
-- переписать vision под infrastructure-first модель;
+- переписать vision под модель простых reusable-блоков;
 - зафиксировать новую target architecture;
 - описать карту `Platform / Capabilities / Examples`.
 
@@ -29,7 +29,7 @@
 Для каждого крупного участка кода нужно принять одно из решений:
 
 - оставить в `Platform`;
-- оставить как reusable capability;
+- оставить как reusable блок;
 - понизить до example;
 - удалить как архитектурный шум.
 
@@ -54,18 +54,18 @@
 - в `Platform` нет продуктовой политики;
 - capability-код не зависит от product examples.
 
-## Этап 4. Выделить reusable capabilities
+## Этап 4. Выделить reusable blocks
 
 Предварительная целевая классификация:
 
-1. `Session` — capability;
-2. `ApiStats` -> `Observability` capability, если останется generic;
-3. `Auth` — capability primitives плюс example flow;
-4. всё, что не reusable, не должно оставаться capability.
+1. `Session` — reusable блок;
+2. `ApiStats` -> `Observability` блок, если останется generic;
+3. `Auth` — primitives плюс example flow;
+4. всё, что не reusable, не должно оставаться в `Capabilities`.
 
 Критерий успеха:
 
-- capability можно перенести в другой backend без смены её смысла.
+- блок можно перенести в другой backend без смены его смысла.
 
 ## Этап 5. Понизить examples до examples
 
@@ -93,7 +93,7 @@ Examples не должны быть обязательной частью core r
 
 Нужно принять решения по спорным зонам:
 
-- SQLite остаётся только как вторичный dev/test инструмент или удаляется;
+- storage остаётся простым: PostgreSQL как основной adapter, другие profiles только по реальной необходимости;
 - `ReflectionHydrator` и `CodeGeneratingHydrator` либо получают чёткую роль, либо сокращаются;
 - tooling окончательно отделяется от runtime;
 - proto/codegen pipeline описывается как инфраструктурный механизм, а не как признак продуктового домена.

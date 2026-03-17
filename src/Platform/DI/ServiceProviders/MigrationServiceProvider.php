@@ -26,13 +26,14 @@ final readonly class MigrationServiceProvider implements ServiceProvider
             static function (Container $container): MigrationLoader {
                 /** @var array{
                  *     engine: string,
+                 *     sqlite?: array{migrations_path: string},
                  *     pgsql?: array{migrations_path: string}
                  * } $storageConfig
                  */
                 $storageConfig = require ProjectPath::getConfigPath('storage.php');
 
-                // PostgreSQL migrations path
-                $migrationsPath = $storageConfig['pgsql']['migrations_path'] ?? '';
+                $engine = $storageConfig['engine'];
+                $migrationsPath = $storageConfig[$engine]['migrations_path'] ?? '';
 
                 /** @var Logger $logger */
                 $logger = $container->get(Logger::class);

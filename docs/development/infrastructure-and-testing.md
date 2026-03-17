@@ -24,20 +24,16 @@
 - metrics/status endpoints;
 - KV storage (`local-memory`, `redis`).
 
-### PostgreSQL
+### Storage adapters
 
 Основная конфигурация лежит в `config/storage.php`.
 
 По умолчанию используется:
 
-- host: `localhost`
-- port: `5432`
-- database: `app`
-- user: `app`
-- password: `password`
+- `pgsql` как основной runtime adapter
+- `sqlite` как лёгкий adapter для отдельных изолированных сценариев и тестов
 
-PostgreSQL остаётся основным runtime и integration storage adapter.
-Базовый quality gate шаблона при этом не должен требовать поднятые внешние сервисы.
+Базовый quality gate шаблона не должен требовать поднятые внешние сервисы, но сам backend по умолчанию ориентирован на PostgreSQL.
 
 ### Redis
 
@@ -52,7 +48,7 @@ PostgreSQL остаётся основным runtime и integration storage adap
 
 `docker-compose.yml` поднимает:
 
-- `db-postgres`
+- `db-postgres` для основного PostgreSQL runtime profile
 - `redis`
 
 Стандартный lifecycle:
@@ -71,7 +67,7 @@ task services:stop
 Назначение:
 
 - хранение анонимных и пользовательских сессий;
-- session payload в `JSONB`;
+- session payload в JSON-compatible field;
 - индексы под поиск по `user_id`, `expires_at`, `payload->>'ip'`, `payload->>'fingerprint'`.
 
 ### `api_stats`
@@ -99,7 +95,7 @@ CLI wrapper:
 
 Реализация миграций:
 
-- `src/Platform/Storage/Migration/PostgreSQL/*`
+- `src/Platform/Storage/Migration/*`
 
 ## Тесты
 
@@ -121,7 +117,7 @@ Bootstrap:
 
 Свойства:
 
-- не требуют PostgreSQL;
+- не требуют внешнюю БД;
 - не требуют RoadRunner KV;
 - используются в default `task test` и `task verify`.
 
@@ -141,7 +137,7 @@ Bootstrap:
 
 Свойства:
 
-- требуют реальный PostgreSQL;
+- требуют PostgreSQL profile;
 - запускаются отдельным профилем через `task test:integration`.
 
 ## Как устроены integration tests
@@ -150,7 +146,7 @@ Bootstrap в `tests/Integration/bootstrap.php`:
 
 - создаёт единый `App`;
 - получает container;
-- очищает public schema в PostgreSQL;
+- очищает `public` schema в PostgreSQL integration profile;
 - заново прогоняет миграции;
 - сохраняет shared app в `TestAppFactory`.
 
@@ -179,7 +175,7 @@ task verify:full
 2. phpstan
 3. unit tests
 
-`task verify:integration` запускает PostgreSQL-backed integration tests.
+`task verify:integration` запускает PostgreSQL integration profile.
 
 `task verify:full` объединяет оба контура.
 

@@ -8,22 +8,21 @@ use App\Capabilities\Session\Domain\Session;
 use App\Capabilities\Session\Domain\SessionRepository;
 use App\Platform\Storage\Repository\AbstractRepository;
 
-final class SQLiteSessionRepository extends AbstractRepository implements SessionRepository
+final class SqlSessionRepository extends AbstractRepository implements SessionRepository
 {
-    private const TABLE = 'sessions';
-    private const PRIMARY_KEY = 'id';
+    private const TABLE_NAME = 'sessions';
 
     public function findById(string $id): ?Session
     {
-        $query = $this->query(self::TABLE)
-            ->where(self::PRIMARY_KEY, $id);
+        $query = $this->query(self::TABLE_NAME)
+            ->where('id', $id);
 
         return $this->fetchOne(Session::class, $query);
     }
 
     public function findByUserId(int $userId): array
     {
-        $query = $this->query(self::TABLE)
+        $query = $this->query(self::TABLE_NAME)
             ->where('user_id', $userId);
 
         return $this->fetchAll(Session::class, $query);
@@ -31,27 +30,27 @@ final class SQLiteSessionRepository extends AbstractRepository implements Sessio
 
     public function findAll(): array
     {
-        $query = $this->query(self::TABLE);
+        $query = $this->query(self::TABLE_NAME);
 
         return $this->fetchAll(Session::class, $query);
     }
 
     public function save(Session $session): void
     {
-        $this->saveEntity($session, self::TABLE, self::PRIMARY_KEY, $session->id);
+        $this->saveEntity($session, self::TABLE_NAME, 'id', $session->id);
     }
 
     public function delete(string $id): void
     {
-        $this->deleteEntity(self::TABLE, self::PRIMARY_KEY, $id);
+        $this->deleteEntity(self::TABLE_NAME, 'id', $id);
     }
 
     public function deleteExpired(): void
     {
-        $query = $this->query(self::TABLE)
-            ->whereRaw('expires_at < :current_time', ['current_time' => time()]);
+        $deleteQuery = $this->query(self::TABLE_NAME)
+            ->where('expires_at', time(), '<');
 
-        [$sql, $params] = $query->buildDeleteQuery();
+        [$sql, $params] = $deleteQuery->buildDeleteQuery();
         /** @var array<string, scalar|null> $castParams */
         $castParams = $params;
         $this->storage->execute($sql, $castParams);

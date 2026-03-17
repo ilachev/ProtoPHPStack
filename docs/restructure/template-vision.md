@@ -4,18 +4,18 @@
 
 ## Цель проекта
 
-Проект должен стать `production-ready` инфраструктурным шаблоном для backend-разработки на чистом PHP.
+Проект должен стать `production-ready` шаблоном для backend-разработки на чистом PHP.
 
-Ключевое слово здесь не "backend", а "инфраструктурный".
+Ключевое слово здесь не "архитектура", а "переиспользуемость".
 
-Шаблон не должен поставлять готовый продуктовый домен. Он должен поставлять набор устойчивых инфраструктурных и полуинфраструктурных строительных блоков, из которых уже собирается конкретный продукт.
+Шаблон не должен поставлять готовый продуктовый домен. Он должен поставлять понятный набор базовых backend-блоков, из которых уже собирается конкретный продукт.
 
 Шаблон должен давать:
 
 - минимальное и понятное runtime-ядро;
-- нейтральную архитектурную основу без framework coupling;
-- набор reusable capabilities;
-- example implementations как исполняемую документацию;
+- нейтральную основу без framework coupling;
+- набор reusable blocks;
+- примеры использования как исполняемую документацию;
 - структуру, понятную человеку и LLM.
 
 ## Что это означает practically
@@ -30,9 +30,9 @@
 
 Поэтому в шаблоне должны жить:
 
-- `Platform` primitives;
-- reusable capabilities;
-- маленькие example modules.
+- runtime primitives;
+- reusable подсистемы вроде `Session`, `Cache`, `Storage`, `Routing`;
+- маленькие examples, если они помогают понять сборку.
 
 И не должны жить:
 
@@ -55,8 +55,8 @@
 
 - стабильный bootstrap flow;
 - предсказуемый request lifecycle;
-- ясные расширяемые границы между platform и capability-кодом;
-- PostgreSQL-first storage baseline;
+- ясные и не перегруженные границы между runtime-блоками;
+- PostgreSQL как основной runtime adapter без обязательности для default quality gate;
 - logging, metrics и error-handling baseline;
 - понятный quality gate;
 - явную схему, по которой из шаблона собирается конкретный продукт.
@@ -67,21 +67,21 @@ Production-ready здесь не означает "внутри уже реал�
 
 Основная архитектурная цель проекта теперь формулируется так:
 
-- маленький `Platform` core;
-- reusable `Capabilities`;
+- маленький runtime core;
+- reusable blocks;
 - минимальные `Examples`;
 - tooling, отделённый от runtime;
-- LLM-friendly структура, в которой каждый слой имеет ограниченную ответственность.
+- LLM-friendly структура, в которой каждый блок имеет понятную ответственность.
 
-Vertical slices по-прежнему полезны, но не как "срезы продукта", а как "срезы возможностей шаблона".
+Текущие каталоги можно сохранять, если они помогают держать код в порядке, но они не должны превращаться в архитектурную идеологию.
 
 ## Предпочтительная модель
 
-Целевой шаблон должен быть устроен так:
+Целевой шаблон должен быть устроен просто:
 
-- `src/Platform/*` — HTTP kernel, routing, bootstrap, storage abstractions, cache, logging, console/runtime support;
-- `src/Capabilities/*` — reusable возможности вроде `Session`, `Auth primitives`, `Observability`, `RateLimit`, `Idempotency`;
-- `src/Examples/*` — example implementations, демонстрирующие, как capabilities собираются в продукт;
+- `src/Platform/*` — HTTP kernel, routing, bootstrap, storage, cache, logging и другой runtime support;
+- `src/Capabilities/*` — reusable подсистемы вроде `Session`, `Observability`, `RateLimit`;
+- `src/Examples/*` — небольшие примеры, демонстрирующие, как из этих блоков собирается продукт;
 - `src/Shared/*` — действительно небольшие общие контракты и support utilities;
 - `protos/*` — transport contracts, если protobuf-first сохраняется;
 - `tools/*` — build-time/codegen tooling.
@@ -102,15 +102,15 @@ Vertical slices по-прежнему полезны, но не как "срез
 
 Сначала определяются общие runtime primitives, а не продуктовые сценарии.
 
-### 2. Capability-first
+### 2. Block-first
 
-Если подсистема reusable между продуктами, она может жить в template как capability.
+Если подсистема reusable между продуктами, она может жить в template как отдельный блок.
 
 ### 3. Examples are not core
 
 `Home`, demo auth flow и похожие вещи допустимы только как example code, а не как смысл проекта.
 
-### 4. Small platform core
+### 4. Small runtime core
 
 `Platform` должен быть маленьким, стабильным и техническим.
 
@@ -123,7 +123,7 @@ Vertical slices по-прежнему полезны, но не как "срез
 LLM должна сразу понимать:
 
 - что является core runtime;
-- что является reusable capability;
+- что является reusable блоком;
 - что является example;
 - что можно удалить без разрушения шаблона.
 
@@ -136,13 +136,13 @@ LLM должна сразу понимать:
 Текущий репозиторий уже содержит полезные части для новой цели:
 
 - `Platform` runtime;
-- `Session` как сильную capability;
-- `ApiStats` как потенциальную observability capability;
+- `Session` как сильный reusable блок;
+- `ApiStats` как потенциальный observability block;
 - `Auth` и `Home` как candidate example implementations.
 
 Но репозиторий ещё надо дочистить от product bias:
 
-1. согласовать документацию под infrastructure-first модель;
-2. удерживать явное разделение `Platform / Capabilities / Examples`;
+1. согласовать документацию под модель простых reusable-блоков;
+2. удерживать явное разделение runtime blocks / reusable blocks / examples;
 3. понижать demo/product-specific код до example implementation;
 4. дочищать legacy-слои, которые всё ещё тянут проект обратно в product-first модель.

@@ -11,6 +11,7 @@ use Tests\Integration\TestAppFactory;
 require_once __DIR__ . '/../../vendor/autoload.php';
 
 echo "Environment variables for database connection:\n";
+echo 'STORAGE_ENGINE: ' . (getenv('STORAGE_ENGINE') ?: 'not set') . "\n";
 echo 'DB_HOST: ' . (getenv('DB_HOST') ?: 'not set') . "\n";
 echo 'DB_PORT: ' . (getenv('DB_PORT') ?: 'not set') . "\n";
 echo 'DB_NAME: ' . (getenv('DB_NAME') ?: 'not set') . "\n";

@@ -4,17 +4,17 @@
 
 ## Что это за проект
 
-`base-api-template` — это infrastructure-first шаблон для backend API на PHP 8.4 с упором на:
+`base-api-template` — это шаблон для backend API на PHP 8.4 с упором на:
 
 - `protobuf-first` описание API-контрактов;
 - генерацию SDK-классов, OpenAPI и маршрутов из `.proto`;
 - запуск на RoadRunner вместо классического PHP-FPM;
-- PostgreSQL как основном хранилище;
+- PostgreSQL как основной storage adapter;
 - Redis/RoadRunner KV для кеша;
 - маленький framework-free runtime core;
-- разделение на `Platform`, `Capabilities`, `Examples` и infrastructure support.
+- разделение на runtime blocks, reusable blocks и examples.
 
-Проект не должен трактоваться как готовый продукт. Это шаблон плюс небольшой набор example implementations, которые показывают, как собирать backend из platform runtime и reusable capabilities.
+Проект не должен трактоваться как готовый продукт. Это шаблон плюс небольшой набор examples, которые показывают, как собирать backend из runtime primitives и reusable blocks.
 
 ## Какая теперь официальная цель
 
@@ -23,7 +23,7 @@
 - `production-ready` backend template;
 - чистый PHP без framework-зависимости;
 - минимальная архитектурная зависимость от внешних библиотек;
-- capability-oriented vertical slices как целевая модель организации кода.
+- набор базовых reusable-блоков вместо тяжёлой фреймворкоподобной архитектуры.
 
 Подробно это описано в `docs/restructure/template-vision.md` и `docs/architecture/target-architecture.md`.
 
@@ -95,14 +95,14 @@ Infrastructure support:
 - fingerprint matching клиента;
 - геолокация по IP;
 - запись статистики API-вызовов;
-- миграции PostgreSQL;
+- миграции storage adapters;
 - unit и integration tests.
 
 ## Что ещё не доведено до целевого состояния
 
 - `Auth` пока не разделён на reusable primitives и example policy;
 - `Infrastructure` всё ещё слишком широк как support/tooling каталог;
-- SQLite слой всё ещё присутствует;
+- терминология проекта всё ещё местами звучит тяжелее, чем реально нужно для набора reusable-блоков;
 - hydration/codegen слой ещё не до конца вычищен и документирован.
 
 ## Основные инварианты для безопасной разработки
@@ -111,12 +111,12 @@ Infrastructure support:
 - Не редактировать вручную `config/routes.php`; core routes генерируются из `protos/proto/app/v1`.
 - Для нового публичного API сначала правится `.proto`, затем запускается генерация.
 - `Platform` не должен содержать продуктовую политику.
-- Capability должна быть reusable вне конкретного продукта.
+- Reusable блок должен быть полезен вне конкретного продукта.
 - Example должен быть явно вторичен по отношению к platform/capability-коду.
 - Default runtime не должен зависеть от example handlers или example routes.
 - Handler должен быть тонким адаптером.
 - Преобразования между слоями должны делаться через mapper/hydrator, а не через ad-hoc массивы по всему коду.
-- Для storage по умолчанию используется PostgreSQL, даже если в кодовой базе ещё остались SQLite-артефакты.
+- Default quality gate не должен зависеть от поднятой БД, даже если основной runtime adapter — PostgreSQL.
 - Проект работает в long-running процессе RoadRunner, поэтому надо учитывать память, кеши и накопление состояния между запросами.
 
 ## Команды, которые нужно знать LLM
@@ -140,7 +140,7 @@ task run
 Интерпретация:
 
 - `task test` и `task verify` не должны требовать внешние сервисы;
-- `task test:integration` и `task verify:full` используют реальный PostgreSQL;
+- `task test:integration` и `task verify:full` используют PostgreSQL profile;
 - для изменений в storage/runtime adapters недостаточно только unit-контура.
 
 ## Минимальная стратегия чтения кода
@@ -161,15 +161,15 @@ task run
 
 - `Infrastructure` всё ещё совмещает support runtime и tooling glue.
 - `Auth` пока не разделён на capability primitives и example flow.
-- Часть кода ориентирована на PostgreSQL-only стратегию, но SQLite-слой ещё присутствует.
+- Storage и integration adapters всё ещё дочищаются от vendor-specific предположений.
 - Code-generating hydration остаётся вторичным механизмом по отношению к reflection-based runtime hydration.
 
 ## Как теперь интерпретировать изменения
 
 Если LLM вносит изменения в проект, она должна оценивать их не только относительно текущего кода, но и относительно target state:
 
-- приближает ли изменение структуру к vertical slices;
-- приближает ли изменение структуру к `Platform / Capabilities / Examples`;
+- приближает ли изменение структуру к набору простых reusable-блоков;
+- делает ли границы `Platform / Capabilities / Examples` проще и понятнее, а не сложнее;
 - уменьшает ли framework/library coupling;
 - делает ли platform слой более маленьким и ясным;
 - помогает ли это прийти к production-ready шаблону, а не просто чинит локальный симптом.

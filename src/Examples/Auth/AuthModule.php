@@ -10,8 +10,8 @@ use App\Capabilities\Session\Domain\SessionService;
 use App\Examples\Auth\Domain\AuthService;
 use App\Examples\Auth\Domain\AuthUserRepository;
 use App\Examples\Auth\Domain\RefreshTokenSessionRepository;
-use App\Examples\Auth\Infrastructure\Persistence\PostgreSQLAuthUserRepository;
-use App\Examples\Auth\Infrastructure\Persistence\PostgreSQLRefreshTokenSessionRepository;
+use App\Examples\Auth\Infrastructure\Persistence\SessionPayloadRefreshTokenRepository;
+use App\Examples\Auth\Infrastructure\Persistence\SqlAuthUserRepository;
 use App\Examples\Auth\Transport\Http\AuthHandler;
 use App\Examples\Auth\Transport\Http\AuthMiddleware;
 use App\Examples\ExampleModule;
@@ -26,17 +26,17 @@ final readonly class AuthModule implements ExampleModule
 {
     public function register(Container $container): void
     {
-        $container->bind(PostgreSQLAuthUserRepository::class, PostgreSQLAuthUserRepository::class);
-        $container->bind(PostgreSQLRefreshTokenSessionRepository::class, PostgreSQLRefreshTokenSessionRepository::class);
+        $container->bind(SqlAuthUserRepository::class, SqlAuthUserRepository::class);
+        $container->bind(SessionPayloadRefreshTokenRepository::class, SessionPayloadRefreshTokenRepository::class);
 
         $container->set(
             AuthUserRepository::class,
-            static fn(Container $container): AuthUserRepository => $container->get(PostgreSQLAuthUserRepository::class),
+            static fn(Container $container): AuthUserRepository => $container->get(SqlAuthUserRepository::class),
         );
 
         $container->set(
             RefreshTokenSessionRepository::class,
-            static fn(Container $container): RefreshTokenSessionRepository => $container->get(PostgreSQLRefreshTokenSessionRepository::class),
+            static fn(Container $container): RefreshTokenSessionRepository => $container->get(SessionPayloadRefreshTokenRepository::class),
         );
 
         $container->set(

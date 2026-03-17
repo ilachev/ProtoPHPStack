@@ -36,7 +36,7 @@ final readonly class StorageFactory
      */
     public function createStorage(): Storage
     {
-        $engine = $this->config['engine'];
+        $engine = $this->getEngine();
 
         $this->logger->info("Creating {$engine} storage");
 
@@ -52,7 +52,7 @@ final readonly class StorageFactory
      */
     public function createQueryFactory(): QueryFactory
     {
-        $engine = $this->config['engine'];
+        $engine = $this->getEngine();
 
         if ($engine === 'pgsql') {
             $schema = $this->config['pgsql']['schema'] ?? 'public';
@@ -94,5 +94,10 @@ final readonly class StorageFactory
             password: $password,
             schema: $schema,
         );
+    }
+
+    public function getEngine(): string
+    {
+        return $this->config['engine'];
     }
 }

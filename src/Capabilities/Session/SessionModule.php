@@ -17,7 +17,7 @@ use App\Capabilities\Session\Infrastructure\DefaultSessionPayloadFactory;
 use App\Capabilities\Session\Infrastructure\FingerprintClientDetector;
 use App\Capabilities\Session\Infrastructure\GeoLocation\IP2LocationGeoLocationService;
 use App\Capabilities\Session\Infrastructure\Persistence\CachedSessionRepository;
-use App\Capabilities\Session\Infrastructure\Persistence\PostgreSQLSessionRepository;
+use App\Capabilities\Session\Infrastructure\Persistence\SqlSessionRepository;
 use App\Capabilities\Session\Transport\Http\SessionMiddleware;
 use App\Infrastructure\Cache\CacheService;
 use App\Infrastructure\Config\ProjectPath;
@@ -76,13 +76,13 @@ final readonly class SessionModule implements Capability
             },
         );
 
-        $container->bind(PostgreSQLSessionRepository::class, PostgreSQLSessionRepository::class);
+        $container->bind(SqlSessionRepository::class, SqlSessionRepository::class);
 
         $container->set(
             SessionRepository::class,
             static function (Container $container): SessionRepository {
-                /** @var PostgreSQLSessionRepository $baseRepository */
-                $baseRepository = $container->get(PostgreSQLSessionRepository::class);
+                /** @var SqlSessionRepository $baseRepository */
+                $baseRepository = $container->get(SqlSessionRepository::class);
 
                 /** @var CacheService $cacheService */
                 $cacheService = $container->get(CacheService::class);

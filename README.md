@@ -2,11 +2,11 @@
 
 [![CI](https://github.com/ilachev/base-api-template/actions/workflows/ci.yml/badge.svg)](https://github.com/ilachev/base-api-template/actions/workflows/ci.yml)
 
-A pure PHP infrastructure-first backend template with Protocol Buffers for transport contracts, automatic route generation, and a small RoadRunner-based runtime core.
+A pure PHP backend template with Protocol Buffers for transport contracts, automatic route generation, and a small RoadRunner-based runtime core.
 
-Current target state for this repository: a production-ready infrastructure template on pure PHP, without framework coupling, organized around `Platform`, reusable `Capabilities`, and small `Examples`.
+Current target state for this repository: a production-ready set of reusable backend blocks on pure PHP, without framework coupling. The repository keeps runtime primitives, optional integrations, and a few small examples, but it should not feel like a heavy framework.
 
-Default runtime is infrastructure-only. Example code is kept in the repository, but it is not part of the main bootstrap or route surface.
+The default runtime stays focused on reusable blocks. Example code may live in the repository, but it should not define the main bootstrap or API surface.
 
 ## Features
 
@@ -15,7 +15,7 @@ Default runtime is infrastructure-only. Example code is kept in the repository, 
 - OpenAPI documentation generation
 - Small framework-free runtime core
 - RoadRunner-powered execution model
-- Capability-oriented architecture for reusable backend building blocks
+- Reusable backend building blocks instead of framework-driven architecture
 - High test coverage and static analysis
 - GitHub Actions CI/CD pipeline
 
@@ -53,7 +53,7 @@ The application uses RoadRunner for high performance. To run:
 # Install RoadRunner globally (if not already installed)
 # Visit https://roadrunner.dev/download for installation instructions
 
-# Start all services and run the application (PostgreSQL + RoadRunner)
+# Start optional services and run the application
 task run
 
 # The API will be available at http://localhost:8080
@@ -66,10 +66,10 @@ task services:stop
 
 - `task test` runs unit tests only and requires no external services
 - `task verify` is the default local gate: lint, static analysis and unit tests
-- `task test:integration` runs PostgreSQL-backed integration tests
+- `task test:integration` runs the PostgreSQL integration profile
 - `task verify:full` runs both the default gate and integration verification
 
-Use `task services:start` before integration runs when you need a local PostgreSQL instance.
+Use `task services:start` before integration runs or local runtime checks when you need a PostgreSQL instance.
 
 ## GitHub Actions
 

@@ -6,7 +6,7 @@ namespace App\Capabilities\ApiStats;
 
 use App\Capabilities\ApiStats\Domain\ApiStatRepository;
 use App\Capabilities\ApiStats\Domain\ApiStatService;
-use App\Capabilities\ApiStats\Infrastructure\Persistence\PostgreSQLApiStatRepository;
+use App\Capabilities\ApiStats\Infrastructure\Persistence\SqlApiStatRepository;
 use App\Capabilities\ApiStats\Transport\Http\ApiStatsMiddleware;
 use App\Capabilities\Capability;
 use App\Capabilities\Session\Domain\SessionService;
@@ -20,11 +20,11 @@ final readonly class ApiStatsModule implements Capability
 {
     public function register(Container $container): void
     {
-        $container->bind(PostgreSQLApiStatRepository::class, PostgreSQLApiStatRepository::class);
+        $container->bind(SqlApiStatRepository::class, SqlApiStatRepository::class);
 
         $container->set(
             ApiStatRepository::class,
-            static fn(Container $container): ApiStatRepository => $container->get(PostgreSQLApiStatRepository::class),
+            static fn(Container $container): ApiStatRepository => $container->get(SqlApiStatRepository::class),
         );
 
         $container->bind(ApiStatService::class, ApiStatService::class);

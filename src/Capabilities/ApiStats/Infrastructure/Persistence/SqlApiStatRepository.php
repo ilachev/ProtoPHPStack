@@ -6,46 +6,11 @@ namespace App\Capabilities\ApiStats\Infrastructure\Persistence;
 
 use App\Capabilities\ApiStats\Domain\ApiStat;
 use App\Capabilities\ApiStats\Domain\ApiStatRepository;
-use App\Platform\Hydration\Hydrator;
-use App\Platform\Storage\Query\QueryFactory;
 use App\Platform\Storage\Repository\AbstractRepository;
-use App\Platform\Storage\Storage;
 
-/**
- * PostgreSQL implementation of the API stats repository.
- */
-final class PostgreSQLApiStatRepository extends AbstractRepository implements ApiStatRepository
+final class SqlApiStatRepository extends AbstractRepository implements ApiStatRepository
 {
     private const TABLE_NAME = 'api_stats';
-
-    public function __construct(
-        Storage $storage,
-        Hydrator $hydrator,
-        QueryFactory $queryFactory,
-    ) {
-        parent::__construct($storage, $hydrator, $queryFactory);
-    }
-
-    public function save(ApiStat $stat): void
-    {
-        $this->saveEntity($stat, self::TABLE_NAME, 'id', $stat->id);
-    }
-
-    /**
-     * @param array<ApiStat> $stats
-     */
-    public function saveMultiple(array $stats): void
-    {
-        if (empty($stats)) {
-            return;
-        }
-
-        $this->storage->transaction(function () use ($stats): void {
-            foreach ($stats as $stat) {
-                $this->save($stat);
-            }
-        });
-    }
 
     /**
      * @return array<ApiStat>
@@ -117,5 +82,10 @@ final class PostgreSQLApiStatRepository extends AbstractRepository implements Ap
             ->offset($offset);
 
         return $this->fetchAll(ApiStat::class, $query);
+    }
+
+    public function save(ApiStat $stat): void
+    {
+        $this->saveEntity($stat, self::TABLE_NAME, 'id', $stat->id);
     }
 }

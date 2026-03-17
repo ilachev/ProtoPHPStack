@@ -3,18 +3,16 @@
 declare(strict_types=1);
 
 return [
-    // The storage engine to use: 'sqlite' or 'pgsql'
-    'engine' => 'pgsql',
+    // PostgreSQL is the primary runtime adapter for real backends.
+    'engine' => getenv('STORAGE_ENGINE') ?: 'pgsql',
 
-    // SQLite configuration
     'sqlite' => [
-        'database' => __DIR__ . '/../db/app.sqlite',
+        'database' => getenv('SQLITE_DATABASE') ?: __DIR__ . '/../var/app.sqlite',
         'migrations_path' => __DIR__ . '/../src/Platform/Storage/Migration/SQLite',
     ],
 
-    // PostgreSQL configuration
     'pgsql' => [
-        'host' => getenv('DB_HOST') ?: 'localhost',  // Use 'db-postgres' if connecting from within Docker
+        'host' => getenv('DB_HOST') ?: 'localhost',
         'port' => (int) (getenv('DB_PORT') ?: 5432),
         'database' => getenv('DB_NAME') ?: 'app',
         'username' => getenv('DB_USER') ?: 'app',

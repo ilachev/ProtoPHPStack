@@ -1,16 +1,16 @@
 # Целевая архитектура
 
-Этот документ описывает target state проекта как infrastructure-first шаблона.
+Этот документ описывает target state проекта как набора простых reusable backend-блоков.
 
 ## Главный принцип
 
-Репозиторий делится не на "продуктовые фичи внутри шаблона", а на три уровня:
+Репозиторий не должен выглядеть как большой framework или полуготовый продукт. Он должен быть читаем как набор блоков:
 
 - `Platform` — runtime core;
 - `Capabilities` — reusable building blocks;
-- `Examples` — example implementations.
+- `Examples` — примеры использования.
 
-целевая структура должна двигаться к виду:
+Текущая структура каталогов может оставаться такой, если она помогает держать границы простыми:
 
 ```text
 src/
@@ -57,7 +57,7 @@ src/
 
 ## Что такое `Capabilities`
 
-`Capabilities` — это reusable возможности шаблона.
+`Capabilities` — это просто папка для reusable-подсистем.
 
 Они допускают свою внутреннюю вертикальную структуру и могут содержать:
 
@@ -68,7 +68,7 @@ src/
 - capability-specific middleware;
 - tests и примеры использования.
 
-Capability отличается от product feature тем, что её можно использовать в разных продуктах без переписывания смысла.
+Такой блок отличается от product feature тем, что его можно использовать в разных продуктах без переписывания смысла.
 
 Хорошие кандидаты:
 
@@ -87,7 +87,7 @@ Capability отличается от product feature тем, что её мож�
 
 ## Что такое `Examples`
 
-`Examples` нужны как исполняемая документация.
+`Examples` нужны как минимальная исполняемая документация.
 
 Там допустимы:
 
@@ -108,9 +108,9 @@ Capability отличается от product feature тем, что её мож�
 
 `Shared` не должен превращаться в новую свалку legacy-кода.
 
-## Внутренняя структура capability
+## Внутренняя структура reusable-блока
 
-Capability остаётся slice-oriented.
+Внутри блока можно оставлять удобную вертикальную структуру, если она помогает чтению кода.
 
 Пример:
 
@@ -124,7 +124,7 @@ src/Capabilities/Session/
     Persistence/
 ```
 
-Это означает: vertical slices полезны, но их предметом должны быть reusable capabilities, а не продуктовая предметная область шаблона.
+Это означает: структура допустима любая, если она остаётся простой и обслуживает reusable-блок, а не продуктовую предметную область шаблона.
 
 ## HTTP модель
 
@@ -142,10 +142,11 @@ src/Capabilities/Session/
 
 Целевая стратегия:
 
-- PostgreSQL — основной production backend;
+- `PostgreSQL` остаётся основным runtime adapter;
 - generic storage abstractions живут в `Platform`;
-- capability-specific repositories живут внутри capability;
-- SQLite допустим только как явно вторичный dev/test fallback или удаляется.
+- block-specific repositories живут рядом со своим блоком;
+- unit и default verify не должны требовать поднятую БД;
+- дополнительные storage profiles допустимы только как адаптеры, а не как смысл проекта.
 
 ## Routing модель
 
@@ -172,16 +173,16 @@ Tooling должно быть отделено от runtime:
 
 LLM должна быстро отвечать на вопросы:
 
-1. это platform code, capability code или example code;
+1. это platform code, reusable block или example code;
 2. это reusable primitive или продуктовая политика;
-3. это надо обобщить, вынести в example или удалить;
-4. какие части нужно затронуть, чтобы добавить новую capability.
+3. это надо упростить, вынести в example или удалить;
+4. какие части нужно затронуть, чтобы добавить новый reusable-блок.
 
 Если ответ требует чтения половины репозитория, структура ещё недостаточно ясна.
 
 ## Архитектурные решения, которые уже можно принять
 
-### 1. `Session` — capability
+### 1. `Session` — reusable block
 
 Это reusable building block, а не домен продукта.
 
@@ -190,7 +191,7 @@ LLM должна быстро отвечать на вопросы:
 В template можно оставить только auth primitives и example flow.
 Конкретный login policy не должен быть смыслом core template.
 
-### 3. `ApiStats` — candidate observability capability
+### 3. `ApiStats` — candidate observability block
 
 Если он выражается как generic request stats, он остаётся.
 Если он завязан на продуктовые сценарии, его надо упростить.
@@ -209,13 +210,13 @@ LLM должна быстро отвечать на вопросы:
 Bootstrap
   -> load config
   -> create platform services
-  -> register capabilities
+  -> register reusable blocks
   -> optionally register examples
   -> assemble router/pipeline
   -> start runtime
 ```
 
-Важно: examples не должны быть обязательной частью runtime-ядра.
+Важно: examples не должны быть обязательной частью runtime-ядра, а структура не должна быть сложнее, чем требует реальная переиспользуемость.
 
 ## Definition of Ready для дальнейшей миграции
 
@@ -223,7 +224,7 @@ Bootstrap
 
 - целевые роли `Platform`, `Capabilities`, `Examples`, `Shared`;
 - судьба protobuf-first pipeline;
-- судьба SQLite;
+- роль optional storage adapters;
 - судьба hydrator/tooling слоя;
 - что именно из текущего кода считается capability, а что example.
 
@@ -232,8 +233,8 @@ Bootstrap
 Физическое разделение уже начато и должно считаться каноническим:
 
 - `src/Platform/*` — runtime core;
-- `src/Capabilities/Session` — reusable session capability;
-- `src/Capabilities/ApiStats` — candidate observability capability;
+- `src/Capabilities/Session` — reusable session block;
+- `src/Capabilities/ApiStats` — candidate observability block;
 - `src/Examples/Home` — smoke-test example endpoint;
 - `src/Examples/Auth` — example auth flow поверх capability-слоя.
 
@@ -241,4 +242,4 @@ Bootstrap
 
 - отделить auth primitives от example auth flow;
 - довести `src/Infrastructure` до более узких и понятных support-ролей;
-- привести onboarding и текущую архитектурную документацию к новой физической структуре.
+- привести onboarding и текущую документацию к языку simple reusable blocks, а не к языку сверх-архитектуры.
