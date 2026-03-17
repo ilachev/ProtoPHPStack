@@ -9,6 +9,7 @@
 - `src/Platform` — runtime core;
 - `src/Capabilities` — reusable building blocks;
 - `src/Examples` — example implementations;
+
 Проблема сейчас не в отсутствии структуры как таковой, а в том, что проект всё ещё местами описан тяжёлым архитектурным языком.
 
 ## `Platform`
@@ -86,7 +87,9 @@ Pipeline собирается в `App::createPipeline()` и сейчас вып�
 - login;
 - refresh;
 - logout;
-- integration с session capability.
+- integration с session capability;
+- явный demo-flow `email/password`, а не абстрактная auth-подсистема;
+- без отдельного auth middleware, потому что session context уже поставляется `SessionMiddleware`.
 
 Но этот код пока не отделён на:
 
@@ -143,9 +146,9 @@ Routing остаётся двухфазным:
 
 Хотя широкий `Infrastructure` уже убран, tooling и runtime support ещё не везде разведены достаточно ясно.
 
-### 2. `Auth` ещё не разделён на primitive и example policy
+### 2. `Auth` всё ещё не разрезан до конца
 
-Из-за этого в example-слое всё ещё лежит код, который частично выглядит как reusable capability.
+Хотя example-flow уже стал явнее, reusable auth primitives всё ещё не выделены отдельно от demo-сценария.
 
 ### 3. Tooling и runtime support ещё не разведены до конца
 

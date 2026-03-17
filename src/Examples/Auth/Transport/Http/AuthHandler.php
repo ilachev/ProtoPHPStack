@@ -11,7 +11,7 @@ use App\Api\V1\RefreshTokenRequest;
 use App\Api\V1\RefreshTokenResponse;
 use App\Capabilities\Session\Domain\Session;
 use App\Capabilities\Session\Transport\Http\SessionResponseHeaders;
-use App\Examples\Auth\Domain\AuthService;
+use App\Examples\Auth\Domain\EmailPasswordAuthFlow;
 use App\Platform\Http\Handler\AbstractJsonHandler;
 use App\Platform\Http\JsonResponse;
 use Google\Protobuf\Internal\Message;
@@ -21,7 +21,7 @@ use Psr\Http\Message\ServerRequestInterface;
 final readonly class AuthHandler extends AbstractJsonHandler
 {
     public function __construct(
-        private AuthService $authService,
+        private EmailPasswordAuthFlow $authFlow,
         JsonResponse $jsonResponse,
     ) {
         parent::__construct($jsonResponse);
@@ -57,7 +57,7 @@ final readonly class AuthHandler extends AbstractJsonHandler
             return $this->jsonResponse(json_encode(['error' => 'Invalid login request body'], JSON_THROW_ON_ERROR), 400);
         }
 
-        $tokens = $this->authService->login(
+        $tokens = $this->authFlow->login(
             $session,
             $loginRequest->getEmail(),
             $loginRequest->getPassword(),
@@ -82,7 +82,7 @@ final readonly class AuthHandler extends AbstractJsonHandler
     {
         /** @var Session|null $session */
         $session = $request->getAttribute('session');
-        $this->authService->logout($session);
+        $this->authFlow->logout($session);
 
         $response = $this->jsonResponse((new LogoutResponse())->serializeToJsonString());
 
@@ -102,7 +102,7 @@ final readonly class AuthHandler extends AbstractJsonHandler
 
         /** @var Session|null $currentSession */
         $currentSession = $request->getAttribute('session');
-        $tokens = $this->authService->refresh($currentSession, $refreshRequest->getRefreshToken());
+        $tokens = $this->authFlow->refresh($currentSession, $refreshRequest->getRefreshToken());
 
         if ($tokens === null) {
             return $this->jsonResponse(json_encode(['error' => 'Invalid refresh token'], JSON_THROW_ON_ERROR), 401);

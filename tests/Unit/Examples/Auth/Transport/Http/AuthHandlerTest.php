@@ -10,8 +10,8 @@ use App\Capabilities\Session\Domain\Session;
 use App\Capabilities\Session\Domain\SessionConfig;
 use App\Capabilities\Session\Domain\SessionService;
 use App\Capabilities\Session\Transport\Http\SessionResponseHeaders;
-use App\Examples\Auth\Domain\AuthService;
 use App\Examples\Auth\Domain\AuthUser;
+use App\Examples\Auth\Domain\EmailPasswordAuthFlow;
 use App\Examples\Auth\Transport\Http\AuthHandler;
 use App\Platform\Http\JsonResponse;
 use Nyholm\Psr7\ServerRequest;
@@ -46,7 +46,7 @@ final class AuthHandlerTest extends TestCase
             'use_fingerprint' => false,
         ]);
 
-        $authService = new AuthService(
+        $authFlow = new EmailPasswordAuthFlow(
             $this->userRepository,
             $this->refreshTokenSessionRepository,
             $this->sessionRepository,
@@ -54,7 +54,7 @@ final class AuthHandlerTest extends TestCase
             $sessionConfig,
         );
 
-        $this->handler = new AuthHandler($authService, new JsonResponse());
+        $this->handler = new AuthHandler($authFlow, new JsonResponse());
     }
 
     public function testLoginReturnsTokens(): void

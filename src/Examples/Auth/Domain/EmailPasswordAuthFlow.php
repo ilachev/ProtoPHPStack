@@ -9,7 +9,7 @@ use App\Capabilities\Session\Domain\SessionConfig;
 use App\Capabilities\Session\Domain\SessionRepository;
 use App\Capabilities\Session\Domain\SessionService;
 
-final readonly class AuthService
+final readonly class EmailPasswordAuthFlow
 {
     public function __construct(
         private AuthUserRepository $userRepository,

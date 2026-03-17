@@ -62,7 +62,7 @@ Reusable building blocks:
 Example implementations:
 
 - `Home` — минимальный smoke-test endpoint;
-- `Auth` — example auth flow поверх session capability.
+- `Auth` — example `email/password` flow поверх session capability.
 
 Examples не должны считаться частью default runtime. Они остаются как примерный слой и не участвуют в основном bootstrap по умолчанию.
 
@@ -90,7 +90,7 @@ Examples не должны считаться частью default runtime. Он
 
 ## Что ещё не доведено до целевого состояния
 
-- `Auth` пока не разделён на reusable primitives и example policy;
+- `Auth` всё ещё не разделён на reusable primitives и example policy, хотя demo-flow уже явно отделён от session runtime;
 - терминология проекта всё ещё местами звучит тяжелее, чем реально нужно для набора reusable-блоков;
 - hydration/codegen слой ещё не до конца вычищен и документирован.
 

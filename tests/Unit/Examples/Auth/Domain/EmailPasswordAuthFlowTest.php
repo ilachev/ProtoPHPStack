@@ -8,14 +8,14 @@ use App\Capabilities\Session\Domain\Session;
 use App\Capabilities\Session\Domain\SessionConfig;
 use App\Capabilities\Session\Domain\SessionRepository;
 use App\Capabilities\Session\Domain\SessionService;
-use App\Examples\Auth\Domain\AuthService;
 use App\Examples\Auth\Domain\AuthUser;
 use App\Examples\Auth\Domain\AuthUserRepository;
+use App\Examples\Auth\Domain\EmailPasswordAuthFlow;
 use App\Examples\Auth\Domain\RefreshTokenSessionRepository;
 use PHPUnit\Framework\TestCase;
 use Tests\Unit\Platform\Logging\TestLogger;
 
-final class AuthServiceTest extends TestCase
+final class EmailPasswordAuthFlowTest extends TestCase
 {
     private InMemoryAuthUserRepository $userRepository;
 
@@ -23,7 +23,7 @@ final class AuthServiceTest extends TestCase
 
     private InMemorySessionRepository $sessionRepository;
 
-    private AuthService $authService;
+    private EmailPasswordAuthFlow $authFlow;
 
     protected function setUp(): void
     {
@@ -39,7 +39,7 @@ final class AuthServiceTest extends TestCase
             'use_fingerprint' => false,
         ]);
 
-        $this->authService = new AuthService(
+        $this->authFlow = new EmailPasswordAuthFlow(
             $this->userRepository,
             $this->refreshTokenSessionRepository,
             $this->sessionRepository,
@@ -67,7 +67,7 @@ final class AuthServiceTest extends TestCase
         );
         $this->sessionRepository->save($session);
 
-        $tokens = $this->authService->login($session, 'DEV@example.com', 'secret');
+        $tokens = $this->authFlow->login($session, 'DEV@example.com', 'secret');
 
         self::assertNotNull($tokens);
         self::assertSame('existing-session', $tokens->accessToken);
@@ -101,7 +101,7 @@ final class AuthServiceTest extends TestCase
             updatedAt: time() - 50,
         );
 
-        $tokens = $this->authService->login($session, 'dev@example.com', 'wrong-password');
+        $tokens = $this->authFlow->login($session, 'dev@example.com', 'wrong-password');
 
         self::assertNull($tokens);
     }
@@ -129,7 +129,7 @@ final class AuthServiceTest extends TestCase
         $this->sessionRepository->save($anonymousCurrentSession);
         $this->refreshTokenSessionRepository->sessions['refresh-1'] = $authenticatedSession;
 
-        $tokens = $this->authService->refresh($anonymousCurrentSession, 'refresh-1');
+        $tokens = $this->authFlow->refresh($anonymousCurrentSession, 'refresh-1');
 
         self::assertNotNull($tokens);
         self::assertSame('authenticated-session', $tokens->accessToken);
@@ -155,7 +155,7 @@ final class AuthServiceTest extends TestCase
         );
         $this->sessionRepository->save($session);
 
-        $this->authService->logout($session);
+        $this->authFlow->logout($session);
 
         self::assertNull($this->sessionRepository->findById('session-to-delete'));
     }

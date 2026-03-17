@@ -43,7 +43,7 @@
 
 ### 3. Не вся declared API surface реализована
 
-`AuthService` уже существует как контракт, route и OpenAPI, но не как завершённый runtime module.
+auth example уже существует как route и OpenAPI surface, но reusable auth primitives всё ещё не выделены в отдельный neutral block.
 
 ### 4. Tooling и runtime смешаны в одном уровне важности
 

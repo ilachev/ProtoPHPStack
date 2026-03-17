@@ -7,17 +7,15 @@ namespace App\Examples\Auth;
 use App\Capabilities\Session\Domain\SessionConfig;
 use App\Capabilities\Session\Domain\SessionRepository;
 use App\Capabilities\Session\Domain\SessionService;
-use App\Examples\Auth\Domain\AuthService;
 use App\Examples\Auth\Domain\AuthUserRepository;
+use App\Examples\Auth\Domain\EmailPasswordAuthFlow;
 use App\Examples\Auth\Domain\RefreshTokenSessionRepository;
 use App\Examples\Auth\Infrastructure\Persistence\SessionPayloadRefreshTokenRepository;
 use App\Examples\Auth\Infrastructure\Persistence\SqlAuthUserRepository;
 use App\Examples\Auth\Transport\Http\AuthHandler;
-use App\Examples\Auth\Transport\Http\AuthMiddleware;
 use App\Examples\ExampleModule;
 use App\Platform\DI\Container;
 use App\Platform\Http\JsonResponse;
-use App\Platform\Logging\Logger;
 
 /**
  * @implements ExampleModule<object>
@@ -40,8 +38,8 @@ final readonly class AuthModule implements ExampleModule
         );
 
         $container->set(
-            AuthService::class,
-            static function (Container $container): AuthService {
+            EmailPasswordAuthFlow::class,
+            static function (Container $container): EmailPasswordAuthFlow {
                 /** @var AuthUserRepository $userRepository */
                 $userRepository = $container->get(AuthUserRepository::class);
 
@@ -57,7 +55,7 @@ final readonly class AuthModule implements ExampleModule
                 /** @var SessionConfig $sessionConfig */
                 $sessionConfig = $container->get(SessionConfig::class);
 
-                return new AuthService(
+                return new EmailPasswordAuthFlow(
                     $userRepository,
                     $refreshTokenSessionRepository,
                     $sessionRepository,
@@ -70,26 +68,13 @@ final readonly class AuthModule implements ExampleModule
         $container->set(
             AuthHandler::class,
             static function (Container $container): AuthHandler {
-                /** @var AuthService $authService */
-                $authService = $container->get(AuthService::class);
+                /** @var EmailPasswordAuthFlow $authFlow */
+                $authFlow = $container->get(EmailPasswordAuthFlow::class);
 
                 /** @var JsonResponse $jsonResponse */
                 $jsonResponse = $container->get(JsonResponse::class);
 
-                return new AuthHandler($authService, $jsonResponse);
-            },
-        );
-
-        $container->set(
-            AuthMiddleware::class,
-            static function (Container $container): AuthMiddleware {
-                /** @var SessionService $sessionService */
-                $sessionService = $container->get(SessionService::class);
-
-                /** @var Logger $logger */
-                $logger = $container->get(Logger::class);
-
-                return new AuthMiddleware($sessionService, $logger);
+                return new AuthHandler($authFlow, $jsonResponse);
             },
         );
     }
