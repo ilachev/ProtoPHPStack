@@ -7,9 +7,9 @@ namespace App\Examples\Auth\Infrastructure\Persistence;
 use App\Examples\Auth\Domain\AuthUser;
 use App\Examples\Auth\Domain\AuthUserRepository;
 use App\Infrastructure\Hydrator\Hydrator;
-use App\Infrastructure\Storage\Query\QueryFactory;
-use App\Infrastructure\Storage\Repository\AbstractRepository;
-use App\Infrastructure\Storage\Storage;
+use App\Platform\Storage\Query\QueryFactory;
+use App\Platform\Storage\Repository\AbstractRepository;
+use App\Platform\Storage\Storage;
 
 final class PostgreSQLAuthUserRepository extends AbstractRepository implements AuthUserRepository
 {

@@ -7,9 +7,9 @@ namespace App\Examples\Auth\Infrastructure\Persistence;
 use App\Capabilities\Session\Domain\Session;
 use App\Examples\Auth\Domain\RefreshTokenSessionRepository;
 use App\Infrastructure\Hydrator\Hydrator;
-use App\Infrastructure\Storage\Query\QueryFactory;
-use App\Infrastructure\Storage\Repository\AbstractRepository;
-use App\Infrastructure\Storage\Storage;
+use App\Platform\Storage\Query\QueryFactory;
+use App\Platform\Storage\Repository\AbstractRepository;
+use App\Platform\Storage\Storage;
 
 final class PostgreSQLRefreshTokenSessionRepository extends AbstractRepository implements RefreshTokenSessionRepository
 {

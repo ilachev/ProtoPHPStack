@@ -9,7 +9,7 @@ return [
     // SQLite configuration
     'sqlite' => [
         'database' => __DIR__ . '/../db/app.sqlite',
-        'migrations_path' => __DIR__ . '/../src/Infrastructure/Storage/Migration/SQLite',
+        'migrations_path' => __DIR__ . '/../src/Platform/Storage/Migration/SQLite',
     ],
 
     // PostgreSQL configuration
@@ -20,6 +20,6 @@ return [
         'username' => getenv('DB_USER') ?: 'app',
         'password' => getenv('DB_PASSWORD') ?: 'password',
         'schema' => 'public',
-        'migrations_path' => __DIR__ . '/../src/Infrastructure/Storage/Migration/PostgreSQL',
+        'migrations_path' => __DIR__ . '/../src/Platform/Storage/Migration/PostgreSQL',
     ],
 ];

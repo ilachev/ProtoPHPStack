@@ -37,7 +37,7 @@
 
 Например:
 
-- sessions растянуты между `Domain`, `Application/Client`, `Application/Middleware`, `Infrastructure/Storage`, `Infrastructure/DI`;
+- sessions были растянуты между `Domain`, `Application/Client`, `Application/Middleware`, `Infrastructure/Storage`, `Infrastructure/DI`;
 - routing разбит между proto, generator, config и runtime router;
 - hydrator/codegen — отдельная ось, которая пересекает почти все слои.
 

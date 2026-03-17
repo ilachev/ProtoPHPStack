@@ -6,7 +6,7 @@ namespace App\Capabilities\ApiStats\Infrastructure\Persistence;
 
 use App\Capabilities\ApiStats\Domain\ApiStat;
 use App\Capabilities\ApiStats\Domain\ApiStatRepository;
-use App\Infrastructure\Storage\Repository\AbstractRepository;
+use App\Platform\Storage\Repository\AbstractRepository;
 
 final class SQLiteApiStatRepository extends AbstractRepository implements ApiStatRepository
 {

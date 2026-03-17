@@ -9,9 +9,9 @@ use App\Capabilities\Session\Domain\SessionPayload;
 use App\Capabilities\Session\Domain\SessionRepository;
 use App\Infrastructure\Hydrator\Hydrator;
 use App\Infrastructure\Hydrator\JsonFieldAdapter;
-use App\Infrastructure\Storage\Query\QueryFactory;
-use App\Infrastructure\Storage\Repository\AbstractRepository;
-use App\Infrastructure\Storage\Storage;
+use App\Platform\Storage\Query\QueryFactory;
+use App\Platform\Storage\Repository\AbstractRepository;
+use App\Platform\Storage\Storage;
 
 final class PostgreSQLSessionRepository extends AbstractRepository implements SessionRepository
 {

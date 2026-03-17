@@ -3,9 +3,9 @@
 declare(strict_types=1);
 
 use App\Infrastructure\Console\MigrateCommand;
-use App\Infrastructure\Storage\Migration\MigrationService;
-use App\Infrastructure\Storage\Storage;
 use App\Platform\Runtime\App;
+use App\Platform\Storage\Migration\MigrationService;
+use App\Platform\Storage\Storage;
 use Tests\Integration\TestAppFactory;
 
 require_once __DIR__ . '/../../vendor/autoload.php';

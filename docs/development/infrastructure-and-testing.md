@@ -98,7 +98,7 @@ CLI wrapper:
 
 Реализация миграций:
 
-- `src/Infrastructure/Storage/Migration/PostgreSQL/*`
+- `src/Platform/Storage/Migration/PostgreSQL/*`
 
 ## Тесты
 

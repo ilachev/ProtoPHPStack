@@ -44,6 +44,7 @@
 Runtime core:
 
 - DI container and service providers;
+- storage abstractions, queries and migrations;
 - HTTP abstractions;
 - middleware pipeline;
 - route resolving;
@@ -69,7 +70,6 @@ Examples не должны считаться частью default runtime. Он
 
 Infrastructure support:
 
-- storage adapters и migrations;
 - cache, logger и console glue;
 - routing/codegen support;
 - hydrator/runtime integration.
@@ -143,8 +143,8 @@ task run
 4. `src/Capabilities/*`
 5. `src/Examples/*`
 6. `src/Platform/DI/*`
-7. `src/Infrastructure/Storage/*`
-8. `src/Infrastructure/*` когда нужен storage/tooling support
+7. `src/Platform/Storage/*`
+8. `src/Infrastructure/*` когда нужен cache/logger/console/tooling support
 9. `protos/proto/app/v1/*` и `protos/proto/examples/v1/*`
 
 ## Главные текущие зоны риска

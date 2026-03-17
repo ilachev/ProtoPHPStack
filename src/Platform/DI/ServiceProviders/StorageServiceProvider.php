@@ -6,11 +6,11 @@ namespace App\Platform\DI\ServiceProviders;
 
 use App\Infrastructure\Config\ProjectPath;
 use App\Infrastructure\Logger\Logger;
-use App\Infrastructure\Storage\Query\QueryFactory;
-use App\Infrastructure\Storage\Storage;
-use App\Infrastructure\Storage\StorageFactory;
 use App\Platform\DI\Container;
 use App\Platform\DI\ServiceProvider;
+use App\Platform\Storage\Query\QueryFactory;
+use App\Platform\Storage\Storage;
+use App\Platform\Storage\StorageFactory;
 
 /**
  * @implements ServiceProvider<object>

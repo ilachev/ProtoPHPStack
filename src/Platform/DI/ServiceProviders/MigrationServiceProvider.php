@@ -6,12 +6,12 @@ namespace App\Platform\DI\ServiceProviders;
 
 use App\Infrastructure\Config\ProjectPath;
 use App\Infrastructure\Logger\Logger;
-use App\Infrastructure\Storage\Migration\MigrationLoader;
-use App\Infrastructure\Storage\Migration\MigrationRepository;
-use App\Infrastructure\Storage\Migration\MigrationService;
-use App\Infrastructure\Storage\Storage;
 use App\Platform\DI\Container;
 use App\Platform\DI\ServiceProvider;
+use App\Platform\Storage\Migration\MigrationLoader;
+use App\Platform\Storage\Migration\MigrationRepository;
+use App\Platform\Storage\Migration\MigrationService;
+use App\Platform\Storage\Storage;
 
 /**
  * @implements ServiceProvider<object>

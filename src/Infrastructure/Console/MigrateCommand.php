@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Console;
 
-use App\Infrastructure\Storage\Migration\MigrationService;
+use App\Platform\Storage\Migration\MigrationService;
 
 final readonly class MigrateCommand
 {

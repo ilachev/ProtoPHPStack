@@ -10,8 +10,8 @@ use App\Infrastructure\Hydrator\Hydrator;
 use App\Infrastructure\Hydrator\LimitedReflectionCache;
 use App\Infrastructure\Hydrator\ReflectionHydrator;
 use App\Infrastructure\Hydrator\SetterProtobufHydration;
-use App\Infrastructure\Storage\Query\QueryBuilderFactory;
-use App\Infrastructure\Storage\Storage;
+use App\Platform\Storage\Query\QueryBuilderFactory;
+use App\Platform\Storage\Storage;
 use PHPUnit\Framework\TestCase;
 
 final class SQLiteSessionRepositoryTest extends TestCase

@@ -109,8 +109,6 @@ Pipeline собирается в `App::createPipeline()` и сейчас вып�
 
 Этот каталог всё ещё содержит много технических частей:
 
-- storage;
-- migrations;
 - cache;
 - logger;
 - routing generation;
@@ -119,7 +117,7 @@ Pipeline собирается в `App::createPipeline()` и сейчас вып�
 
 Сейчас это не один связный "слой инфраструктуры", а смесь:
 
-- platform-support кода;
+- tooling-support кода;
 - tooling/runtime glue;
 - support-кода, который ещё не до конца разведен между runtime и tooling.
 
@@ -143,13 +141,13 @@ Storage стратегия остаётся PostgreSQL-first.
 
 В коде всё ещё существует SQLite-слой, но его нужно считать legacy/compatibility нагрузкой, а не опорой архитектуры.
 
-Репозитории capability-уровня должны жить рядом со своей capability, а generic storage/runtime support — в platform/infrastructure support зоне.
+Репозитории capability-уровня должны жить рядом со своей capability, а generic storage/runtime support — в `Platform`.
 
 ## Главные текущие противоречия
 
 ### 1. `Infrastructure` ещё слишком широкий
 
-Сейчас он совмещает storage, service providers, hydrator, routing generation и console support.
+Сейчас он совмещает cache, hydrator, routing generation и console support.
 
 ### 2. `Auth` ещё не разделён на primitive и example policy
 

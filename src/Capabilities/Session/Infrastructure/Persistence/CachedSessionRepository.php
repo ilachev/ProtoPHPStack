@@ -8,7 +8,7 @@ use App\Capabilities\Session\Domain\Session;
 use App\Capabilities\Session\Domain\SessionRepository;
 use App\Infrastructure\Cache\CacheService;
 use App\Infrastructure\Logger\Logger;
-use App\Infrastructure\Storage\Repository\AbstractCachedRepository;
+use App\Platform\Storage\Repository\AbstractCachedRepository;
 
 final readonly class CachedSessionRepository extends AbstractCachedRepository implements SessionRepository
 {

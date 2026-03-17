@@ -7,9 +7,9 @@ namespace App\Capabilities\ApiStats\Infrastructure\Persistence;
 use App\Capabilities\ApiStats\Domain\ApiStat;
 use App\Capabilities\ApiStats\Domain\ApiStatRepository;
 use App\Infrastructure\Hydrator\Hydrator;
-use App\Infrastructure\Storage\Query\QueryFactory;
-use App\Infrastructure\Storage\Repository\AbstractRepository;
-use App\Infrastructure\Storage\Storage;
+use App\Platform\Storage\Query\QueryFactory;
+use App\Platform\Storage\Repository\AbstractRepository;
+use App\Platform\Storage\Storage;
 
 /**
  * PostgreSQL implementation of the API stats repository.

@@ -6,7 +6,7 @@ namespace App\Capabilities\Session\Infrastructure\Persistence;
 
 use App\Capabilities\Session\Domain\Session;
 use App\Capabilities\Session\Domain\SessionRepository;
-use App\Infrastructure\Storage\Repository\AbstractRepository;
+use App\Platform\Storage\Repository\AbstractRepository;
 
 final class SQLiteSessionRepository extends AbstractRepository implements SessionRepository
 {
