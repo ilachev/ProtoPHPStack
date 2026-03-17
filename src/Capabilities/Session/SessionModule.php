@@ -21,9 +21,9 @@ use App\Capabilities\Session\Infrastructure\Persistence\PostgreSQLSessionReposit
 use App\Capabilities\Session\Transport\Http\SessionMiddleware;
 use App\Infrastructure\Cache\CacheService;
 use App\Infrastructure\Config\ProjectPath;
-use App\Infrastructure\Hydrator\JsonFieldAdapter;
 use App\Infrastructure\Logger\Logger;
 use App\Platform\DI\Container;
+use App\Platform\Hydration\JsonFieldAdapter;
 
 /**
  * @implements Capability<object>

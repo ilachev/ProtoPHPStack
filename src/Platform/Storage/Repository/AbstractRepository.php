@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Platform\Storage\Repository;
 
-use App\Infrastructure\Hydrator\Hydrator;
+use App\Platform\Hydration\Hydrator;
 use App\Platform\Storage\Query\QueryBuilder;
 use App\Platform\Storage\Query\QueryFactory;
 use App\Platform\Storage\Storage;

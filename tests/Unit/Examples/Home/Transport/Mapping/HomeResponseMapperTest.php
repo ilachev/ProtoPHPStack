@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Tests\Unit\Examples\Home\Transport\Mapping;
 
 use App\Examples\Home\Transport\Mapping\HomeResponseMapper;
-use App\Infrastructure\Hydrator\LimitedReflectionCache;
-use App\Infrastructure\Hydrator\ReflectionHydrator;
-use App\Infrastructure\Hydrator\SetterProtobufHydration;
 use App\Platform\DataMapping\DataTransferObjectMapper;
+use App\Platform\Hydration\LimitedReflectionCache;
+use App\Platform\Hydration\ReflectionHydrator;
+use App\Platform\Hydration\SetterProtobufHydration;
 use PHPUnit\Framework\TestCase;
 
 final class HomeResponseMapperTest extends TestCase

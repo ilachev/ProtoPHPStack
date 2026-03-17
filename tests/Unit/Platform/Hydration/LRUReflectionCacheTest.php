@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Infrastructure\Hydrator;
+namespace Tests\Unit\Platform\Hydration;
 
-use App\Infrastructure\Hydrator\HydratorException;
-use App\Infrastructure\Hydrator\LRUReflectionCache;
+use App\Platform\Hydration\HydratorException;
+use App\Platform\Hydration\LRUReflectionCache;
 use PHPUnit\Framework\TestCase;
-use Tests\Unit\Infrastructure\Hydrator\Fixtures\TestProtobufMessage;
+use Tests\Unit\Platform\Hydration\Fixtures\TestProtobufMessage;
 
 final class LRUReflectionCacheTest extends TestCase
 {
@@ -15,7 +15,7 @@ final class LRUReflectionCacheTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->cache = new LRUReflectionCache(3); // Small cache size for testing
+        $this->cache = new LRUReflectionCache(3); // Small cache size for testing.
     }
 
     public function testGetReflectionClass(): void
@@ -28,18 +28,18 @@ final class LRUReflectionCacheTest extends TestCase
 
     public function testEvictionWhenCacheFull(): void
     {
-        // We're using a cache with size 3 (from setUp)
+        // The cache size is fixed at three entries for this test.
         $this->cache->getReflectionClass(\stdClass::class);
         $this->cache->getReflectionClass(\ArrayObject::class);
         $this->cache->getReflectionClass(\DateTimeImmutable::class);
 
-        // This should cause \stdClass to be evicted as it was accessed first
+        // Touch DateTimeImmutable to keep it fresh in the LRU order.
         $this->cache->getReflectionClass(\DateTimeImmutable::class);
 
-        // Refresh cache for \DateTime to make it recently used
+        // Refresh DateTimeImmutable once more to make it recently used.
         $this->cache->getReflectionClass(\DateTimeImmutable::class);
 
-        // This should evict \ArrayObject not \DateTime
+        // Adding a new class should evict ArrayObject, not DateTimeImmutable.
         $this->cache->getReflectionClass(\Exception::class);
 
         self::assertEquals(3, $this->cache->getSize());
@@ -72,11 +72,11 @@ final class LRUReflectionCacheTest extends TestCase
 
     public function testGetPublicProperties(): void
     {
-        // Create a test class with public properties
+        // Create a test class with public properties.
         $testObj = new class {
             public string $foo = 'bar';
 
-            // Private property used in this test to verify it's not included in getPublicProperties
+            // Private property is used to verify it is excluded from the public property list.
             private string $baz = 'qux';
 
             public function getBaz(): string
@@ -93,20 +93,20 @@ final class LRUReflectionCacheTest extends TestCase
 
     public function testIsProtobufMessage(): void
     {
-        // Test with standard class (not a Protobuf message)
+        // Standard classes must not be detected as Protobuf messages.
         self::assertFalse($this->cache->isProtobufMessage(\stdClass::class));
 
-        // Test with actual Protobuf class
+        // A generated Protobuf message must be detected correctly.
         self::assertTrue($this->cache->isProtobufMessage(TestProtobufMessage::class));
 
-        // Check that repeated calls return same result (caching works)
+        // Repeated calls should read the same cached result.
         $result1 = $this->cache->isProtobufMessage(\stdClass::class);
         $result2 = $this->cache->isProtobufMessage(\stdClass::class);
         self::assertSame($result1, $result2);
     }
 
     /**
-     * Test behavior with non-existent class.
+     * Verifies behavior for non-existent classes.
      */
     public function testIsProtobufMessageWithNonExistentClass(): void
     {
@@ -128,14 +128,14 @@ final class LRUReflectionCacheTest extends TestCase
 
     public function testCachingConsistency(): void
     {
-        // First access should initialize the cache
+        // The first access should initialize the cache.
         $this->cache->getReflectionClass(\DateTimeImmutable::class);
 
-        // Second access should return the same object from cache
+        // Later accesses should return the cached reflection instance.
         $reflection1 = $this->cache->getReflectionClass(\DateTimeImmutable::class);
         $reflection2 = $this->cache->getReflectionClass(\DateTimeImmutable::class);
 
-        // Assert same instance
+        // The same reflection instance should be reused.
         self::assertSame($reflection1, $reflection2);
     }
 }

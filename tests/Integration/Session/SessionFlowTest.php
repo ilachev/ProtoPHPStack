@@ -7,7 +7,7 @@ namespace Tests\Integration\Session;
 use App\Capabilities\Session\Application\ClientDetector;
 use App\Capabilities\Session\Application\SessionPayloadFactory;
 use App\Capabilities\Session\Domain\SessionService;
-use App\Infrastructure\Hydrator\JsonFieldAdapter;
+use App\Platform\Hydration\JsonFieldAdapter;
 use Nyholm\Psr7\ServerRequest;
 use Tests\Integration\IntegrationTestCase;
 

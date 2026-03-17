@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Infrastructure\Hydrator\Generator;
+namespace App\Platform\Hydration\Codegen;
 
 /**
  * Generates the source code for a high-performance, reflection-free hydrator class.
@@ -15,9 +15,8 @@ final class HydratorCodeGenerator
     /**
      * Generates the PHP source code for a hydrator for the given class name.
      *
-     * @param string $originalClassName The FQCN of the class to hydrate (e.g., App\Capabilities\Session\Domain\Session).
-     * @param string $generatedClassName the FQCN of the class to be generated
-     * @return string the generated PHP code
+     * @param class-string $originalClassName
+     * @param class-string $generatedClassName
      * @throws \ReflectionException
      */
     public function generate(string $originalClassName, string $generatedClassName): string
@@ -27,8 +26,15 @@ final class HydratorCodeGenerator
         $hydrateMethod = $this->generateHydrateMethod($reflection);
         $extractMethod = $this->generateExtractMethod($reflection);
 
-        $namespace = substr($generatedClassName, 0, strrpos($generatedClassName, '\\'));
-        $className = substr($generatedClassName, strrpos($generatedClassName, '\\') + 1);
+        $namespaceSeparatorPosition = strrpos($generatedClassName, '\\');
+        if ($namespaceSeparatorPosition === false) {
+            throw new \InvalidArgumentException(
+                \sprintf('Generated hydrator class name "%s" must be fully-qualified', $generatedClassName),
+            );
+        }
+
+        $namespace = substr($generatedClassName, 0, $namespaceSeparatorPosition);
+        $className = substr($generatedClassName, $namespaceSeparatorPosition + 1);
 
         return <<<PHP
             <?php
@@ -38,14 +44,14 @@ final class HydratorCodeGenerator
             namespace {$namespace};
 
             use {$originalClassName};
-            use App\\Infrastructure\\Hydrator\\GeneratedHydratorInterface;
+            use App\\Platform\\Hydration\\Codegen\\GeneratedHydrator;
 
             /**
              * Auto-generated hydrator for {@see {$originalClassName}}.
              *
              * DO NOT EDIT. This file is generated at runtime.
              */
-            final class {$className} implements GeneratedHydratorInterface
+            final class {$className} implements GeneratedHydrator
             {
             {$hydrateMethod}
 
@@ -55,6 +61,9 @@ final class HydratorCodeGenerator
             PHP;
     }
 
+    /**
+     * @param \ReflectionClass<object> $reflection
+     */
     private function generateHydrateMethod(\ReflectionClass $reflection): string
     {
         $constructor = $reflection->getConstructor();
@@ -73,7 +82,6 @@ final class HydratorCodeGenerator
             $name = $param->getName();
             $snakeName = $this->camelToSnake($name);
 
-            // Basic type casting for safety
             $type = $param->getType();
             if ($type instanceof \ReflectionNamedType) {
                 $typeName = $type->getName();
@@ -100,6 +108,9 @@ final class HydratorCodeGenerator
             PHP;
     }
 
+    /**
+     * @param \ReflectionClass<object> $reflection
+     */
     private function generateExtractMethod(\ReflectionClass $reflection): string
     {
         $properties = $reflection->getProperties(\ReflectionProperty::IS_PUBLIC);

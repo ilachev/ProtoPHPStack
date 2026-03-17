@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Infrastructure\Hydrator;
+namespace App\Platform\Hydration;
 
 final readonly class ReflectionHydrator implements Hydrator
 {

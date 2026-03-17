@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\Infrastructure\Hydrator;
+namespace App\Platform\Hydration;
 
 use Google\Protobuf\Internal\Message;
 
 /**
- * Кеш рефлексии с ограниченным размером хранения.
+ * Reflection cache with a fixed upper bound.
  */
 final class LimitedReflectionCache implements ReflectionCache
 {
@@ -90,9 +90,6 @@ final class LimitedReflectionCache implements ReflectionCache
     }
 
     /**
-     * Проверяет существование класса
-     * Выделен в отдельный метод для возможности мокирования в тестах.
-     *
      * @param class-string $className
      */
     private function isClassExists(string $className): bool
@@ -129,7 +126,9 @@ final class LimitedReflectionCache implements ReflectionCache
         if (\count($cache) >= $this->maxCacheSize) {
             reset($cache);
             $firstKey = key($cache);
-            unset($cache[$firstKey]);
+            if (\is_string($firstKey)) {
+                unset($cache[$firstKey]);
+            }
         }
 
         $cache[$key] = $value;

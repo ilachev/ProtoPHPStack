@@ -6,7 +6,7 @@ namespace App\Examples\Auth\Infrastructure\Persistence;
 
 use App\Examples\Auth\Domain\AuthUser;
 use App\Examples\Auth\Domain\AuthUserRepository;
-use App\Infrastructure\Hydrator\Hydrator;
+use App\Platform\Hydration\Hydrator;
 use App\Platform\Storage\Query\QueryFactory;
 use App\Platform\Storage\Repository\AbstractRepository;
 use App\Platform\Storage\Storage;

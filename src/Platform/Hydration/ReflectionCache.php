@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Infrastructure\Hydrator;
+namespace App\Platform\Hydration;
 
 /**
- * Кеширование рефлексии классов для оптимизации производительности.
+ * Caches reflection metadata used by hydration.
  */
 interface ReflectionCache
 {

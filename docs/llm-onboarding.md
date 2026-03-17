@@ -103,7 +103,7 @@ Infrastructure support:
 - `Auth` пока не разделён на reusable primitives и example policy;
 - `Infrastructure` всё ещё слишком широк как support/tooling каталог;
 - SQLite слой всё ещё присутствует;
-- hydrator/codegen слой ещё не получил окончательно согласованную роль.
+- hydration/codegen слой ещё не до конца вычищен и документирован.
 
 ## Основные инварианты для безопасной разработки
 
@@ -152,7 +152,7 @@ task run
 - `Infrastructure` всё ещё совмещает support runtime и tooling glue.
 - `Auth` пока не разделён на capability primitives и example flow.
 - Часть кода ориентирована на PostgreSQL-only стратегию, но SQLite-слой ещё присутствует.
-- В репозитории уже есть незавершённый переход к code-generating hydrator, но он пока не является основным runtime-механизмом.
+- Code-generating hydration остаётся вторичным механизмом по отношению к reflection-based runtime hydration.
 
 ## Как теперь интерпретировать изменения
 

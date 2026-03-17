@@ -6,10 +6,10 @@ namespace Tests\Unit\Platform\DataMapping;
 
 use App\Api\V1\HomeData;
 use App\Api\V1\HomeResponse;
-use App\Infrastructure\Hydrator\LimitedReflectionCache;
-use App\Infrastructure\Hydrator\ReflectionHydrator;
-use App\Infrastructure\Hydrator\SetterProtobufHydration;
 use App\Platform\DataMapping\DataTransferObjectMapper;
+use App\Platform\Hydration\LimitedReflectionCache;
+use App\Platform\Hydration\ReflectionHydrator;
+use App\Platform\Hydration\SetterProtobufHydration;
 use PHPUnit\Framework\TestCase;
 
 final class DataTransferObjectMapperTest extends TestCase

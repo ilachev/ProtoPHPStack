@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Infrastructure\Hydrator;
+namespace Tests\Unit\Platform\Hydration;
 
-use App\Infrastructure\Hydrator\LimitedReflectionCache;
-use App\Infrastructure\Hydrator\ProtobufHydration;
-use App\Infrastructure\Hydrator\SetterProtobufHydration;
+use App\Platform\Hydration\LimitedReflectionCache;
+use App\Platform\Hydration\ProtobufHydration;
+use App\Platform\Hydration\SetterProtobufHydration;
 use Google\Protobuf\Internal\Message;
 use PHPUnit\Framework\TestCase;
 
@@ -29,7 +29,7 @@ final class CacheLimitTest extends TestCase
     }
 
     /**
-     * Verifies that SetterProtobufHydration exists as replacement for ProtobufAdapter.
+     * Verifies that the protobuf hydration strategy is available.
      */
     public function testProtobufHydrationExists(): void
     {
@@ -88,14 +88,14 @@ final class CacheLimitTest extends TestCase
     }
 
     /**
-     * Тест на проверку поведения кеша protobufCache через прямую манипуляцию.
+     * Verifies protobuf cache limiting via direct cache manipulation.
      */
     public function testProtobufCacheLimiting(): void
     {
-        // Создаем кеш с маленьким размером
+        // Create a cache with a small size limit.
         $cache = new LimitedReflectionCache(5);
 
-        // Получаем доступ к приватным полям и методам
+        // Access private fields and methods for targeted assertions.
         $reflection = new \ReflectionClass(LimitedReflectionCache::class);
         $protobufCacheProperty = $reflection->getProperty('protobufCache');
         $protobufCacheProperty->setAccessible(true);
@@ -103,14 +103,14 @@ final class CacheLimitTest extends TestCase
         $manageCacheMethod = $reflection->getMethod('manageCache');
         $manageCacheMethod->setAccessible(true);
 
-        // Получаем исходное состояние кеша
+        // Read the initial cache state.
         /** @var array<string, bool> $cacheData */
         $cacheData = $protobufCacheProperty->getValue($cache);
 
-        // Начинаем с пустого кеша
-        self::assertCount(0, $cacheData, 'Начальный кеш должен быть пустым');
+        // Start with an empty cache.
+        self::assertCount(0, $cacheData, 'Initial cache must be empty');
 
-        // Вручную добавляем элементы в кеш через метод manageCache
+        // Add entries through the internal cache management method.
         for ($i = 0; $i < 10; ++$i) {
             $className = 'TestClass' . $i;
             $value = ($i % 2) === 0;
@@ -121,32 +121,32 @@ final class CacheLimitTest extends TestCase
             $protobufCacheProperty->setValue($cache, $cacheRef);
         }
 
-        // Получаем итоговое состояние кеша
+        // Read the final cache state.
         /** @var array<string, bool> $finalCacheData */
         $finalCacheData = $protobufCacheProperty->getValue($cache);
 
-        // Проверяем, что размер кеша не превышает установленный лимит
+        // Verify that the cache size never exceeds the configured limit.
         self::assertLessThanOrEqual(
             5,
             \count($finalCacheData),
-            'Размер кеша protobufCache должен быть ограничен максимальным значением',
+            'The protobuf cache size must remain bounded',
         );
     }
 
     /**
-     * Проверяет поведение механизма кеширования для рефлексии классов.
+     * Verifies reflection cache limiting with real classes.
      */
     public function testReflectionClassCacheBehavior(): void
     {
-        // Создаем кеш с очень маленьким размером
+        // Create a cache with a very small size limit.
         $cache = new LimitedReflectionCache(3);
 
-        // Получаем доступ к приватному полю reflectionCache
+        // Access the internal reflection cache.
         $reflection = new \ReflectionClass(LimitedReflectionCache::class);
         $reflectionCacheProperty = $reflection->getProperty('reflectionCache');
         $reflectionCacheProperty->setAccessible(true);
 
-        // Список существующих классов для тестирования
+        // Use real classes to populate the cache.
         $classesToTest = [
             self::class,
             TestCase::class,
@@ -155,20 +155,20 @@ final class CacheLimitTest extends TestCase
             \Exception::class,
         ];
 
-        // Вызываем метод getReflectionClass для каждого из классов
+        // Populate the cache.
         foreach ($classesToTest as $className) {
             $cache->getReflectionClass($className);
         }
 
-        // Получаем актуальное состояние кеша
+        // Read the resulting cache state.
         /** @var array<string, \ReflectionClass<object>> $reflectionCacheData */
         $reflectionCacheData = $reflectionCacheProperty->getValue($cache);
 
-        // Проверяем, что размер кеша ограничен
+        // Verify the configured upper bound.
         self::assertLessThanOrEqual(
             3,
             \count($reflectionCacheData),
-            'Размер кеша reflectionCache должен быть ограничен',
+            'The reflection cache size must remain bounded',
         );
     }
 
@@ -177,10 +177,10 @@ final class CacheLimitTest extends TestCase
         $cache = new LimitedReflectionCache();
 
         $result = $cache->isProtobufMessage(TestCase::class);
-        self::assertFalse($result, 'TestCase не должен определяться как Protobuf-сообщение');
+        self::assertFalse($result, 'TestCase must not be treated as a Protobuf message');
 
         $result = $cache->isProtobufMessage(Message::class);
-        self::assertFalse($result, 'Message::class не должен определяться как подкласс самого себя');
+        self::assertFalse($result, 'Message::class must not be treated as its own subclass');
     }
 
     public function testIsProtobufMessageCaching(): void
@@ -202,6 +202,6 @@ final class CacheLimitTest extends TestCase
         $protobufCacheProperty->setValue($cache, $cacheData);
 
         $result = $cache->isProtobufMessage(TestCase::class);
-        self::assertTrue($result, 'Метод должен вернуть значение из кеша');
+        self::assertTrue($result, 'The method must return the cached value');
     }
 }

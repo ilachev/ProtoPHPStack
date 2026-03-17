@@ -18,6 +18,7 @@
 В `src/Platform` уже сосредоточено runtime-ядро:
 
 - DI container и service providers;
+- hydration и data mapping;
 - HTTP abstractions и handler contracts;
 - middleware pipeline;
 - route handler resolving;
@@ -112,7 +113,6 @@ Pipeline собирается в `App::createPipeline()` и сейчас вып�
 - cache;
 - logger;
 - routing generation;
-- hydrator;
 - console commands и другой runtime/tooling glue.
 
 Сейчас это не один связный "слой инфраструктуры", а смесь:
@@ -147,7 +147,7 @@ Storage стратегия остаётся PostgreSQL-first.
 
 ### 1. `Infrastructure` ещё слишком широкий
 
-Сейчас он совмещает cache, hydrator, routing generation и console support.
+Сейчас он совмещает cache, logger, routing generation и console support.
 
 ### 2. `Auth` ещё не разделён на primitive и example policy
 
@@ -155,7 +155,7 @@ Storage стратегия остаётся PostgreSQL-first.
 
 ### 3. Tooling и runtime support ещё не разведены до конца
 
-Hydrator/codegen/routing generation живут рядом с runtime support кодом и требуют дальнейшего упорядочивания.
+Routing generation и часть support/tooling кода всё ещё живут рядом и требуют дальнейшего упорядочивания.
 
 ### 4. PostgreSQL-first стратегия ещё не доведена до конца
 

@@ -2,20 +2,15 @@
 
 declare(strict_types=1);
 
-namespace App\Infrastructure\Hydrator;
+namespace App\Platform\Hydration;
 
-interface Hydrator
+interface ProtobufHydration
 {
     /**
      * @template T of object
      * @param class-string<T> $className
-     * @param mixed[] $data
+     * @param array<string, mixed> $data
      * @return T
      */
     public function hydrate(string $className, array $data): object;
-
-    /**
-     * @return mixed[]
-     */
-    public function extract(object $object): array;
 }

@@ -9,10 +9,10 @@ use App\Capabilities\Session\Application\SessionPayloadFactory;
 use App\Capabilities\Session\Domain\Session;
 use App\Capabilities\Session\Domain\SessionConfig;
 use App\Capabilities\Session\Domain\SessionService;
-use App\Infrastructure\Hydrator\JsonFieldAdapter;
 use App\Infrastructure\Logger\Logger;
 use App\Platform\Http\Middleware;
 use App\Platform\Http\RequestHandler;
+use App\Platform\Hydration\JsonFieldAdapter;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 

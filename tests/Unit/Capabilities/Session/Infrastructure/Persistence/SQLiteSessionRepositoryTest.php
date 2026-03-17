@@ -6,10 +6,10 @@ namespace Tests\Unit\Capabilities\Session\Infrastructure\Persistence;
 
 use App\Capabilities\Session\Domain\Session;
 use App\Capabilities\Session\Infrastructure\Persistence\SQLiteSessionRepository;
-use App\Infrastructure\Hydrator\Hydrator;
-use App\Infrastructure\Hydrator\LimitedReflectionCache;
-use App\Infrastructure\Hydrator\ReflectionHydrator;
-use App\Infrastructure\Hydrator\SetterProtobufHydration;
+use App\Platform\Hydration\Hydrator;
+use App\Platform\Hydration\LimitedReflectionCache;
+use App\Platform\Hydration\ReflectionHydrator;
+use App\Platform\Hydration\SetterProtobufHydration;
 use App\Platform\Storage\Query\QueryBuilderFactory;
 use App\Platform\Storage\Storage;
 use PHPUnit\Framework\TestCase;

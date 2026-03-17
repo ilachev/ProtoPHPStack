@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Infrastructure\Hydrator;
+namespace Tests\Unit\Platform\Hydration;
 
 use App\Api\V1\HomeData;
-use App\Infrastructure\Hydrator\Hydrator;
-use App\Infrastructure\Hydrator\LimitedReflectionCache;
-use App\Infrastructure\Hydrator\ReflectionHydrator;
-use App\Infrastructure\Hydrator\SetterProtobufHydration;
+use App\Platform\Hydration\Hydrator;
+use App\Platform\Hydration\LimitedReflectionCache;
+use App\Platform\Hydration\ReflectionHydrator;
+use App\Platform\Hydration\SetterProtobufHydration;
 use PHPUnit\Framework\TestCase;
-use Tests\Unit\Infrastructure\Hydrator\Fixtures\TestEntity;
+use Tests\Unit\Platform\Hydration\Fixtures\TestEntity;
 
 final class HydratorProtobufTest extends TestCase
 {

@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Platform\DI\ServiceProviders;
 
-use App\Infrastructure\Hydrator\DefaultJsonFieldAdapter;
-use App\Infrastructure\Hydrator\Hydrator;
-use App\Infrastructure\Hydrator\JsonFieldAdapter;
 use App\Platform\DataMapping\DataTransferObjectMapper;
 use App\Platform\DI\Container;
 use App\Platform\DI\ServiceProvider;
 use App\Platform\Http\JsonResponse;
+use App\Platform\Hydration\DefaultJsonFieldAdapter;
+use App\Platform\Hydration\Hydrator;
+use App\Platform\Hydration\JsonFieldAdapter;
 
 /**
  * @implements ServiceProvider<object>

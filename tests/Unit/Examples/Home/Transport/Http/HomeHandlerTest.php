@@ -7,11 +7,11 @@ namespace Tests\Unit\Examples\Home\Transport\Http;
 use App\Examples\Home\Domain\HomeService;
 use App\Examples\Home\Transport\Http\HomeHandler;
 use App\Examples\Home\Transport\Mapping\HomeResponseMapper;
-use App\Infrastructure\Hydrator\LimitedReflectionCache;
-use App\Infrastructure\Hydrator\ReflectionHydrator;
-use App\Infrastructure\Hydrator\SetterProtobufHydration;
 use App\Platform\DataMapping\DataTransferObjectMapper;
 use App\Platform\Http\JsonResponse;
+use App\Platform\Hydration\LimitedReflectionCache;
+use App\Platform\Hydration\ReflectionHydrator;
+use App\Platform\Hydration\SetterProtobufHydration;
 use Nyholm\Psr7\ServerRequest;
 use PHPUnit\Framework\TestCase;
 

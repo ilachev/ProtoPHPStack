@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Infrastructure\Hydrator;
+namespace App\Platform\Hydration\Codegen;
 
-use App\Infrastructure\Hydrator\Generator\HydratorCodeGenerator;
+use App\Platform\Hydration\Hydrator;
 
 /**
  * Manages the generation and caching of high-performance hydrators.
@@ -14,10 +14,10 @@ use App\Infrastructure\Hydrator\Generator\HydratorCodeGenerator;
  * the filesystem (for persistence between processes) and in memory (for
  * performance within a single request).
  */
-final class CodeGeneratingHydrator implements HydratorInterface
+final class CodeGeneratingHydrator implements Hydrator
 {
     /**
-     * @var array<class-string, GeneratedHydratorInterface>
+     * @var array<class-string, GeneratedHydrator>
      */
     private array $instanceCache = [];
 
@@ -32,11 +32,23 @@ final class CodeGeneratingHydrator implements HydratorInterface
         $this->generator = new HydratorCodeGenerator();
     }
 
+    /**
+     * @template T of object
+     * @param class-string<T> $className
+     * @param array<string, mixed> $data
+     * @return T
+     */
     public function hydrate(string $className, array $data): object
     {
-        return $this->getHydrator($className)->hydrate($data);
+        /** @var T $hydrated */
+        $hydrated = $this->getHydrator($className)->hydrate($data);
+
+        return $hydrated;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function extract(object $object): array
     {
         return $this->getHydrator($object::class)->extract($object);
@@ -45,10 +57,10 @@ final class CodeGeneratingHydrator implements HydratorInterface
     /**
      * Gets a hydrator instance for the given class name.
      *
-     * @param class-string $className
-     * @throws \ReflectionException|\Exception
+     * @template T of object
+     * @param class-string<T> $className
      */
-    private function getHydrator(string $className): GeneratedHydratorInterface
+    private function getHydrator(string $className): GeneratedHydrator
     {
         if (isset($this->instanceCache[$className])) {
             return $this->instanceCache[$className];
@@ -63,7 +75,7 @@ final class CodeGeneratingHydrator implements HydratorInterface
 
         require_once $fileName;
 
-        /** @var GeneratedHydratorInterface $instance */
+        /** @var GeneratedHydrator $instance */
         $instance = new $generatedClassName();
         $this->instanceCache[$className] = $instance;
 
@@ -72,15 +84,26 @@ final class CodeGeneratingHydrator implements HydratorInterface
 
     /**
      * @param class-string $className
+     * @return class-string
      */
     private function getGeneratedClassName(string $className): string
     {
-        return 'App\Infrastructure\Hydrator\Generated\\' . str_replace('\\', '_', $className) . 'Hydrator';
+        $generatedClassName = 'App\Platform\Hydration\Generated\\' . str_replace('\\', '_', $className) . 'Hydrator';
+
+        /** @var class-string $generatedClassName */
+        return $generatedClassName;
     }
 
     private function getGeneratedClassFileName(string $generatedClassName): string
     {
-        $shortName = substr($generatedClassName, strrpos($generatedClassName, '\\') + 1);
+        $namespaceSeparatorPosition = strrpos($generatedClassName, '\\');
+        if ($namespaceSeparatorPosition === false) {
+            throw new \RuntimeException(
+                \sprintf('Generated hydrator class name "%s" must be fully-qualified', $generatedClassName),
+            );
+        }
+
+        $shortName = substr($generatedClassName, $namespaceSeparatorPosition + 1);
 
         return $this->cacheDir . \DIRECTORY_SEPARATOR . $shortName . '.php';
     }

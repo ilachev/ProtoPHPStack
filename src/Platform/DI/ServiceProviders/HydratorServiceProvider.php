@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Platform\DI\ServiceProviders;
 
-use App\Infrastructure\Hydrator\Hydrator;
-use App\Infrastructure\Hydrator\LRUReflectionCache;
-use App\Infrastructure\Hydrator\ProtobufHydration;
-use App\Infrastructure\Hydrator\ReflectionCache;
-use App\Infrastructure\Hydrator\ReflectionHydrator;
-use App\Infrastructure\Hydrator\SetterProtobufHydration;
 use App\Platform\DI\Container;
 use App\Platform\DI\ServiceProvider;
+use App\Platform\Hydration\Hydrator;
+use App\Platform\Hydration\LRUReflectionCache;
+use App\Platform\Hydration\ProtobufHydration;
+use App\Platform\Hydration\ReflectionCache;
+use App\Platform\Hydration\ReflectionHydrator;
+use App\Platform\Hydration\SetterProtobufHydration;
 
 /**
  * @implements ServiceProvider<object>

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Platform\DataMapping;
 
-use App\Infrastructure\Hydrator\Hydrator;
+use App\Platform\Hydration\Hydrator;
 use Google\Protobuf\Internal\Message;
 
 /**
