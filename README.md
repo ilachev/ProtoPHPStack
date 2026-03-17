@@ -32,11 +32,17 @@ composer install
 # Generate proto artifacts
 task proto:gen:all
 
-# Run tests
+# Run unit tests
 task test
 
-# Run all verifications (lint, static analysis, tests)
+# Run integration tests against PostgreSQL
+task test:integration
+
+# Run the default verification gate (lint, static analysis, unit tests)
 task verify
+
+# Run the full verification gate, including integration tests
+task verify:full
 ```
 
 ## Running the Application
@@ -55,6 +61,15 @@ task run
 # To stop all services
 task services:stop
 ```
+
+## Testing Strategy
+
+- `task test` runs unit tests only and requires no external services
+- `task verify` is the default local gate: lint, static analysis and unit tests
+- `task test:integration` runs PostgreSQL-backed integration tests
+- `task verify:full` runs both the default gate and integration verification
+
+Use `task services:start` before integration runs when you need a local PostgreSQL instance.
 
 ## GitHub Actions
 

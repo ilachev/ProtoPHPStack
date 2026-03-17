@@ -127,11 +127,21 @@ task proto:gen:all
 task lint
 task phpstan
 task test
+task test:integration
+task test:full
 task verify
+task verify:integration
+task verify:full
 task services:start
 task services:stop
 task run
 ```
+
+Интерпретация:
+
+- `task test` и `task verify` не должны требовать внешние сервисы;
+- `task test:integration` и `task verify:full` используют реальный PostgreSQL;
+- для изменений в storage/runtime adapters недостаточно только unit-контура.
 
 ## Минимальная стратегия чтения кода
 

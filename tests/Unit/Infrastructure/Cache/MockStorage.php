@@ -9,7 +9,7 @@ use Spiral\RoadRunner\KeyValue\Serializer\SerializerInterface;
 use Spiral\RoadRunner\KeyValue\StorageInterface;
 
 /**
- * Тестовая реализация хранилища для юнит-тестов.
+ * In-memory storage used by cache unit tests.
  */
 final class MockStorage implements StorageInterface, SerializerAwareInterface
 {
@@ -75,7 +75,7 @@ final class MockStorage implements StorageInterface, SerializerAwareInterface
     public function setMultiple(iterable $values, null|int|\DateInterval $ttl = null): bool
     {
         foreach ($values as $key => $value) {
-            // Гарантируем, что ключ будет строкой
+            // The interface accepts iterable keys, so normalize them here.
             $this->set((string) $key, $value, $ttl);
         }
 
@@ -125,15 +125,14 @@ final class MockStorage implements StorageInterface, SerializerAwareInterface
 
     public function withSerializer(SerializerInterface $serializer): self
     {
-        $new = clone $this;
-        $new->serializer = $serializer;
+        $this->serializer = $serializer;
 
-        return $new;
+        return $this;
     }
 
     public function getSerializer(): SerializerInterface
     {
-        // В реальном классе здесь не может быть null, но для тестов нам нужно обойти это
+        // Tests can instantiate the storage without wiring a serializer first.
         return $this->serializer ?? new class implements SerializerInterface {
             public function serialize(mixed $value): string
             {

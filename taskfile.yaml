@@ -37,8 +37,16 @@ tasks:
           CLI_ARGS: "--dry-run {{.CLI_ARGS}}"
 
   verify:
-    desc: Run all verification steps (lint, phpstan, tests)
-    deps: [ var, install, lint, phpstan, cache:clear, test ]
+    desc: Run the default verification gate (lint, phpstan, unit tests)
+    deps: [ var, install, lint, phpstan, test ]
+
+  verify:integration:
+    desc: Run integration verification against real PostgreSQL
+    deps: [ var, install, test:integration ]
+
+  verify:full:
+    desc: Run all verification steps including integration tests
+    deps: [ verify, verify:integration ]
 
   phpstan:
     desc: Run static analysis
@@ -53,10 +61,19 @@ tasks:
       - "{{.PHP}} bin/cache-clear.php"
 
   test:
-    desc: Run unit and integration tests
-    deps: [ var, install, cache:clear ]
+    desc: Run unit tests without external services
     cmds:
-      - "{{.PHP}} vendor/bin/phpunit --colors=never {{.CLI_ARGS}}"
+      - "{{.PHP}} vendor/bin/phpunit --colors=never -c phpunit.xml {{.CLI_ARGS}}"
+
+  test:integration:
+    desc: Run integration tests against real PostgreSQL
+    deps: [ var, install ]
+    cmds:
+      - "{{.PHP}} vendor/bin/phpunit --colors=never -c phpunit.integration.xml {{.CLI_ARGS}}"
+
+  test:full:
+    desc: Run unit and integration tests
+    deps: [ test, test:integration ]
 
   proto:gen:sdk:
     desc: Generate PHP SDK classes from core and example proto files
@@ -130,7 +147,7 @@ tasks:
     cmds:
       - cd tools/protoc-php-gen && {{.COMPOSER}} check
 
-  # Задачи для производительности
+  # Performance tasks
   perf:test:
     desc: Run single performance test
     deps: [ var, install ]

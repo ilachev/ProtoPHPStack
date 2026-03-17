@@ -36,7 +36,8 @@
 - user: `app`
 - password: `password`
 
-Проектовая стратегия — использовать PostgreSQL во всех средах, включая тесты.
+PostgreSQL остаётся основным runtime и integration storage adapter.
+Базовый quality gate шаблона при этом не должен требовать поднятые внешние сервисы.
 
 ### Redis
 
@@ -114,6 +115,16 @@ CLI wrapper:
 - repositories;
 - route generation.
 
+Bootstrap:
+
+- `vendor/autoload.php`
+
+Свойства:
+
+- не требуют PostgreSQL;
+- не требуют RoadRunner KV;
+- используются в default `task test` и `task verify`.
+
 ### Integration tests
 
 Проверяют:
@@ -123,6 +134,15 @@ CLI wrapper:
 - session creation/validation/fingerprinting;
 - geolocation integration;
 - api stats recording.
+
+Bootstrap:
+
+- `tests/Integration/bootstrap.php`
+
+Свойства:
+
+- требуют реальный PostgreSQL;
+- запускаются отдельным профилем через `task test:integration`.
 
 ## Как устроены integration tests
 
@@ -146,20 +166,27 @@ Bootstrap в `tests/Integration/bootstrap.php`:
 task lint
 task phpstan
 task test
+task test:integration
+task test:full
 task verify
+task verify:integration
+task verify:full
 ```
 
-`task verify` — основной gate. Он запускает:
+`task verify` — основной локальный gate. Он запускает:
 
 1. lint
 2. phpstan
-3. cache clear
-4. tests
+3. unit tests
+
+`task verify:integration` запускает PostgreSQL-backed integration tests.
+
+`task verify:full` объединяет оба контура.
 
 ## Что должна помнить LLM при изменениях
 
-- Изменения в storage/repository/migrations нужно проверять на PostgreSQL.
+- Изменения в storage/repository/migrations нужно проверять через `task test:integration` или `task verify:full`.
 - Изменения в `.proto` почти всегда требуют регенерации артефактов.
 - Изменения в middleware могут затронуть integration tests, даже если unit tests зелёные.
 - Из-за RoadRunner нельзя бездумно использовать растущие static caches и состояние в singleton-like сервисах.
-- Любая реструктуризация должна сохранить или улучшить сценарий `task verify`.
+- Любая реструктуризация должна сохранять быстрый автономный `task verify`.

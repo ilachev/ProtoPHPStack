@@ -8,8 +8,7 @@ use Spiral\RoadRunner\KeyValue\Serializer\SerializerInterface;
 use Spiral\RoadRunner\KeyValue\StorageInterface;
 
 /**
- * Реализация хранилища-заглушки для случаев, когда основное хранилище недоступно.
- * Все операции выполняются без ошибок, но никакие данные не сохраняются.
+ * Null-object storage used when the primary backend is unavailable.
  */
 final class FallbackStorage implements StorageInterface
 {
@@ -84,15 +83,14 @@ final class FallbackStorage implements StorageInterface
 
     public function withSerializer(SerializerInterface $serializer): self
     {
-        $new = clone $this;
-        $new->serializer = $serializer;
+        $this->serializer = $serializer;
 
-        return $new;
+        return $this;
     }
 
     public function getSerializer(): SerializerInterface
     {
-        // Возвращаем дефолтный сериализатор, если не был установлен
+        // Provide a minimal serializer when none was configured.
         return $this->serializer ?? new class implements SerializerInterface {
             public function serialize(mixed $value): string
             {

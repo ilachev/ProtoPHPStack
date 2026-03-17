@@ -66,5 +66,5 @@ jobs:
           php -r "var_dump(get_loaded_extensions());"
           php -r "var_dump(ini_get_all());" | grep -i "memor"
       
-      - name: Run verify (tests, lint and static analysis)
-        run: task verify
+      - name: Run full verify (unit, integration, lint and static analysis)
+        run: task verify:full
