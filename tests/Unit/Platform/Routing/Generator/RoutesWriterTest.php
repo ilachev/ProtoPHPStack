@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Infrastructure\Routing\Generator;
+namespace Tests\Unit\Platform\Routing\Generator;
 
-use App\Infrastructure\Routing\Generator\RouteProvider;
-use App\Infrastructure\Routing\Generator\RoutesWriter;
+use App\Platform\Routing\Generator\RouteProvider;
+use App\Platform\Routing\Generator\RoutesWriter;
 use PHPUnit\Framework\TestCase;
 
 final class RoutesWriterTest extends TestCase

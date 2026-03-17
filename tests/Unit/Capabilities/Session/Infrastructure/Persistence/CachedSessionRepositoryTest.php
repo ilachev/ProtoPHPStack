@@ -7,14 +7,13 @@ namespace Tests\Unit\Capabilities\Session\Infrastructure\Persistence;
 use App\Capabilities\Session\Domain\Session;
 use App\Capabilities\Session\Domain\SessionRepository;
 use App\Capabilities\Session\Infrastructure\Persistence\CachedSessionRepository;
-use App\Infrastructure\Cache\CacheConfig;
-use App\Infrastructure\Cache\CacheService;
-use App\Infrastructure\Cache\FallbackStorage;
-use App\Infrastructure\Cache\RoadRunnerCacheService;
+use App\Platform\Cache\CacheConfig;
+use App\Platform\Cache\CacheService;
+use App\Platform\Cache\RoadRunnerCacheService;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Tests\Unit\Infrastructure\Cache\MockStorage;
-use Tests\Unit\Infrastructure\Logger\TestLogger;
+use Tests\Unit\Platform\Cache\MockStorage;
+use Tests\Unit\Platform\Logging\TestLogger;
 
 final class CachedSessionRepositoryTest extends TestCase
 {
@@ -31,13 +30,13 @@ final class CachedSessionRepositoryTest extends TestCase
 
     protected function setUp(): void
     {
-        // Мокаем внутренний репозиторий
+        // Mock the inner repository.
         $this->innerRepository = $this->createMock(SessionRepository::class);
 
-        // Создаем тестовый логгер
+        // Create test logger.
         $logger = new TestLogger();
 
-        // Используем FallbackStorage вместо RPC-зависимого хранилища
+        // Use in-memory storage instead of the RoadRunner backend.
         $this->storage = new MockStorage();
 
         $cacheConfig = new CacheConfig(
@@ -47,26 +46,25 @@ final class CachedSessionRepositoryTest extends TestCase
             defaultTtl: 3600,
         );
 
-        // Создаем сервис кеширования без RPC-зависимости
+        // Create cache service without RoadRunner dependencies.
         $this->cacheService = new RoadRunnerCacheService($cacheConfig, $logger);
 
-        // Заменяем хранилище на наш мок
+        // Replace the backend storage with the test double.
         $reflection = new \ReflectionProperty($this->cacheService, 'storage');
         $reflection->setAccessible(true);
         $reflection->setValue($this->cacheService, $this->storage);
 
-        // Устанавливаем флаг доступности кеша
+        // Force the cache service into available mode.
         $reflection = new \ReflectionProperty($this->cacheService, 'available');
         $reflection->setAccessible(true);
         $reflection->setValue($this->cacheService, true);
 
-        // Создаем репозиторий
+        // Create repository under test.
         $this->repository = new CachedSessionRepository(
             $this->innerRepository,
             $this->cacheService,
             $logger,
         );
-
     }
 
     public function testFindByIdUsesCache(): void

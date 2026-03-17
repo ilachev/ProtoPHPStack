@@ -19,11 +19,11 @@ use App\Capabilities\Session\Infrastructure\GeoLocation\IP2LocationGeoLocationSe
 use App\Capabilities\Session\Infrastructure\Persistence\CachedSessionRepository;
 use App\Capabilities\Session\Infrastructure\Persistence\SqlSessionRepository;
 use App\Capabilities\Session\Transport\Http\SessionMiddleware;
-use App\Infrastructure\Cache\CacheService;
-use App\Infrastructure\Config\ProjectPath;
-use App\Infrastructure\Logger\Logger;
+use App\Platform\Cache\CacheService;
+use App\Platform\Config\ProjectPath;
 use App\Platform\DI\Container;
 use App\Platform\Hydration\JsonFieldAdapter;
+use App\Platform\Logging\Logger;
 
 /**
  * @implements Capability<object>

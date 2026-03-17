@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Infrastructure\Config;
+namespace App\Platform\Config;
 
 final class ProjectPath
 {

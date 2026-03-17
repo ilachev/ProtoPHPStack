@@ -11,7 +11,7 @@ use App\Platform\Storage\Migration\MigrationService;
 use App\Platform\Storage\SQLiteStorage;
 use App\Platform\Storage\StorageException;
 use PHPUnit\Framework\TestCase;
-use Tests\Unit\Infrastructure\Logger\TestLogger;
+use Tests\Unit\Platform\Logging\TestLogger;
 
 final class MigrationServiceTest extends TestCase
 {

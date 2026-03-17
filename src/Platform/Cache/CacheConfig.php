@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Infrastructure\Cache;
+namespace App\Platform\Cache;
 
 final readonly class CacheConfig
 {

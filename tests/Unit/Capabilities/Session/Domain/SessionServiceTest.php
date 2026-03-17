@@ -7,9 +7,9 @@ namespace Tests\Unit\Capabilities\Session\Domain;
 use App\Capabilities\Session\Domain\Session;
 use App\Capabilities\Session\Domain\SessionRepository;
 use App\Capabilities\Session\Domain\SessionService;
-use App\Infrastructure\Logger\Logger;
+use App\Platform\Logging\Logger;
 use PHPUnit\Framework\TestCase;
-use Tests\Unit\Infrastructure\Logger\TestLogger;
+use Tests\Unit\Platform\Logging\TestLogger;
 
 final class SessionServiceTest extends TestCase
 {

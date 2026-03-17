@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Infrastructure\Routing\Generator;
+namespace App\Platform\Routing\Generator;
 
 final readonly class RoutesWriter
 {

@@ -5,7 +5,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/../vendor/autoload.php';
 
-use App\Infrastructure\Console\MigrateCommand;
+use App\Platform\Console\MigrateCommand;
 use App\Platform\DI\Container;
 use App\Platform\DI\DIContainer;
 use App\Platform\Storage\Migration\MigrationService;

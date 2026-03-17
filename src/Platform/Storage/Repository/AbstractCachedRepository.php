@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Platform\Storage\Repository;
 
-use App\Infrastructure\Cache\CacheService;
-use App\Infrastructure\Logger\Logger;
+use App\Platform\Cache\CacheService;
+use App\Platform\Logging\Logger;
 
 abstract readonly class AbstractCachedRepository
 {

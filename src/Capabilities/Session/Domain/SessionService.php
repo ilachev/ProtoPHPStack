@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Capabilities\Session\Domain;
 
-use App\Infrastructure\Logger\Logger;
+use App\Platform\Logging\Logger;
 
 final readonly class SessionService
 {

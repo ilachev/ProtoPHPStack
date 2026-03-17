@@ -19,7 +19,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Tests\Unit\Capabilities\ApiStats\Domain\TestApiStatRepository;
-use Tests\Unit\Infrastructure\Logger\TestLogger;
+use Tests\Unit\Platform\Logging\TestLogger;
 
 final class ApiStatsMiddlewareTest extends TestCase
 {

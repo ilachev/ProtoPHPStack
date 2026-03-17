@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Infrastructure\Cache;
+namespace App\Platform\Cache;
 
 use Spiral\RoadRunner\KeyValue\Serializer\SerializerInterface;
 use Spiral\RoadRunner\KeyValue\StorageInterface;

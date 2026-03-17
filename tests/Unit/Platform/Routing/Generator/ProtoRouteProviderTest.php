@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Infrastructure\Routing\Generator;
+namespace Tests\Unit\Platform\Routing\Generator;
 
-use App\Infrastructure\Routing\Generator\ProtoRouteProvider;
+use App\Platform\Routing\Generator\ProtoRouteProvider;
 use PHPUnit\Framework\TestCase;
 
 final class ProtoRouteProviderTest extends TestCase

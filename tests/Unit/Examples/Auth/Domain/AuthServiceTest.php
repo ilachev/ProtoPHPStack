@@ -13,7 +13,7 @@ use App\Examples\Auth\Domain\AuthUser;
 use App\Examples\Auth\Domain\AuthUserRepository;
 use App\Examples\Auth\Domain\RefreshTokenSessionRepository;
 use PHPUnit\Framework\TestCase;
-use Tests\Unit\Infrastructure\Logger\TestLogger;
+use Tests\Unit\Platform\Logging\TestLogger;
 
 final class AuthServiceTest extends TestCase
 {

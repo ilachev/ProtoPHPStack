@@ -6,9 +6,9 @@ namespace App\Examples\Auth\Transport\Http;
 
 use App\Capabilities\Session\Domain\Session;
 use App\Capabilities\Session\Domain\SessionService;
-use App\Infrastructure\Logger\Logger;
 use App\Platform\Http\Middleware;
 use App\Platform\Http\RequestHandler;
+use App\Platform\Logging\Logger;
 use Nyholm\Psr7\Response;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;

@@ -7,9 +7,9 @@ require __DIR__ . '/../vendor/autoload.php';
 
 use App\Capabilities\Session\Application\GeoLocationConfig;
 use App\Capabilities\Session\Infrastructure\GeoLocation\UpdateGeoIPCommand;
-use App\Infrastructure\Logger\Logger;
 use App\Platform\DI\Container;
 use App\Platform\DI\DIContainer;
+use App\Platform\Logging\Logger;
 
 /** @var callable(Container<object>): void $containerConfig */
 $containerConfig = require __DIR__ . '/../config/container.php';

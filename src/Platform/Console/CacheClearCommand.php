@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Infrastructure\Console;
+namespace App\Platform\Console;
 
-use App\Infrastructure\Cache\CacheService;
-use App\Infrastructure\Logger\Logger;
+use App\Platform\Cache\CacheService;
+use App\Platform\Logging\Logger;
 
 final readonly class CacheClearCommand
 {
@@ -15,10 +15,10 @@ final readonly class CacheClearCommand
     ) {}
 
     /**
-     * Очищает весь кеш.
+     * Clears the cache backend.
      *
-     * @param bool $quiet Если true, не выводит сообщения в консоль
-     * @return bool True в случае успеха, false в случае ошибки
+     * @param bool $quiet When true, suppresses console output
+     * @return bool True on success, false on failure
      */
     public function clear(bool $quiet = false): bool
     {

@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Infrastructure\Cache;
+namespace Tests\Unit\Platform\Cache;
 
-use App\Infrastructure\Cache\CacheConfig;
-use App\Infrastructure\Cache\CacheService;
-use App\Infrastructure\Cache\RoadRunnerCacheService;
-use App\Infrastructure\Logger\Logger;
+use App\Platform\Cache\CacheConfig;
+use App\Platform\Cache\CacheService;
+use App\Platform\Cache\RoadRunnerCacheService;
+use App\Platform\Logging\Logger;
 use PHPUnit\Framework\TestCase;
-use Tests\Unit\Infrastructure\Logger\TestLogger;
+use Tests\Unit\Platform\Logging\TestLogger;
 
 final class RoadRunnerCacheServiceTest extends TestCase
 {
@@ -23,7 +23,7 @@ final class RoadRunnerCacheServiceTest extends TestCase
 
     protected function setUp(): void
     {
-        // Создаем конфигурацию
+        // Create test configuration.
         $this->config = new CacheConfig(
             engine: 'memory',
             address: 'tcp://localhost:6001',
@@ -31,32 +31,32 @@ final class RoadRunnerCacheServiceTest extends TestCase
             defaultTtl: 60,
         );
 
-        // Создаем логгер
+        // Create logger.
         $this->logger = new TestLogger();
 
-        // Создаем тестовое хранилище
+        // Create in-memory storage.
         $this->mockStorage = new MockStorage();
 
-        // Создаем сервис кеширования
+        // Create cache service.
         $this->cacheService = new RoadRunnerCacheService(
             $this->config,
             $this->logger,
         );
 
-        // Устанавливаем наше тестовое хранилище через рефлексию
+        // Override the backend storage with the test double.
         $reflectionProperty = new \ReflectionProperty(RoadRunnerCacheService::class, 'storage');
         $reflectionProperty->setValue($this->cacheService, $this->mockStorage);
     }
 
     public function testSetAndGet(): void
     {
-        // Установка значения
+        // Store value.
         $key = 'test-key';
         $value = ['foo' => 'bar'];
 
         self::assertTrue($this->cacheService->set($key, $value));
 
-        // Получение значения
+        // Read value.
         $retrieved = $this->cacheService->get($key);
         self::assertSame($value, $retrieved);
     }
@@ -75,13 +75,13 @@ final class RoadRunnerCacheServiceTest extends TestCase
         $key = 'existing-key';
         $value = 'test-value';
 
-        // Проверка до установки
+        // Assert missing key before write.
         self::assertFalse($this->cacheService->has($key));
 
-        // Установка значения
+        // Store value.
         $this->cacheService->set($key, $value);
 
-        // Проверка после установки
+        // Assert key exists after write.
         self::assertTrue($this->cacheService->has($key));
     }
 
@@ -90,25 +90,25 @@ final class RoadRunnerCacheServiceTest extends TestCase
         $key = 'to-delete';
         $value = 'delete-me';
 
-        // Установка значения
+        // Store value.
         $this->cacheService->set($key, $value);
         self::assertTrue($this->cacheService->has($key));
 
-        // Удаление значения
+        // Delete value.
         self::assertTrue($this->cacheService->delete($key));
         self::assertFalse($this->cacheService->has($key));
     }
 
     public function testClear(): void
     {
-        // Установка нескольких значений
+        // Store multiple values.
         $this->cacheService->set('key1', 'value1');
         $this->cacheService->set('key2', 'value2');
 
         self::assertTrue($this->cacheService->has('key1'));
         self::assertTrue($this->cacheService->has('key2'));
 
-        // Очистка кеша
+        // Clear cache.
         self::assertTrue($this->cacheService->clear());
 
         self::assertFalse($this->cacheService->has('key1'));
@@ -126,15 +126,15 @@ final class RoadRunnerCacheServiceTest extends TestCase
             return 'computed-result';
         };
 
-        // Первый вызов - значения нет в кеше, должен вызваться callback
+        // First call should compute and store the value.
         $result1 = $this->cacheService->getOrSet($key, $callback);
         self::assertSame('computed-result', $result1);
-        self::assertSame(1, $computeCount, 'Callback должен быть вызван ровно 1 раз');
+        self::assertSame(1, $computeCount, 'Callback must be called exactly once');
 
-        // Второй вызов - значение должно быть в кеше, callback не должен вызываться
+        // Second call should reuse the cached value.
         $result2 = $this->cacheService->getOrSet($key, $callback);
         self::assertSame('computed-result', $result2);
-        // Проверяем, что колбэк не был вызван второй раз (счетчик не изменился)
-        self::assertSame(1, $computeCount, 'Callback не должен вызываться повторно');
+        // The callback must not run again once the value is cached.
+        self::assertSame(1, $computeCount, 'Callback must not be called again');
     }
 }

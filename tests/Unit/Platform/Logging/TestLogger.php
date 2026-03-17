@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Infrastructure\Logger;
+namespace Tests\Unit\Platform\Logging;
 
-use App\Infrastructure\Logger\Logger;
+use App\Platform\Logging\Logger;
 
 final class TestLogger implements Logger
 {

@@ -66,16 +66,6 @@ Example implementations:
 
 Examples не должны считаться частью default runtime. Они остаются как примерный слой и не участвуют в основном bootstrap по умолчанию.
 
-### `src/Infrastructure`
-
-Infrastructure support:
-
-- cache, logger и console glue;
-- routing/codegen support;
-- hydrator/runtime integration.
-
-Это не старая "главная архитектура", а технический support layer вокруг `Platform` и `Capabilities`.
-
 ### `protos`
 
 - `protos/proto/app/v1` — core API-контракты шаблона.
@@ -101,7 +91,6 @@ Infrastructure support:
 ## Что ещё не доведено до целевого состояния
 
 - `Auth` пока не разделён на reusable primitives и example policy;
-- `Infrastructure` всё ещё слишком широк как support/tooling каталог;
 - терминология проекта всё ещё местами звучит тяжелее, чем реально нужно для набора reusable-блоков;
 - hydration/codegen слой ещё не до конца вычищен и документирован.
 
@@ -154,12 +143,11 @@ task run
 5. `src/Examples/*`
 6. `src/Platform/DI/*`
 7. `src/Platform/Storage/*`
-8. `src/Infrastructure/*` когда нужен cache/logger/console/tooling support
+8. `src/Platform/Cache`, `src/Platform/Logging`, `src/Platform/Console`, `src/Platform/Routing/Generator` когда нужен runtime/support код
 9. `protos/proto/app/v1/*` и `protos/proto/examples/v1/*`
 
 ## Главные текущие зоны риска
 
-- `Infrastructure` всё ещё совмещает support runtime и tooling glue.
 - `Auth` пока не разделён на capability primitives и example flow.
 - Storage и integration adapters всё ещё дочищаются от vendor-specific предположений.
 - Code-generating hydration остаётся вторичным механизмом по отношению к reflection-based runtime hydration.

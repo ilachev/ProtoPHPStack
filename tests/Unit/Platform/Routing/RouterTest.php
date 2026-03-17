@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Infrastructure\Routing;
+namespace Tests\Unit\Platform\Routing;
 
 use App\Platform\Routing\DefaultRouteCollector;
 use App\Platform\Routing\RouteDefinitionInterface;

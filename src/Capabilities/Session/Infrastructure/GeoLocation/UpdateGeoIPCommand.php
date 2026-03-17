@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Capabilities\Session\Infrastructure\GeoLocation;
 
 use App\Capabilities\Session\Application\GeoLocationConfig;
-use App\Infrastructure\Logger\Logger;
+use App\Platform\Logging\Logger;
 
 /**
  * Updates the local IP2Location geolocation database.

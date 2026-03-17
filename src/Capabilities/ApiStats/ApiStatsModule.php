@@ -10,8 +10,8 @@ use App\Capabilities\ApiStats\Infrastructure\Persistence\SqlApiStatRepository;
 use App\Capabilities\ApiStats\Transport\Http\ApiStatsMiddleware;
 use App\Capabilities\Capability;
 use App\Capabilities\Session\Domain\SessionService;
-use App\Infrastructure\Logger\Logger;
 use App\Platform\DI\Container;
+use App\Platform\Logging\Logger;
 
 /**
  * @implements Capability<object>

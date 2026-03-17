@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Platform\Http\Middleware;
 
-use App\Infrastructure\Logger\Logger;
 use App\Platform\Error\Error;
 use App\Platform\Http\JsonResponse;
 use App\Platform\Http\Middleware;
 use App\Platform\Http\RequestHandler;
+use App\Platform\Logging\Logger;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 

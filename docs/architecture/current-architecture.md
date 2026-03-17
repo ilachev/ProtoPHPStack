@@ -9,9 +9,7 @@
 - `src/Platform` — runtime core;
 - `src/Capabilities` — reusable building blocks;
 - `src/Examples` — example implementations;
-- `src/Infrastructure` — support/tooling слой.
-
-Проблема сейчас не в отсутствии структуры как таковой, а в том, что проект всё ещё местами описан и организован слишком тяжёлым архитектурным языком.
+Проблема сейчас не в отсутствии структуры как таковой, а в том, что проект всё ещё местами описан тяжёлым архитектурным языком.
 
 ## `Platform`
 
@@ -61,7 +59,7 @@ Pipeline собирается в `App::createPipeline()` и сейчас вып�
 Сейчас он даёт:
 
 - repository contract и service для записи статистики;
-- PostgreSQL persistence adapter;
+- SQL persistence adapter;
 - `ApiStatsMiddleware`, который интегрируется в platform pipeline.
 
 Смысл этой части нужно ещё дочистить: либо окончательно оформить как generic observability block, либо упростить.
@@ -106,20 +104,16 @@ Pipeline собирается в `App::createPipeline()` и сейчас вып�
 
 Следствие: examples остаются в репозитории, но не должны быть обязательной частью runtime surface.
 
-## `src/Infrastructure`
+## Runtime support
 
-Этот каталог всё ещё содержит много технических частей:
+Поддерживающие runtime-части теперь живут рядом с `Platform`:
 
-- cache;
-- logger;
-- routing generation;
-- console commands и другой runtime/tooling glue.
+- `src/Platform/Cache`
+- `src/Platform/Logging`
+- `src/Platform/Console`
+- `src/Platform/Routing/Generator`
 
-Сейчас это не один связный "слой инфраструктуры", а смесь:
-
-- tooling-support кода;
-- tooling/runtime glue;
-- support-кода, который ещё не до конца разведен между runtime и tooling.
+Это проще для чтения: нет отдельного широкого слоя, который снова начинает выглядеть как архитектурный центр.
 
 ## Routing и protobuf
 
@@ -145,9 +139,9 @@ Routing остаётся двухфазным:
 
 ## Главные текущие противоречия
 
-### 1. `Infrastructure` ещё слишком широкий
+### 1. Support-код ещё не до конца упрощён
 
-Сейчас он совмещает cache, logger, routing generation и console support.
+Хотя широкий `Infrastructure` уже убран, tooling и runtime support ещё не везде разведены достаточно ясно.
 
 ### 2. `Auth` ещё не разделён на primitive и example policy
 

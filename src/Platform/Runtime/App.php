@@ -6,8 +6,7 @@ namespace App\Platform\Runtime;
 
 use App\Capabilities\ApiStats\Transport\Http\ApiStatsMiddleware;
 use App\Capabilities\Session\Transport\Http\SessionMiddleware;
-use App\Infrastructure\Cache\CacheService;
-use App\Infrastructure\Logger\Logger;
+use App\Platform\Cache\CacheService;
 use App\Platform\DI\Container;
 use App\Platform\DI\DIContainer;
 use App\Platform\Http\Middleware\{
@@ -18,6 +17,7 @@ use App\Platform\Http\Middleware\{
     RoutingMiddleware
 };
 use App\Platform\Http\RouteHandlerResolver;
+use App\Platform\Logging\Logger;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Spiral\RoadRunner\Http\PSR7Worker;

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Platform\Storage;
 
-use App\Infrastructure\Logger\Logger;
+use App\Platform\Logging\Logger;
 use App\Platform\Storage\Query\QueryFactory;
 
 /**

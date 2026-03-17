@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Infrastructure\Cache;
+namespace Tests\Unit\Platform\Cache;
 
 use Spiral\RoadRunner\KeyValue\Serializer\SerializerAwareInterface;
 use Spiral\RoadRunner\KeyValue\Serializer\SerializerInterface;

@@ -7,8 +7,8 @@ namespace App\Capabilities\Session\Infrastructure\GeoLocation;
 use App\Capabilities\Session\Application\GeoLocationConfig;
 use App\Capabilities\Session\Application\GeoLocationData;
 use App\Capabilities\Session\Application\GeoLocationService;
-use App\Infrastructure\Cache\CacheService;
-use App\Infrastructure\Logger\Logger;
+use App\Platform\Cache\CacheService;
+use App\Platform\Logging\Logger;
 use IP2Location\Database;
 
 /**

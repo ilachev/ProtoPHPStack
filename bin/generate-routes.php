@@ -5,8 +5,8 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use App\Infrastructure\Routing\Generator\ProtoRouteProvider;
-use App\Infrastructure\Routing\Generator\RoutesWriter;
+use App\Platform\Routing\Generator\ProtoRouteProvider;
+use App\Platform\Routing\Generator\RoutesWriter;
 
 // Configuration
 $protoDir = __DIR__ . '/../protos/proto/app';

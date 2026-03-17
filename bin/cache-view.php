@@ -5,8 +5,8 @@ declare(strict_types=1);
 
 require __DIR__ . '/../vendor/autoload.php';
 
-use App\Infrastructure\Cache\CacheConfig;
-use App\Infrastructure\Cache\CacheService;
+use App\Platform\Cache\CacheConfig;
+use App\Platform\Cache\CacheService;
 use App\Platform\DI\Container;
 use App\Platform\DI\DIContainer;
 use Spiral\Goridge\RPC\RPC;

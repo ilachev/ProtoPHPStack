@@ -6,8 +6,8 @@ namespace App\Capabilities\Session\Infrastructure\Persistence;
 
 use App\Capabilities\Session\Domain\Session;
 use App\Capabilities\Session\Domain\SessionRepository;
-use App\Infrastructure\Cache\CacheService;
-use App\Infrastructure\Logger\Logger;
+use App\Platform\Cache\CacheService;
+use App\Platform\Logging\Logger;
 use App\Platform\Storage\Repository\AbstractCachedRepository;
 
 final readonly class CachedSessionRepository extends AbstractCachedRepository implements SessionRepository

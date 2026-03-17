@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Infrastructure\Console;
+namespace App\Platform\Console;
 
 use App\Platform\Storage\Migration\MigrationService;
 

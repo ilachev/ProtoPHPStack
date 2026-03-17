@@ -20,7 +20,7 @@ use PHPUnit\Framework\TestCase;
 use Tests\Unit\Examples\Auth\Domain\InMemoryAuthUserRepository;
 use Tests\Unit\Examples\Auth\Domain\InMemoryRefreshTokenSessionRepository;
 use Tests\Unit\Examples\Auth\Domain\InMemorySessionRepository;
-use Tests\Unit\Infrastructure\Logger\TestLogger;
+use Tests\Unit\Platform\Logging\TestLogger;
 
 final class AuthHandlerTest extends TestCase
 {

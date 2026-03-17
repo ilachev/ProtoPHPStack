@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Platform\DI\ServiceProviders;
 
-use App\Infrastructure\Config\ProjectPath;
-use App\Infrastructure\Logger\Logger;
+use App\Platform\Config\ProjectPath;
 use App\Platform\DI\Container;
 use App\Platform\DI\ServiceProvider;
+use App\Platform\Logging\Logger;
 use App\Platform\Storage\Query\QueryFactory;
 use App\Platform\Storage\Storage;
 use App\Platform\Storage\StorageFactory;

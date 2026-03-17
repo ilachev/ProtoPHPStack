@@ -241,5 +241,5 @@ Bootstrap
 Следующий уровень работы теперь не "переименовать `Modules`", а дочистить границы:
 
 - отделить auth primitives от example auth flow;
-- довести `src/Infrastructure` до более узких и понятных support-ролей;
+- удерживать support-код в узких runtime-каталогах, а не собирать его обратно в широкий `Infrastructure`;
 - привести onboarding и текущую документацию к языку simple reusable blocks, а не к языку сверх-архитектуры.

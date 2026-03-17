@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Platform\DI\ServiceProviders;
 
-use App\Infrastructure\Logger\Logger;
-use App\Infrastructure\Logger\ReadableOutputLogger;
-use App\Infrastructure\Logger\RoadRunnerLogger;
 use App\Platform\DI\Container;
 use App\Platform\DI\ContainerHandlerFactory;
 use App\Platform\DI\DIContainer;
 use App\Platform\DI\ServiceProvider;
 use App\Platform\Http\Handler\HandlerFactoryInterface;
+use App\Platform\Logging\Logger;
+use App\Platform\Logging\ReadableOutputLogger;
+use App\Platform\Logging\RoadRunnerLogger;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\Http\Message\ServerRequestFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;

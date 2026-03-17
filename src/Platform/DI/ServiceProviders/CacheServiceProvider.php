@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Platform\DI\ServiceProviders;
 
-use App\Infrastructure\Cache\CacheConfig;
-use App\Infrastructure\Cache\CacheService;
-use App\Infrastructure\Cache\RoadRunnerCacheService;
-use App\Infrastructure\Config\ProjectPath;
+use App\Platform\Cache\CacheConfig;
+use App\Platform\Cache\CacheService;
+use App\Platform\Cache\RoadRunnerCacheService;
+use App\Platform\Config\ProjectPath;
 use App\Platform\DI\Container;
 use App\Platform\DI\ServiceProvider;
 
