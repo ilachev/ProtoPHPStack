@@ -191,10 +191,10 @@ LLM должна быстро отвечать на вопросы:
 В template можно оставить только auth primitives и example flow.
 Конкретный login policy не должен быть смыслом core template.
 
-### 3. `ApiStats` — candidate observability block
+### 3. `ApiStats` — optional request logging add-on
 
-Если он выражается как generic request stats, он остаётся.
-Если он завязан на продуктовые сценарии, его надо упростить.
+Если он остаётся маленьким и generic, он подходит шаблону.
+Если он начинает разрастаться в продуктовую аналитику, его надо упростить или вынести.
 
 ### 4. `Home` — только example
 

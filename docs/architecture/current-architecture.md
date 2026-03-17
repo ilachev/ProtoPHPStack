@@ -55,15 +55,15 @@ Pipeline собирается в `App::createPipeline()` и сейчас вып�
 
 ### `src/Capabilities/ApiStats`
 
-Это candidate observability block.
+Это небольшой request logging add-on.
 
 Сейчас он даёт:
 
-- repository contract и service для записи статистики;
+- recorder для записи вызовов;
 - SQL persistence adapter;
 - `ApiStatsMiddleware`, который интегрируется в platform pipeline.
 
-Смысл этой части нужно ещё дочистить: либо окончательно оформить как generic observability block, либо упростить.
+Эта часть должна оставаться маленькой и нейтральной: без лишнего аналитического API surface и без притворства большой observability-подсистемой.
 
 ## `Examples`
 

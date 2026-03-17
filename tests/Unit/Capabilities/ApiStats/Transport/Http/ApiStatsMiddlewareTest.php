@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Capabilities\ApiStats\Transport\Http;
 
+use App\Capabilities\ApiStats\Domain\ApiCallRecorder;
 use App\Capabilities\ApiStats\Domain\ApiStat;
-use App\Capabilities\ApiStats\Domain\ApiStatService;
 use App\Capabilities\ApiStats\Transport\Http\ApiStatsMiddleware;
 use App\Capabilities\Session\Domain\Session;
-use App\Capabilities\Session\Domain\SessionRepository;
-use App\Capabilities\Session\Domain\SessionService;
 use App\Platform\Http\RequestHandler;
 use App\Platform\Routing\RouteResult;
 use App\Platform\Routing\RouteStatus;
@@ -19,78 +17,43 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Tests\Unit\Capabilities\ApiStats\Domain\TestApiStatRepository;
-use Tests\Unit\Platform\Logging\TestLogger;
 
 final class ApiStatsMiddlewareTest extends TestCase
 {
     private TestApiStatRepository $repository;
 
-    private ApiStatService $statService;
-
-    private SessionService $sessionService;
-
-    private TestLogger $logger;
+    private ApiCallRecorder $recorder;
 
     private ApiStatsMiddleware $middleware;
 
     protected function setUp(): void
     {
         $this->repository = new TestApiStatRepository();
-        $this->statService = new ApiStatService($this->repository);
-
-        // Create a test session repository.
-        $testSessionRepository = new class implements SessionRepository {
-            public function findById(string $id): Session
-            {
-                $now = time();
-
-                return new Session(
-                    id: $id,
-                    userId: null,
-                    payload: '{}',
-                    expiresAt: $now + 3600,
-                    createdAt: $now,
-                    updatedAt: $now,
-                );
-            }
-
-            public function save(Session $session): void {}
-
-            public function delete(string $id): void {}
-
-            public function deleteExpired(): void {}
-
-            public function findByUserId(int $userId): array
-            {
-                return [];
-            }
-
-            public function findAll(): array
-            {
-                return [];
-            }
-        };
-
-        // Create a real SessionService instance.
-        $this->logger = new TestLogger();
-        $this->sessionService = new SessionService($testSessionRepository, $this->logger);
-
-        $this->middleware = new ApiStatsMiddleware($this->statService, $this->sessionService, $this->logger);
+        $this->recorder = new ApiCallRecorder($this->repository);
+        $this->middleware = new ApiStatsMiddleware($this->recorder);
     }
 
-    public function testProcessWithSessionId(): void
+    public function testProcessWithSession(): void
     {
-        // Use a valid session ID format (32 hex characters).
         $sessionId = '0123456789abcdef0123456789abcdef';
         $routeName = 'test.route';
         $routePath = '/test/path';
         $method = 'GET';
         $statusCode = 200;
+        $now = time();
+        $session = new Session(
+            id: $sessionId,
+            userId: null,
+            payload: '{}',
+            expiresAt: $now + 3600,
+            createdAt: $now,
+            updatedAt: $now,
+        );
 
         $routeResult = new RouteResult(RouteStatus::FOUND, $routeName, ['action' => 'test']);
 
         $request = new ServerRequest($method, 'https://example.com' . $routePath);
-        $request = $request->withAttribute('sessionId', $sessionId)
+        $request = $request->withAttribute('session', $session)
             ->withAttribute(RouteResult::class, $routeResult);
 
         $response = new Response($statusCode);
@@ -132,7 +95,7 @@ final class ApiStatsMiddlewareTest extends TestCase
         self::assertGreaterThan(0, $stat->requestTime);
     }
 
-    public function testProcessWithoutSessionId(): void
+    public function testProcessWithoutSession(): void
     {
         $request = new ServerRequest('GET', 'https://example.com/test');
         $response = new Response(200);
@@ -156,20 +119,28 @@ final class ApiStatsMiddlewareTest extends TestCase
         // Ensure middleware passed the request through.
         self::assertSame($response, $result);
 
-        // Ensure stats were not saved because sessionId is missing.
+        // Ensure stats were not saved because the request has no session.
         self::assertEmpty($this->repository->stats);
     }
 
     public function testProcessWithoutRouteResult(): void
     {
-        // Use a valid session ID format (32 hex characters).
         $sessionId = '0123456789abcdef0123456789abcdef';
         $path = '/no-route-result';
         $method = 'GET';
         $statusCode = 404;
+        $now = time();
+        $session = new Session(
+            id: $sessionId,
+            userId: null,
+            payload: '{}',
+            expiresAt: $now + 3600,
+            createdAt: $now,
+            updatedAt: $now,
+        );
 
         $request = new ServerRequest($method, 'https://example.com' . $path);
-        $request = $request->withAttribute('sessionId', $sessionId);
+        $request = $request->withAttribute('session', $session);
 
         $response = new Response($statusCode);
 

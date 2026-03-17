@@ -55,7 +55,7 @@ Runtime core:
 Reusable building blocks:
 
 - `Session` — сессии, fingerprinting, client detection, session middleware, geolocation integration;
-- `ApiStats` — request statistics / observability candidate.
+- `ApiStats` — небольшой add-on для записи request log.
 
 ### `src/Examples`
 
@@ -84,7 +84,7 @@ Examples не должны считаться частью default runtime. Он
 - восстановление сессии по cookie/bearer;
 - fingerprint matching клиента;
 - геолокация по IP;
-- запись статистики API-вызовов;
+- запись request log для API-вызовов;
 - миграции storage adapters;
 - unit и integration tests.
 

@@ -137,7 +137,7 @@ LLM должна сразу понимать:
 
 - `Platform` runtime;
 - `Session` как сильный reusable блок;
-- `ApiStats` как потенциальный observability block;
+- `ApiStats` как маленький request logging add-on;
 - `Auth` и `Home` как candidate example implementations.
 
 Но репозиторий ещё надо дочистить от product bias:

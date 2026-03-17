@@ -59,7 +59,7 @@
 Предварительная целевая классификация:
 
 1. `Session` — reusable блок;
-2. `ApiStats` -> `Observability` блок, если останется generic;
+2. `ApiStats` -> маленький request logging block, если останется generic;
 3. `Auth` — primitives плюс example flow;
 4. всё, что не reusable, не должно оставаться в `Capabilities`.
 
