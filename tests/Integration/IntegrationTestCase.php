@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
-use App\Infrastructure\DI\Container;
+use App\Platform\DI\Container;
 use App\Platform\Runtime\App;
 use Nyholm\Psr7\ServerRequest;
 use Nyholm\Psr7\Stream;

@@ -17,6 +17,7 @@
 
 В `src/Platform` уже сосредоточено runtime-ядро:
 
+- DI container и service providers;
 - HTTP abstractions и handler contracts;
 - middleware pipeline;
 - route handler resolving;
@@ -48,8 +49,8 @@ Pipeline собирается в `App::createPipeline()` и сейчас вып�
 Внутри уже есть собственная вертикаль:
 
 - `Domain` — модель сессии, конфиг, repository contract, service;
-- `Application` — client detection и payload factory contracts;
-- `Infrastructure` — persistence adapters, fingerprint detector, payload factory implementation;
+- `Application` — client detection, geolocation contracts и payload factory contracts;
+- `Infrastructure` — persistence adapters, fingerprint detector, geolocation implementation и payload factory implementation;
 - `Transport/Http` — capability middleware и HTTP coordination.
 
 ### `src/Capabilities/ApiStats`
@@ -108,14 +109,13 @@ Pipeline собирается в `App::createPipeline()` и сейчас вып�
 
 Этот каталог всё ещё содержит много технических частей:
 
-- DI container и service providers;
 - storage;
 - migrations;
 - cache;
 - logger;
 - routing generation;
 - hydrator;
-- geolocation adapters.
+- console commands и другой runtime/tooling glue.
 
 Сейчас это не один связный "слой инфраструктуры", а смесь:
 

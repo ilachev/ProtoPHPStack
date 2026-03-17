@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Capabilities;
 
-use App\Infrastructure\DI\ServiceProvider;
+use App\Platform\DI\ServiceProvider;
 
 /**
  * Marker interface for reusable capabilities registered by the application bootstrap.

@@ -8,8 +8,8 @@ use App\Examples\ExampleModule;
 use App\Examples\Home\Domain\HomeService;
 use App\Examples\Home\Transport\Http\HomeHandler;
 use App\Examples\Home\Transport\Mapping\HomeResponseMapper;
-use App\Infrastructure\DI\Container;
 use App\Platform\DataMapping\DataTransferObjectMapper;
+use App\Platform\DI\Container;
 use App\Platform\Http\JsonResponse;
 
 /**

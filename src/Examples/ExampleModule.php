@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Examples;
 
-use App\Infrastructure\DI\ServiceProvider;
+use App\Platform\DI\ServiceProvider;
 
 /**
  * Marker interface for example modules registered on top of platform and capabilities.

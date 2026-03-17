@@ -10,8 +10,8 @@ use App\Capabilities\ApiStats\Infrastructure\Persistence\PostgreSQLApiStatReposi
 use App\Capabilities\ApiStats\Transport\Http\ApiStatsMiddleware;
 use App\Capabilities\Capability;
 use App\Capabilities\Session\Domain\SessionService;
-use App\Infrastructure\DI\Container;
 use App\Infrastructure\Logger\Logger;
+use App\Platform\DI\Container;
 
 /**
  * @implements Capability<object>

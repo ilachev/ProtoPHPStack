@@ -7,9 +7,9 @@ namespace App\Platform\Runtime;
 use App\Capabilities\ApiStats\Transport\Http\ApiStatsMiddleware;
 use App\Capabilities\Session\Transport\Http\SessionMiddleware;
 use App\Infrastructure\Cache\CacheService;
-use App\Infrastructure\DI\Container;
-use App\Infrastructure\DI\DIContainer;
 use App\Infrastructure\Logger\Logger;
+use App\Platform\DI\Container;
+use App\Platform\DI\DIContainer;
 use App\Platform\Http\Middleware\{
     ErrorHandlerMiddleware,
     HttpLoggingMiddleware,

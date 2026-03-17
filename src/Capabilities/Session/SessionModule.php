@@ -7,6 +7,7 @@ namespace App\Capabilities\Session;
 use App\Capabilities\Capability;
 use App\Capabilities\Session\Application\ClientConfig;
 use App\Capabilities\Session\Application\ClientDetector;
+use App\Capabilities\Session\Application\GeoLocationConfig;
 use App\Capabilities\Session\Application\GeoLocationService;
 use App\Capabilities\Session\Application\SessionPayloadFactory;
 use App\Capabilities\Session\Domain\SessionConfig;
@@ -14,14 +15,15 @@ use App\Capabilities\Session\Domain\SessionRepository;
 use App\Capabilities\Session\Domain\SessionService;
 use App\Capabilities\Session\Infrastructure\DefaultSessionPayloadFactory;
 use App\Capabilities\Session\Infrastructure\FingerprintClientDetector;
+use App\Capabilities\Session\Infrastructure\GeoLocation\IP2LocationGeoLocationService;
 use App\Capabilities\Session\Infrastructure\Persistence\CachedSessionRepository;
 use App\Capabilities\Session\Infrastructure\Persistence\PostgreSQLSessionRepository;
 use App\Capabilities\Session\Transport\Http\SessionMiddleware;
 use App\Infrastructure\Cache\CacheService;
 use App\Infrastructure\Config\ProjectPath;
-use App\Infrastructure\DI\Container;
 use App\Infrastructure\Hydrator\JsonFieldAdapter;
 use App\Infrastructure\Logger\Logger;
+use App\Platform\DI\Container;
 
 /**
  * @implements Capability<object>
@@ -57,6 +59,23 @@ final readonly class SessionModule implements Capability
             },
         );
 
+        $container->set(
+            GeoLocationConfig::class,
+            static function (): GeoLocationConfig {
+                /** @var array{
+                 *     db_path: string,
+                 *     download_token: string,
+                 *     download_url: string,
+                 *     database_code: string,
+                 *     cache_ttl: int,
+                 * } $geoConfig
+                 */
+                $geoConfig = require ProjectPath::getConfigPath('geolocation.php');
+
+                return GeoLocationConfig::fromArray($geoConfig);
+            },
+        );
+
         $container->bind(PostgreSQLSessionRepository::class, PostgreSQLSessionRepository::class);
 
         $container->set(
@@ -85,6 +104,23 @@ final readonly class SessionModule implements Capability
                 $logger = $container->get(Logger::class);
 
                 return new SessionService($repository, $logger);
+            },
+        );
+
+        $container->bind(GeoLocationService::class, IP2LocationGeoLocationService::class);
+        $container->set(
+            IP2LocationGeoLocationService::class,
+            static function (Container $container): IP2LocationGeoLocationService {
+                /** @var GeoLocationConfig $config */
+                $config = $container->get(GeoLocationConfig::class);
+
+                /** @var CacheService $cache */
+                $cache = $container->get(CacheService::class);
+
+                /** @var Logger $logger */
+                $logger = $container->get(Logger::class);
+
+                return new IP2LocationGeoLocationService($config, $cache, $logger);
             },
         );
 

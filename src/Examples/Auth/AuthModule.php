@@ -15,8 +15,8 @@ use App\Examples\Auth\Infrastructure\Persistence\PostgreSQLRefreshTokenSessionRe
 use App\Examples\Auth\Transport\Http\AuthHandler;
 use App\Examples\Auth\Transport\Http\AuthMiddleware;
 use App\Examples\ExampleModule;
-use App\Infrastructure\DI\Container;
 use App\Infrastructure\Logger\Logger;
+use App\Platform\DI\Container;
 use App\Platform\Http\JsonResponse;
 
 /**

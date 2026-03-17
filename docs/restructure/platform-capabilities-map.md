@@ -33,7 +33,7 @@
 ### Текущие кандидаты
 
 - `src/Platform/*`
-- generic service providers в `src/Infrastructure/DI/ServiceProviders/*`
+- generic service providers в `src/Platform/DI/ServiceProviders/*`
 - generic storage/query abstractions
 - RoadRunner bootstrap
 

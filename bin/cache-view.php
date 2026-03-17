@@ -7,60 +7,64 @@ require __DIR__ . '/../vendor/autoload.php';
 
 use App\Infrastructure\Cache\CacheConfig;
 use App\Infrastructure\Cache\CacheService;
-use App\Infrastructure\DI\Container;
-use App\Infrastructure\DI\DIContainer;
-use Psr\Log\LoggerInterface;
+use App\Platform\DI\Container;
+use App\Platform\DI\DIContainer;
 use Spiral\Goridge\RPC\RPC;
 use Spiral\RoadRunner\KeyValue\Factory;
+use Spiral\RoadRunner\KeyValue\StorageInterface;
 
-// Обработка аргументов командной строки
+// Read the optional cache key passed from the command line.
 $specificKey = $argv[1] ?? null;
 
-// Инициализация контейнера
+// Bootstrap the application container.
 /** @var callable(Container<object>): void $containerConfig */
 $containerConfig = require __DIR__ . '/../config/container.php';
 
 $container = new DIContainer();
 $containerConfig($container);
 
-// Получаем кэш-сервис
+// Resolve the cache dependencies used by the inspection tool.
 /** @var CacheService $cacheService */
 $cacheService = $container->get(CacheService::class);
 
 /** @var CacheConfig $config */
 $config = $container->get(CacheConfig::class);
 
-/** @var LoggerInterface $logger */
-$logger = $container->get(LoggerInterface::class);
-
-// Проверяем доступность кеша
+// Abort early when the KV backend is unavailable.
 if (!$cacheService->isAvailable()) {
     echo "\033[31mКеш-сервис недоступен\033[0m\n";
     exit(1);
 }
 
-// Подключаемся к RPC напрямую для дампа всех данных
+// Connect to RoadRunner KV directly to inspect raw entries.
 try {
-    $address = !empty($config->address) ? $config->address : 'tcp://127.0.0.1:6001';
+    $address = $config->address !== '' ? $config->address : 'tcp://127.0.0.1:6001';
     $rpc = RPC::create($address);
     $factory = new Factory($rpc);
-    $engine = $config->engine === '' ? 'local-memory' : $config->engine;
+    if ($config->engine === '') {
+        echo "\033[31mНе задано имя движка кеша\033[0m\n";
+        exit(1);
+    }
 
+    /** @var non-empty-string $engine */
+    $engine = $config->engine;
+
+    /** @var StorageInterface $storage */
     $storage = $factory->select($engine);
 
-    // Информация о движке кеша
+    // Print a short summary of the connected cache backend.
     echo "Информация о кеш-сервисе:\n";
     echo '- Название движка: ' . $storage->getName() . "\n";
-    echo '- Доступность: ' . ($cacheService->isAvailable() ? "\033[32mДоступен\033[0m" : "\033[31mНедоступен\033[0m") . "\n";
+    echo "- Доступность: \033[32mДоступен\033[0m\n";
     echo '- Адрес: ' . $address . "\n";
     echo '- Префикс ключей: ' . $config->defaultPrefix . "\n";
     echo '- TTL по умолчанию: ' . $config->defaultTtl . " сек.\n\n";
 
-    // Обрабатываем конкретный ключ, если указан
+    // Inspect one specific key when it was passed explicitly.
     if ($specificKey !== null) {
         echo "Поиск ключа: \033[36m{$specificKey}\033[0m\n";
 
-        // Если ключ указан без префикса, добавляем префикс по умолчанию
+        // Add the default prefix when the caller passed a logical key.
         $fullKey = $specificKey;
         if (strpos($specificKey, $config->defaultPrefix) !== 0) {
             $fullKey = $config->defaultPrefix . $specificKey;
@@ -80,26 +84,23 @@ try {
         exit(0);
     }
 
-    // Если конкретный ключ не указан, пытаемся вывести все ключи
+    // Otherwise probe the cache using known prefixes and log-derived keys.
     echo "Поиск всех ключей в кеше...\n";
 
-    // В RoadRunner KV нет метода для получения всех ключей напрямую
-    // Используем альтернативный подход - пытаемся проверить наличие ключей по шаблонам
-
-    // Проверяем ключи по определенным шаблонам
+    // RoadRunner KV does not expose a "list all keys" operation.
     $prefixes = ['session:', 'geo:', 'cache:', $config->defaultPrefix];
 
     $found = false;
     $foundCount = 0;
 
     foreach ($prefixes as $prefix) {
-        // Для каждого префикса создаем тестовые ключи
+        // Probe a batch of plausible keys for each known prefix.
         $testKeys = [];
         for ($i = 0; $i < 1000; ++$i) {
             $testKey = $prefix . str_pad((string) $i, 5, '0', STR_PAD_LEFT);
             $testKeys[] = $testKey;
 
-            // Проверяем блоками по 50 ключей для оптимизации
+            // Query small batches to keep the probing overhead bounded.
             if (count($testKeys) >= 50) {
                 $results = $storage->getMultiple($testKeys, null);
                 foreach ($results as $key => $value) {
@@ -114,7 +115,7 @@ try {
         }
     }
 
-    // Проверка ключей из логов
+    // Probe keys previously mentioned in the application logs.
     $keys = findKeysInLogs($config->defaultPrefix);
     foreach ($keys as $key) {
         if (!$cacheService->has($key)) {
@@ -146,10 +147,17 @@ try {
 }
 
 /**
- * Выводит информацию о ключе и его значении в кеше.
+ * Prints the cache key, value and expiration metadata.
  */
-function outputKeyValue(string $key, mixed $value, object $storage): void
+function outputKeyValue(string $key, mixed $value, StorageInterface $storage): void
 {
+    if ($key === '') {
+        echo "----------------------------------------\n";
+        echo "Ключ пропущен: пустое имя\n\n";
+
+        return;
+    }
+
     echo "----------------------------------------\n";
     echo "Ключ: \033[32m{$key}\033[0m\n";
 
@@ -157,13 +165,13 @@ function outputKeyValue(string $key, mixed $value, object $storage): void
 
     echo 'Значение: ';
     if (is_string($value)) {
-        // Для строк проверяем, является ли это JSON и выводим красиво, если да
+        // Pretty-print JSON payloads when possible.
         $json = json_decode($value, true);
         if (json_last_error() === JSON_ERROR_NONE) {
             echo "JSON данные\n";
             echo json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n";
         } elseif (strlen($value) > 100) {
-            // Для длинных строк выводим только начало
+            // Trim very long strings to keep the output readable.
             echo substr($value, 0, 100) . "...\n";
             echo 'Размер: ' . strlen($value) . " байт\n";
         } else {
@@ -175,13 +183,12 @@ function outputKeyValue(string $key, mixed $value, object $storage): void
         echo var_export($value, true) . "\n";
     }
 
-    // Пытаемся получить TTL ключа
+    // Print expiration metadata when the backend provides it.
     try {
         $ttl = $storage->getTtl($key);
-        if ($ttl) {
+        if ($ttl instanceof DateTimeInterface) {
             $now = new DateTimeImmutable();
-            $expireAt = $ttl;
-            $diffSeconds = $expireAt->getTimestamp() - $now->getTimestamp();
+            $diffSeconds = $ttl->getTimestamp() - $now->getTimestamp();
 
             echo 'Истекает: ' . $ttl->format('Y-m-d H:i:s');
             echo ' (через ' . formatTimeRemaining($diffSeconds) . ")\n";
@@ -196,7 +203,7 @@ function outputKeyValue(string $key, mixed $value, object $storage): void
 }
 
 /**
- * Форматирует оставшееся время в удобный формат.
+ * Formats the remaining lifetime into a readable string.
  */
 function formatTimeRemaining(int $seconds): string
 {
@@ -224,7 +231,7 @@ function formatTimeRemaining(int $seconds): string
 }
 
 /**
- * Находит ключи кеша в файлах логов.
+ * Finds cache keys mentioned in log files.
  *
  * @return array<string>
  */
@@ -232,6 +239,9 @@ function findKeysInLogs(string $prefix): array
 {
     $keys = [];
     $logFiles = glob(__DIR__ . '/../var/log/*.log');
+    if ($logFiles === false) {
+        return [];
+    }
 
     foreach ($logFiles as $logFile) {
         if (file_exists($logFile) && is_readable($logFile)) {
@@ -243,7 +253,7 @@ function findKeysInLogs(string $prefix): array
             preg_match_all('/"key":"([^"]+)"/', $content, $matches);
             if (!empty($matches[1])) {
                 foreach ($matches[1] as $key) {
-                    // Фильтруем ключи с нужным префиксом
+                    // Keep only keys that belong to the configured cache prefix.
                     if (strpos($key, $prefix) === 0) {
                         $keys[$key] = true;
                     }

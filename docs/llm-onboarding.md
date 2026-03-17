@@ -43,6 +43,7 @@
 
 Runtime core:
 
+- DI container and service providers;
 - HTTP abstractions;
 - middleware pipeline;
 - route resolving;
@@ -52,7 +53,7 @@ Runtime core:
 
 Reusable building blocks:
 
-- `Session` — сессии, fingerprinting, client detection, session middleware;
+- `Session` — сессии, fingerprinting, client detection, session middleware, geolocation integration;
 - `ApiStats` — request statistics / observability candidate.
 
 ### `src/Examples`
@@ -68,7 +69,6 @@ Examples не должны считаться частью default runtime. Он
 
 Infrastructure support:
 
-- DI service providers;
 - storage adapters и migrations;
 - cache, logger и console glue;
 - routing/codegen support;
@@ -101,7 +101,7 @@ Infrastructure support:
 ## Что ещё не доведено до целевого состояния
 
 - `Auth` пока не разделён на reusable primitives и example policy;
-- legacy top-level каталоги ещё не дочищены;
+- `Infrastructure` всё ещё слишком широк как support/tooling каталог;
 - SQLite слой всё ещё присутствует;
 - hydrator/codegen слой ещё не получил окончательно согласованную роль.
 
@@ -142,9 +142,9 @@ task run
 3. `config/container.php`
 4. `src/Capabilities/*`
 5. `src/Examples/*`
-6. `src/Infrastructure/DI/ServiceProviders/*`
+6. `src/Platform/DI/*`
 7. `src/Infrastructure/Storage/*`
-8. `src/Infrastructure/*` когда нужен DI/storage/tooling support
+8. `src/Infrastructure/*` когда нужен storage/tooling support
 9. `protos/proto/app/v1/*` и `protos/proto/examples/v1/*`
 
 ## Главные текущие зоны риска

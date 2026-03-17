@@ -6,9 +6,9 @@ declare(strict_types=1);
 require __DIR__ . '/../vendor/autoload.php';
 
 use App\Infrastructure\Console\MigrateCommand;
-use App\Infrastructure\DI\Container;
-use App\Infrastructure\DI\DIContainer;
 use App\Infrastructure\Storage\Migration\MigrationService;
+use App\Platform\DI\Container;
+use App\Platform\DI\DIContainer;
 
 /** @var callable(Container<object>): void $containerConfig */
 $containerConfig = require __DIR__ . '/../config/container.php';
