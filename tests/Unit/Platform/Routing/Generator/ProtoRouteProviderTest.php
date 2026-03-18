@@ -11,10 +11,13 @@ final class ProtoRouteProviderTest extends TestCase
 {
     private string $tempDir;
 
+    private string $fixtureDir;
+
     protected function setUp(): void
     {
         $this->tempDir = sys_get_temp_dir() . '/proto_test_' . uniqid();
         mkdir($this->tempDir, 0o777, true);
+        $this->fixtureDir = \dirname(__DIR__, 5) . '/protos/gen/App/Api/V1/Metadata';
     }
 
     protected function tearDown(): void
@@ -36,133 +39,71 @@ final class ProtoRouteProviderTest extends TestCase
         rmdir($dir);
     }
 
-    private function createProtoFile(string $filename, string $content): void
+    private function copyMetadataFixture(string $fixtureName, string $targetFile): void
     {
-        $dir = \dirname($filename);
+        $sourceFile = $this->fixtureDir . '/' . $fixtureName;
+        $dir = \dirname($targetFile);
         if (!is_dir($dir)) {
             mkdir($dir, 0o777, true);
         }
-        file_put_contents($filename, $content);
+
+        copy($sourceFile, $targetFile);
     }
 
     public function testGetRoutesWithSingleServiceSingleMethod(): void
     {
-        $protoContent = <<<'PROTO'
-            syntax = "proto3";
-
-            package app.v1;
-
-            import "google/api/annotations.proto";
-
-            service TestService {
-              rpc TestMethod(EmptyRequest) returns (EmptyResponse) {
-                option (google.api.http) = {
-                  get: "/api/v1/test"
-                };
-              }
-            }
-
-            message EmptyRequest {}
-            message EmptyResponse {}
-            PROTO;
-
-        $this->createProtoFile("{$this->tempDir}/test.proto", $protoContent);
+        $this->copyMetadataFixture('Home.php', "{$this->tempDir}/Home.php");
 
         $provider = new ProtoRouteProvider($this->tempDir);
         $routes = $provider->getRoutes();
 
         self::assertCount(1, $routes);
         self::assertEquals('GET', $routes[0]['method']);
-        self::assertEquals('/api/v1/test', $routes[0]['path']);
-        self::assertEquals('App\Examples\Test\Transport\Http\TestHandler', $routes[0]['handler']);
+        self::assertEquals('/api/v1/home', $routes[0]['path']);
+        self::assertEquals('App\Examples\Home\Transport\Http\HomeHandler', $routes[0]['handler']);
         self::assertArrayHasKey('operation_id', $routes[0]);
         $operationId = $routes[0]['operation_id'] ?? null;
-        self::assertEquals('TestService.TestMethod', $operationId);
+        self::assertEquals('HomeService.Home', $operationId);
     }
 
     public function testGetRoutesWithCustomMapping(): void
     {
-        $protoContent = <<<'PROTO'
-            syntax = "proto3";
-
-            package app.v1;
-
-            import "google/api/annotations.proto";
-
-            service CustomService {
-              rpc CustomMethod(EmptyRequest) returns (EmptyResponse) {
-                option (google.api.http) = {
-                  post: "/api/v1/custom"
-                };
-              }
-            }
-
-            message EmptyRequest {}
-            message EmptyResponse {}
-            PROTO;
-
-        $this->createProtoFile("{$this->tempDir}/custom.proto", $protoContent);
+        $this->copyMetadataFixture('Home.php', "{$this->tempDir}/Home.php");
 
         $handlerMapping = [
-            'CustomService.CustomMethod' => 'App\Examples\Custom\Transport\Http\SpecialHandler',
+            'HomeService.Home' => 'App\Examples\Custom\Transport\Http\SpecialHandler',
         ];
 
         $provider = new ProtoRouteProvider($this->tempDir, $handlerMapping);
         $routes = $provider->getRoutes();
 
         self::assertCount(1, $routes);
-        self::assertEquals('POST', $routes[0]['method']);
-        self::assertEquals('/api/v1/custom', $routes[0]['path']);
+        self::assertEquals('GET', $routes[0]['method']);
+        self::assertEquals('/api/v1/home', $routes[0]['path']);
         self::assertEquals('App\Examples\Custom\Transport\Http\SpecialHandler', $routes[0]['handler']);
     }
 
     public function testGetRoutesWithMultipleHttpMethods(): void
     {
-        $protoContent = <<<'PROTO'
-            syntax = "proto3";
-
-            package app.v1;
-
-            import "google/api/annotations.proto";
-
-            service MultiService {
-              rpc GetMethod(EmptyRequest) returns (EmptyResponse) {
-                option (google.api.http) = {
-                  get: "/api/v1/multi"
-                };
-              }
-              
-              rpc PostMethod(EmptyRequest) returns (EmptyResponse) {
-                option (google.api.http) = {
-                  post: "/api/v1/multi"
-                };
-              }
-              
-              rpc PutMethod(EmptyRequest) returns (EmptyResponse) {
-                option (google.api.http) = {
-                  put: "/api/v1/multi/{id}"
-                };
-              }
-            }
-
-            message EmptyRequest {}
-            message EmptyResponse {}
-            PROTO;
-
-        $this->createProtoFile("{$this->tempDir}/multi.proto", $protoContent);
+        $this->copyMetadataFixture('Auth.php', "{$this->tempDir}/Auth.php");
 
         $provider = new ProtoRouteProvider($this->tempDir);
         $routes = $provider->getRoutes();
 
-        // Current parser is expected to find at least one route for this pattern.
-        self::assertGreaterThan(0, \count($routes));
+        self::assertCount(3, $routes);
 
         $httpMethods = array_column($routes, 'method');
         $paths = array_column($routes, 'path');
 
-        // Only assert that routes were discovered.
-        self::assertNotEmpty($httpMethods);
-        self::assertNotEmpty($paths);
+        self::assertSame(['POST', 'POST', 'POST'], $httpMethods);
+        self::assertSame(
+            [
+                '/api/v1/auth/login',
+                '/api/v1/auth/logout',
+                '/api/v1/auth/refresh',
+            ],
+            $paths,
+        );
     }
 
     public function testGetRoutesWithEmptyDirectory(): void
@@ -178,70 +119,35 @@ final class ProtoRouteProviderTest extends TestCase
 
     public function testGetRoutesWithNestedDirectories(): void
     {
-        $protoContent1 = <<<'PROTO'
-            syntax = "proto3";
-
-            package app.v1;
-
-            import "google/api/annotations.proto";
-
-            service Service1 {
-              rpc Method1(EmptyRequest) returns (EmptyResponse) {
-                option (google.api.http) = {
-                  get: "/api/v1/service1"
-                };
-              }
-            }
-
-            message EmptyRequest {}
-            message EmptyResponse {}
-            PROTO;
-
-        $protoContent2 = <<<'PROTO'
-            syntax = "proto3";
-
-            package app.v2;
-
-            import "google/api/annotations.proto";
-
-            service Service2 {
-              rpc Method2(EmptyRequest) returns (EmptyResponse) {
-                option (google.api.http) = {
-                  get: "/api/v2/service2"
-                };
-              }
-            }
-
-            message EmptyRequest {}
-            message EmptyResponse {}
-            PROTO;
-
-        $this->createProtoFile("{$this->tempDir}/v1/service1.proto", $protoContent1);
-        $this->createProtoFile("{$this->tempDir}/v2/service2.proto", $protoContent2);
+        $this->copyMetadataFixture('Home.php', "{$this->tempDir}/v1/Home.php");
+        $this->copyMetadataFixture('Auth.php', "{$this->tempDir}/v2/Auth.php");
 
         $provider = new ProtoRouteProvider($this->tempDir);
         $routes = $provider->getRoutes();
 
-        self::assertCount(2, $routes);
+        self::assertCount(4, $routes);
 
         $paths = array_column($routes, 'path');
-        self::assertContains('/api/v1/service1', $paths);
-        self::assertContains('/api/v2/service2', $paths);
+        self::assertContains('/api/v1/home', $paths);
+        self::assertContains('/api/v1/auth/login', $paths);
+        self::assertContains('/api/v1/auth/logout', $paths);
+        self::assertContains('/api/v1/auth/refresh', $paths);
     }
 
     public function testGetRoutesWithNoValidProtoServiceDefinition(): void
     {
-        $protoContent = <<<'PROTO'
-            syntax = "proto3";
+        file_put_contents(
+            "{$this->tempDir}/Invalid.php",
+            <<<'PHP'
+                <?php
 
-            package app.v1;
+                declare(strict_types=1);
 
-            message TestMessage {
-              string field = 1;
-            }
-            PROTO;
-
-        $this->createProtoFile("{$this->tempDir}/test.proto", $protoContent);
+                final class InvalidMetadata
+                {
+                }
+                PHP,
+        );
 
         $provider = new ProtoRouteProvider($this->tempDir);
         $routes = $provider->getRoutes();

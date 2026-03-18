@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Examples\Auth\Transport\Http\AuthHandler;
+use App\Examples\Home\Transport\Http\HomeHandler;
 use App\Platform\Http\Handler\HandlerInterface;
 
 /**
@@ -15,5 +17,28 @@ use App\Platform\Http\Handler\HandlerInterface;
  * }>
  */
 return [
-
+    // AuthService.Login
+    [
+        'method' => 'POST',
+        'path' => '/api/v1/auth/login',
+        'handler' => AuthHandler::class,
+    ],
+    // AuthService.Logout
+    [
+        'method' => 'POST',
+        'path' => '/api/v1/auth/logout',
+        'handler' => AuthHandler::class,
+    ],
+    // AuthService.RefreshToken
+    [
+        'method' => 'POST',
+        'path' => '/api/v1/auth/refresh',
+        'handler' => AuthHandler::class,
+    ],
+    // HomeService.Home
+    [
+        'method' => 'GET',
+        'path' => '/api/v1/home',
+        'handler' => HomeHandler::class,
+    ],
 ];

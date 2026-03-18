@@ -99,7 +99,7 @@ tasks:
 
   proto:gen:routes:
     desc: Generate routes for the core template surface
-    deps: [ var, install ]
+    deps: [ var, install, proto:gen:sdk ]
     cmds:
       - "{{.PHP}} bin/generate-routes.php"
       

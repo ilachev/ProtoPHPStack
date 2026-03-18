@@ -15,7 +15,9 @@
     },
     "autoload": {
         "psr-4": {
-            "App\\": ["src/", "protos/gen/App/"]
+            "App\\": ["src/", "protos/gen/App/"],
+            "Google\\Api\\": "protos/gen/Google/Api/",
+            "GPBMetadata\\Google\\Api\\": "protos/gen/GPBMetadata/Google/Api/"
         }
     },
     "autoload-dev": {

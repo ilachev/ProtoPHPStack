@@ -118,8 +118,8 @@ task proto:gen:all
 
 Файл `bin/generate-routes.php` создаёт `ProtoRouteProvider`, который:
 
-- читает core `.proto` файлы;
-- извлекает `service`, `rpc`, `option (google.api.http)`;
+- читает generated metadata из `protos/gen/App/Api/V1/Metadata`;
+- извлекает `service`, `rpc`, `option (google.api.http)` из protobuf descriptors;
 - строит массив route definitions;
 - пишет `config/routes.php` для core runtime.
 
