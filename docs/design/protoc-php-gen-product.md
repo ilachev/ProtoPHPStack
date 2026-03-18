@@ -13,12 +13,14 @@
 Сейчас production-grade поддерживаются два generator module:
 
 - `transport_contracts`
+- `endpoint_validation`
 - `route_manifest`
 
 Он отвечает за:
 
 - генерацию endpoint interfaces из `service/rpc`;
 - генерацию HTTP handlers поверх runtime adapter;
+- compile-time проверку наличия handwritten endpoint implementations;
 - генерацию endpoint binding manifests для handwritten runtime implementations;
 - генерацию route manifests из `google.api.http`;
 - поддержку protobuf-first transport flow в основном шаблоне.
@@ -53,11 +55,11 @@
 ### Stable now
 
 - `transport_contracts`
+- `endpoint_validation`
 - `route_manifest`
 
 ### Допустимые будущие направления
 
-- `endpoint_validation` — compile-time проверки полноты handwritten endpoint implementations;
 - `http_adapter_helpers` — общие transport-level adapters или metadata helpers;
 - `client_helpers` — дополнительные PHP helpers вокруг generated SDK, если появится реальная потребность.
 
@@ -100,7 +102,7 @@
 Для `base-api-template` сейчас важно следующее:
 
 - `protoc-php-gen` остаётся внутренним инструментом репозитория;
-- основной template использует стабильные `transport_contracts` и `route_manifest` modules;
+- основной template использует стабильные `transport_contracts`, `endpoint_validation` и `route_manifest` modules;
 - расширение тулзы допускается только без разрастания основного project path в набор legacy-веток.
 
 ## Текущие архитектурные ограничения
@@ -125,7 +127,7 @@
 - transport runtime profiles
 - binary plugin protocol test contour
 
-Эта часть была нужна, чтобы `transport_contracts` и `route_manifest` стали честными production-grade модулями.
+Эта часть была нужна, чтобы `transport_contracts`, `endpoint_validation` и `route_manifest` стали честными production-grade модулями.
 
 ### Следующий этап развития
 

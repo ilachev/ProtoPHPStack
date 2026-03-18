@@ -22,6 +22,7 @@
 - читать protobuf descriptors;
 - генерировать endpoint interfaces;
 - генерировать HTTP handlers поверх общего runtime adapter;
+- валидировать handwritten endpoint implementations на этапе generation;
 - генерировать endpoint binding manifests для handwritten runtime implementations;
 - генерировать route manifests для runtime routing;
 - держать явный generated contract между transport-кодом и handwritten endpoint implementations.

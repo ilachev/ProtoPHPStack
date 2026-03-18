@@ -31,6 +31,26 @@ final readonly class BaseApiTemplateTransportProfile implements TransportProfile
         return 'App\Platform\Http\Endpoint\\' . $suffix . '\\' . $serviceName . '\\' . $methodName . 'Endpoint';
     }
 
+    public function buildEndpointImplementationPath(
+        string $sourceRoot,
+        string $fileNamespace,
+        string $serviceName,
+        string $methodName,
+    ): string {
+        $suffix = str_starts_with($fileNamespace, 'App\\')
+            ? substr($fileNamespace, 4)
+            : $fileNamespace;
+
+        return rtrim($sourceRoot, '/')
+            . '/Platform/Http/Endpoint/'
+            . str_replace('\\', '/', $suffix)
+            . '/'
+            . $serviceName
+            . '/'
+            . $methodName
+            . 'Endpoint.php';
+    }
+
     public function getHandlerBaseClass(): string
     {
         return 'App\Platform\Http\Handler\AbstractProtobufRpcHandler';

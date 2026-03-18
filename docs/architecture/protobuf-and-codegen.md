@@ -134,10 +134,11 @@ task proto:gen:all
 Его текущая production-grade роль:
 
 - генерировать server-side transport contracts из protobuf `service/rpc`;
+- валидировать наличие и объявление handwritten endpoint implementations;
 - генерировать route manifests из `google.api.http` bindings;
 - поддерживать protobuf-first HTTP surface без ручного boilerplate в runtime.
 
-При этом инструмент надо понимать шире, чем один текущий generator module: `protoc-php-gen` рассматривается как отдельная modular codegen platform, а основной шаблон сейчас использует два стабильных модуля: `transport_contracts` и `route_manifest`. Отдельно это зафиксировано в `docs/design/protoc-php-gen-product.md`.
+При этом инструмент надо понимать шире, чем один текущий generator module: `protoc-php-gen` рассматривается как отдельная modular codegen platform, а основной шаблон сейчас использует три стабильных модуля: `transport_contracts`, `endpoint_validation` и `route_manifest`. Отдельно это зафиксировано в `docs/design/protoc-php-gen-product.md`.
 
 При реструктуризации нельзя просто "спрятать" этот каталог. Нужно решить:
 
@@ -156,8 +157,8 @@ task proto:gen:all
 
 ## Текущие проблемы codegen-потока
 
-- endpoint implementation пока не валидируется генератором на этапе generation;
-- verify уже проверяет наличие handwritten endpoint implementation для каждого generated `*Endpoint`, но сам generator пока не выдаёт такую ошибку на этапе generation.
+- endpoint implementation теперь валидируется на этапе generation, но generator пока не проверяет полноту реализации интерфейса глубже, чем наличие файла и корректное объявление класса;
+- verify по-прежнему остаётся второй линией контроля для generated `*Endpoint`.
 
 ## Что важно сохранить при реструктуризации
 

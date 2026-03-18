@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ProtoPhpGen\Plugin;
 
+use ProtoPhpGen\Generator\EndpointImplementationValidator;
 use ProtoPhpGen\Generator\RouteManifestGenerator;
 use ProtoPhpGen\Generator\TransportContractGenerator;
 use ProtoPhpGen\Profile\BaseApiTemplateTransportProfile;
@@ -17,6 +18,7 @@ final readonly class PluginOptions
     public function __construct(
         private string $namespace = 'App\Gen',
         private string $outputDir = 'gen',
+        private string $sourceRoot = 'src',
         private string $transportProfile = BaseApiTemplateTransportProfile::NAME,
         private array $enabledModules = [],
     ) {}
@@ -36,9 +38,16 @@ final readonly class PluginOptions
             );
         }
 
+        if ($request->hasParameter('generate_endpoint_validation')) {
+            $enabledModules[EndpointImplementationValidator::MODULE_NAME] = self::toBool(
+                $request->getParameter('generate_endpoint_validation'),
+            );
+        }
+
         return new self(
             namespace: $request->getParameter('namespace', 'App\Gen'),
             outputDir: $request->getParameter('output_dir', 'gen'),
+            sourceRoot: $request->getParameter('source_root', 'src'),
             transportProfile: $request->getParameter('transport_profile', BaseApiTemplateTransportProfile::NAME),
             enabledModules: $enabledModules,
         );
@@ -52,6 +61,11 @@ final readonly class PluginOptions
     public function getOutputDir(): string
     {
         return $this->outputDir;
+    }
+
+    public function getSourceRoot(): string
+    {
+        return $this->sourceRoot;
     }
 
     public function getTransportProfile(): string

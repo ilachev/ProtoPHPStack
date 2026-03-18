@@ -120,7 +120,7 @@ tasks:
       - >
         protoc -I={{.PROTO_DIR}}
         --plugin=protoc-gen-php-transport=tools/protoc-php-gen/bin/protoc-php-gen.php
-        --php-transport_out=namespace=App\\Generated\\Transport,output_dir=gen,transport_profile=base_api_template,generate_transport_contracts=true,generate_route_manifest=true:.
+        --php-transport_out=namespace=App\\Generated\\Transport,output_dir=gen,source_root=src,transport_profile=base_api_template,generate_transport_contracts=true,generate_endpoint_validation=true,generate_route_manifest=true:.
         {{.PROTO_DIR}}/app/v1/*.proto
 
   proto:gen:all:

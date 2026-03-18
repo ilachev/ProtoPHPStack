@@ -183,6 +183,26 @@ final readonly class StubTransportProfile implements TransportProfile
         return 'Vendor\\Runtime\\Endpoint\\' . $suffix . '\\' . $serviceName . '\\' . $methodName . 'Endpoint';
     }
 
+    public function buildEndpointImplementationPath(
+        string $sourceRoot,
+        string $fileNamespace,
+        string $serviceName,
+        string $methodName,
+    ): string {
+        $suffix = str_starts_with($fileNamespace, 'Vendor\\')
+            ? substr($fileNamespace, 7)
+            : $fileNamespace;
+
+        return rtrim($sourceRoot, '/')
+            . '/Endpoint/'
+            . str_replace('\\', '/', $suffix)
+            . '/'
+            . $serviceName
+            . '/'
+            . $methodName
+            . 'Endpoint.php';
+    }
+
     public function getResponseHelperClass(): string
     {
         return 'Vendor\\Runtime\\Http\\CustomResponseFactory';

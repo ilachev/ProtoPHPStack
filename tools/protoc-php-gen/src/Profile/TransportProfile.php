@@ -12,6 +12,13 @@ interface TransportProfile
 
     public function buildEndpointImplementationClass(string $fileNamespace, string $serviceName, string $methodName): string;
 
+    public function buildEndpointImplementationPath(
+        string $sourceRoot,
+        string $fileNamespace,
+        string $serviceName,
+        string $methodName,
+    ): string;
+
     public function getHandlerBaseClass(): string;
 
     public function getResponseHelperClass(): string;

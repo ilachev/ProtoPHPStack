@@ -115,7 +115,7 @@ task run
 
 - storage/integration adapters всё ещё требуют аккуратного упрощения
 - hydration/data mapping layer всё ещё чувствителен к усложнению
-- endpoint implementations всё ещё пишутся вручную, хотя binding к ним уже generated
+- endpoint implementations всё ещё пишутся вручную, а generator пока валидирует только наличие файла и корректное объявление класса
 - `protoc-php-gen` сейчас стабилен только в transport-контуре; дальнейшее расширение допустимо только как modular codegen, а не как возврат к старой смешанной генерации
 
 ## Как оценивать изменения

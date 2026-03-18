@@ -1,8 +1,8 @@
 # Proto PHP Transport Generator
 
-`protoc-php-gen` is the internal protoc plugin used by this repository to generate PHP transport artifacts from protobuf `service/rpc` definitions.
+`protoc-php-gen` is the internal protoc plugin used by this repository to generate and validate PHP transport artifacts from protobuf `service/rpc` definitions.
 
-The current production-grade scope is intentionally narrow: the main project path supports only `transport_contracts` and `route_manifest`.
+The current production-grade scope is intentionally narrow: the main project path supports `transport_contracts`, `endpoint_validation`, and `route_manifest`.
 
 ## Current role
 
@@ -11,6 +11,7 @@ The supported project path is transport-oriented:
 - parse protobuf descriptors;
 - generate endpoint interfaces;
 - generate HTTP handlers for the runtime adapter;
+- validate handwritten endpoint implementations against generated expectations;
 - generate endpoint binding manifests for handwritten runtime implementations;
 - generate route manifests from `google.api.http`.
 
@@ -20,7 +21,7 @@ It is not the canonical path for domain-to-proto mapper generation.
 
 This tool should be treated as a modular PHP code generation platform around protobuf descriptors, not as a one-off script and not as a grab bag of unrelated generators.
 
-Today, `transport_contracts` and `route_manifest` are stable and supported.
+Today, `transport_contracts`, `endpoint_validation`, and `route_manifest` are stable and supported.
 
 Future generators are allowed only if they:
 
@@ -55,7 +56,7 @@ The detailed product-level rationale is documented in:
 ```bash
 protoc -I=./protos/proto \
   --plugin=protoc-gen-php-transport=./tools/protoc-php-gen/bin/protoc-php-gen.php \
-  --php-transport_out=namespace=App\\Generated\\Transport,output_dir=gen,transport_profile=base_api_template,generate_transport_contracts=true,generate_route_manifest=true:. \
+  --php-transport_out=namespace=App\\Generated\\Transport,output_dir=gen,source_root=src,transport_profile=base_api_template,generate_transport_contracts=true,generate_endpoint_validation=true,generate_route_manifest=true:. \
   ./protos/proto/app/v1/*.proto
 ```
 
@@ -63,7 +64,9 @@ protoc -I=./protos/proto \
 
 - `namespace` - Base namespace for generated transport classes
 - `output_dir` - Output directory for generated files
+- `source_root` - Root directory for handwritten endpoint implementations
 - `generate_transport_contracts` - Enable transport contract generation
+- `generate_endpoint_validation` - Fail generation when handwritten endpoint implementations are missing or declared incorrectly
 - `generate_route_manifest` - Enable route manifest generation
 
 ## Output
