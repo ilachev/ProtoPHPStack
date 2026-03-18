@@ -33,7 +33,7 @@ final readonly class DataTransferObjectMapper
      * Maps an array to a response object with setData method.
      * Specifically designed for response wrappers with a setData method.
      *
-     * @template T of object
+     * @template T of ResponseDataContainer
      * @template D of object
      * @param class-string<D> $dataClass Data object class
      * @param class-string<T> $responseClass Response wrapper class
@@ -49,14 +49,7 @@ final readonly class DataTransferObjectMapper
         try {
             /** @var T $response */
             $response = new $responseClass();
-
-            if (method_exists($response, 'setData')) {
-                $response->setData($dataObject);
-            } else {
-                throw new \InvalidArgumentException(
-                    "Response class {$responseClass} does not have a setData method",
-                );
-            }
+            $response->setData($dataObject);
 
             return $response;
         } catch (\Throwable $e) {
