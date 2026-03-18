@@ -10,7 +10,7 @@
 
 - `Platform` — runtime core;
 - `Capabilities` — reusable blocks;
-- `HealthCheck` — минимальный нейтральный пример protobuf-first transport flow внутри core.
+- `HealthCheck` и `SystemDescribe` — минимальные нейтральные примеры protobuf-first transport flow внутри core.
 
 ## Цель проекта
 

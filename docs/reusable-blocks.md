@@ -98,11 +98,11 @@
 
 ## Minimal example
 
-### `HealthService.Check`
+### `HealthService.Check` и `SystemService.Describe`
 
-- Роль: минимальный нейтральный пример protobuf-first transport flow.
+- Роль: минимальные нейтральные примеры protobuf-first transport flow.
 - Обязательность: часть core surface.
-- Назначение: показать, как `.proto` превращается в generated route, generated handler и endpoint implementation без продуктовой логики.
+- Назначение: показать, как `.proto` превращается в generated route, generated handler и endpoint implementation без продуктовой логики, и покрыть и `GET`, и `POST` body flow.
 - Что не должно происходить: превращение health-check в demo-модуль с отдельной архитектурой вокруг него.
 
 ## Как применять эту карту

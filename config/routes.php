@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Generated\Transport\Api\V1\HealthService\CheckHttpHandler;
+use App\Generated\Transport\Api\V1\SystemService\DescribeHttpHandler;
 use App\Platform\Http\Handler\HandlerInterface;
 
 /**
@@ -21,5 +22,11 @@ return [
         'method' => 'GET',
         'path' => '/api/v1/health',
         'handler' => CheckHttpHandler::class,
+    ],
+    // SystemService.Describe
+    [
+        'method' => 'POST',
+        'path' => '/api/v1/system/describe',
+        'handler' => DescribeHttpHandler::class,
     ],
 ];

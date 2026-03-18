@@ -8,6 +8,10 @@
     {
       "name": "HealthService",
       "description": "Core runtime health endpoints"
+    },
+    {
+      "name": "SystemService",
+      "description": "Core runtime system endpoints"
     }
   ],
   "consumes": [
@@ -36,6 +40,41 @@
             }
           }
         },
+        "tags": [
+          "system"
+        ]
+      }
+    },
+    "/api/v1/system/describe": {
+      "post": {
+        "summary": "Describe runtime",
+        "description": "Returns a neutral runtime description and echoes selected request fields",
+        "operationId": "SystemService_Describe",
+        "responses": {
+          "200": {
+            "description": "Runtime description",
+            "schema": {
+              "$ref": "#/definitions/v1SystemDescribeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "SystemDescribeRequest carries a neutral POST body for testing transport generation.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1SystemDescribeRequest"
+            }
+          }
+        ],
         "tags": [
           "system"
         ]
@@ -87,6 +126,66 @@
         }
       },
       "description": "HealthCheckResponse describes the current runtime state."
+    },
+    "v1SystemDescribeRequest": {
+      "type": "object",
+      "properties": {
+        "caller": {
+          "type": "string",
+          "example": "codex",
+          "description": "Optional caller label to echo in the response"
+        },
+        "requestedCapabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Requested runtime capabilities to include when runtime data is enabled"
+        },
+        "includeRuntime": {
+          "type": "boolean",
+          "description": "Whether the response should include core runtime capabilities"
+        }
+      },
+      "description": "SystemDescribeRequest carries a neutral POST body for testing transport generation."
+    },
+    "v1SystemDescribeResponse": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "example": "base-api-template",
+          "description": "Runtime name"
+        },
+        "mode": {
+          "type": "string",
+          "example": "core",
+          "description": "Runtime mode"
+        },
+        "caller": {
+          "type": "string",
+          "example": "codex",
+          "description": "Echoed caller value"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Capabilities included in the neutral runtime description"
+        },
+        "runtimeIncluded": {
+          "type": "boolean",
+          "description": "Whether runtime capabilities were included"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "int64",
+          "example": "1710000000",
+          "description": "Unix timestamp when the response was created"
+        }
+      },
+      "description": "SystemDescribeResponse describes the current neutral runtime state."
     }
   }
 }

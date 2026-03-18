@@ -93,6 +93,7 @@ tasks:
         --php_opt=aggregate_metadata
         {{.PROTO_DIR}}/app/v1/*.proto
         {{.PROTO_DIR}}/google/api/*.proto
+        {{.PROTO_DIR}}/protoc-gen-openapiv2/options/*.proto
 
   proto:gen:docs:
     desc: Generate OpenAPI spec for the core template surface

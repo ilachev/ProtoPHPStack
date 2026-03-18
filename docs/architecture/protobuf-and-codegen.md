@@ -21,6 +21,7 @@
 
 - `api.proto` — общие transport structures;
 - `health.proto` — neutral health-check endpoint for the core runtime;
+- `system.proto` — neutral POST runtime description endpoint for the core runtime;
 - `session.proto` — session-related transport models;
 - `users.proto` — user transport model.
 
@@ -125,7 +126,7 @@ task proto:gen:all
 
 Это важно: `service/rpc + google.api.http` теперь проходят через тот же основной toolchain, что и transport contracts, а не через отдельную runtime-ветку parsing logic.
 
-Сейчас core surface уже содержит `HealthService.Check`, поэтому default route generation создаёт непустой `config/routes.php` и `docs/api.swagger.json`.
+Сейчас core surface уже содержит `HealthService.Check` и `SystemService.Describe`, поэтому default route generation создаёт непустой `config/routes.php` и `docs/api.swagger.json`, а transport pipeline покрывается и `GET`, и `POST` сценарием с body.
 
 ## `tools/protoc-php-gen`
 
