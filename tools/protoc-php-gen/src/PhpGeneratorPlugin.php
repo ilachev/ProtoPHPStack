@@ -9,7 +9,7 @@ use ProtoPhpGen\Generator\EndpointImplementationValidator;
 use ProtoPhpGen\Generator\GeneratorRegistry;
 use ProtoPhpGen\Generator\OperationManifestGenerator;
 use ProtoPhpGen\Plugin\PluginOptions;
-use ProtoPhpGen\Profile\EndpointProfileRegistry;
+use ProtoPhpGen\Profile\EndpointProfileResolver;
 use ProtoPhpGen\Protoc\PluginRequest;
 use ProtoPhpGen\Protoc\PluginResponse;
 use ProtoPhpGen\Protoc\ProtocPlugin;
@@ -27,7 +27,8 @@ final readonly class PhpGeneratorPlugin extends ProtocPlugin
             $this->logDebug('Parameters: ' . json_encode($request->getParameters()));
 
             $options = PluginOptions::fromRequest($request);
-            $endpointProfile = (new EndpointProfileRegistry())->get($options->getEndpointProfile());
+            $this->loadBootstrap($options);
+            $endpointProfile = (new EndpointProfileResolver())->resolve($options->getEndpointProfileClass());
             $registry = new GeneratorRegistry(
                 [
                     new EndpointGenerator($options, $endpointProfile),
@@ -60,6 +61,20 @@ final readonly class PhpGeneratorPlugin extends ProtocPlugin
         }
 
         return $response;
+    }
+
+    private function loadBootstrap(PluginOptions $options): void
+    {
+        $bootstrap = $options->getBootstrap();
+        if ($bootstrap === null || $bootstrap === '') {
+            return;
+        }
+
+        if (!is_file($bootstrap)) {
+            throw new \InvalidArgumentException("Bootstrap file does not exist: {$bootstrap}");
+        }
+
+        require_once $bootstrap;
     }
 
     private function logDebug(string $message): void

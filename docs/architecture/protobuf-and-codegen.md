@@ -114,6 +114,8 @@ task proto:gen:all
 
 Это важно: `service/rpc + google.api.http` теперь проходят через тот же основной toolchain, что и generated endpoints, а не через отдельную runtime-ветку parsing logic.
 
+Project-specific endpoint profile больше не зашит внутрь `protoc-php-gen`. Основной проект передаёт его извне через `bootstrap=codegen/protoc-php-gen-bootstrap.php` и `endpoint_profile_class=ProjectCodegen\Protobuf\BaseApiTemplateEndpointProfile`.
+
 Сейчас core surface уже содержит `HealthService.Check` и `SystemService.Describe`, поэтому transport pipeline покрывается и `GET`, и `POST` сценарием с body, а `docs/api.swagger.json` остаётся непустым.
 
 ## `tools/protoc-php-gen`
@@ -128,6 +130,8 @@ task proto:gen:all
 - поддерживать protobuf-first HTTP surface без ручного endpoint boilerplate в runtime.
 
 При этом инструмент надо понимать шире, чем один текущий generator module: `protoc-php-gen` рассматривается как отдельная modular codegen platform, а основной шаблон сейчас использует три стабильных модуля: `endpoints`, `endpoint_validation` и `operation_manifest`. Отдельно это зафиксировано в `docs/design/protoc-php-gen-product.md`.
+
+Важно: project-specific namespace conventions и runtime bindings теперь живут не в тулзе, а во внешнем profile-классе проекта в [BaseApiTemplateEndpointProfile.php](/Users/ilya/dev/PhpstormProjects/base-api-template/codegen/Protobuf/BaseApiTemplateEndpointProfile.php).
 
 При реструктуризации нельзя просто "спрятать" этот каталог. Нужно решить:
 

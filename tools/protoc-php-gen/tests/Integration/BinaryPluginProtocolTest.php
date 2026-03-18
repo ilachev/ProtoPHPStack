@@ -6,6 +6,7 @@ namespace Tests\Integration;
 
 use PHPUnit\Framework\TestCase;
 use ProtoPhpGen\PhpGeneratorPlugin;
+use ProtoPhpGen\Profile\EndpointProfile;
 use ProtoPhpGen\Protoc\Binary\ProtobufReader;
 use ProtoPhpGen\Protoc\Binary\ProtobufWriter;
 use ProtoPhpGen\Protoc\PluginRequest;
@@ -16,7 +17,9 @@ final class BinaryPluginProtocolTest extends TestCase
     {
         $request = PluginRequest::fromStdin(
             $this->buildCodeGeneratorRequest(
-                parameter: 'namespace=App\\Generated\\Endpoint,output_dir=gen,generate_endpoints=true,generate_operation_manifest=true',
+                parameter: 'namespace=App\\Generated\\Endpoint,output_dir=gen,endpoint_profile_class='
+                    . BinaryProtocolEndpointProfile::class
+                    . ',generate_endpoints=true,generate_operation_manifest=true',
                 filesToGenerate: ['app/v1/health.proto'],
                 protoFiles: [
                     $this->buildFileDescriptorProto(
@@ -69,7 +72,7 @@ final class BinaryPluginProtocolTest extends TestCase
             $decodedResponse['files'][0]['content'],
         );
         self::assertStringContainsString(
-            'extends AbstractProtobufRpcHandler',
+            'extends BaseHandler',
             $decodedResponse['files'][1]['content'],
         );
         self::assertStringContainsString(
@@ -288,5 +291,116 @@ final class BinaryPluginProtocolTest extends TestCase
             'name' => $name,
             'content' => $content,
         ];
+    }
+}
+
+final readonly class BinaryProtocolEndpointProfile implements EndpointProfile
+{
+    public function getName(): string
+    {
+        return 'binary_protocol';
+    }
+
+    public function buildServiceNamespace(string $generatedNamespace, string $fileNamespace, string $serviceName): string
+    {
+        $suffix = str_starts_with($fileNamespace, 'App\\')
+            ? substr($fileNamespace, 4)
+            : $fileNamespace;
+
+        return rtrim($generatedNamespace, '\\') . '\\' . $suffix . '\\' . $serviceName;
+    }
+
+    public function buildEndpointImplementationClass(string $fileNamespace, string $serviceName, string $methodName): string
+    {
+        $suffix = str_starts_with($fileNamespace, 'App\\')
+            ? substr($fileNamespace, 4)
+            : $fileNamespace;
+
+        return 'App\TestEndpoint\\' . $suffix . '\\' . $serviceName . '\\' . $methodName . 'Endpoint';
+    }
+
+    public function buildOperationRegistryNamespace(string $generatedNamespace, string $fileNamespace): string
+    {
+        $suffix = str_starts_with($fileNamespace, 'App\\')
+            ? substr($fileNamespace, 4)
+            : $fileNamespace;
+
+        $baseNamespace = str_ends_with($generatedNamespace, '\Endpoint')
+            ? substr($generatedNamespace, 0, -\strlen('\Endpoint')) . '\OperationManifest'
+            : rtrim($generatedNamespace, '\\') . '\OperationManifest';
+
+        return rtrim($baseNamespace, '\\') . '\\' . $suffix;
+    }
+
+    public function buildOperationRegistryClassName(string $sourceName): string
+    {
+        $basename = pathinfo($sourceName, \PATHINFO_FILENAME);
+
+        return ucfirst($basename) . 'OperationRegistry';
+    }
+
+    public function buildEndpointImplementationPath(
+        string $sourceRoot,
+        string $fileNamespace,
+        string $serviceName,
+        string $methodName,
+    ): string {
+        $suffix = str_starts_with($fileNamespace, 'App\\')
+            ? substr($fileNamespace, 4)
+            : $fileNamespace;
+
+        return rtrim($sourceRoot, '/')
+            . '/Endpoints/'
+            . str_replace('\\', '/', $suffix)
+            . '/'
+            . $serviceName
+            . '/'
+            . $methodName
+            . 'Endpoint.php';
+    }
+
+    public function getHandlerBaseClass(): string
+    {
+        return 'App\TestRuntime\Handler\BaseHandler';
+    }
+
+    public function getResponseHelperClass(): string
+    {
+        return 'App\TestRuntime\ResponseFactory';
+    }
+
+    public function getOperationDefinitionClass(): string
+    {
+        return 'App\TestRuntime\Operation\OperationDefinition';
+    }
+
+    public function getHttpOperationBindingClass(): string
+    {
+        return 'App\TestRuntime\Operation\HttpOperationBinding';
+    }
+
+    public function getOperationRegistryInterface(): string
+    {
+        return 'App\TestRuntime\Operation\OperationRegistry';
+    }
+
+    public function getResponseHelperParameterName(): string
+    {
+        return 'responseFactory';
+    }
+
+    public function getDecodeRequestMethodName(): string
+    {
+        return 'decode';
+    }
+
+    public function getInvalidRequestResponseMethodName(): string
+    {
+        return 'invalid';
+    }
+
+    public function getSuccessResponseMethodName(): string
+    {
+        return 'success';
     }
 }

@@ -58,6 +58,11 @@ Handwritten runtime implementation:
 
 - `src/Platform/Http/Endpoint/...`
 
+Project-specific profile integration:
+
+- `codegen/protoc-php-gen-bootstrap.php`
+- `codegen/Protobuf/BaseApiTemplateEndpointProfile.php`
+
 Генератор не должен подменять собой application logic.
 
 ### 3. Никаких project-specific special cases

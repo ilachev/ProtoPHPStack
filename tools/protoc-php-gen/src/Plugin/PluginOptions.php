@@ -7,7 +7,6 @@ namespace ProtoPhpGen\Plugin;
 use ProtoPhpGen\Generator\EndpointGenerator;
 use ProtoPhpGen\Generator\EndpointImplementationValidator;
 use ProtoPhpGen\Generator\OperationManifestGenerator;
-use ProtoPhpGen\Profile\BaseApiTemplateEndpointProfile;
 use ProtoPhpGen\Protoc\PluginRequest;
 
 final readonly class PluginOptions
@@ -19,7 +18,8 @@ final readonly class PluginOptions
         private string $namespace = 'App\Gen',
         private string $outputDir = 'gen',
         private string $sourceRoot = 'src',
-        private string $endpointProfile = BaseApiTemplateEndpointProfile::NAME,
+        private ?string $bootstrap = null,
+        private string $endpointProfileClass = '',
         private array $enabledModules = [],
     ) {}
 
@@ -48,7 +48,8 @@ final readonly class PluginOptions
             namespace: $request->getParameter('namespace', 'App\Gen'),
             outputDir: $request->getParameter('output_dir', 'gen'),
             sourceRoot: $request->getParameter('source_root', 'src'),
-            endpointProfile: $request->getParameter('endpoint_profile', BaseApiTemplateEndpointProfile::NAME),
+            bootstrap: $request->getParameter('bootstrap') ?: null,
+            endpointProfileClass: $request->getParameter('endpoint_profile_class', ''),
             enabledModules: $enabledModules,
         );
     }
@@ -68,9 +69,14 @@ final readonly class PluginOptions
         return $this->sourceRoot;
     }
 
-    public function getEndpointProfile(): string
+    public function getBootstrap(): ?string
     {
-        return $this->endpointProfile;
+        return $this->bootstrap;
+    }
+
+    public function getEndpointProfileClass(): string
+    {
+        return $this->endpointProfileClass;
     }
 
     public function isModuleEnabled(string $moduleName): bool

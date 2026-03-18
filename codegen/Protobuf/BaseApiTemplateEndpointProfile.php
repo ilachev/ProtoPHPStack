@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace ProtoPhpGen\Profile;
+namespace ProjectCodegen\Protobuf;
+
+use ProtoPhpGen\Profile\EndpointProfile;
 
 final readonly class BaseApiTemplateEndpointProfile implements EndpointProfile
 {
-    public const NAME = 'base_api_template';
-
     public function getName(): string
     {
-        return self::NAME;
+        return 'base_api_template';
     }
 
     public function buildServiceNamespace(string $generatedNamespace, string $fileNamespace, string $serviceName): string
@@ -46,7 +46,7 @@ final readonly class BaseApiTemplateEndpointProfile implements EndpointProfile
 
     public function buildOperationRegistryClassName(string $sourceName): string
     {
-        $basename = pathinfo($sourceName, PATHINFO_FILENAME);
+        $basename = pathinfo($sourceName, \PATHINFO_FILENAME);
         $normalized = preg_replace('/[^A-Za-z0-9]+/', ' ', $basename);
         if (!\is_string($normalized) || $normalized === '') {
             throw new \RuntimeException("Unable to build operation registry class name for source: {$sourceName}");

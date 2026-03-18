@@ -8,8 +8,8 @@ use PHPUnit\Framework\TestCase;
 use ProtoPhpGen\Descriptor\ProtoFileDescriptor;
 use ProtoPhpGen\Generator\OperationManifestGenerator;
 use ProtoPhpGen\Plugin\PluginOptions;
-use ProtoPhpGen\Profile\BaseApiTemplateEndpointProfile;
 use ProtoPhpGen\Type\TypeResolver;
+use Tests\Fixtures\BaseApiTemplateLikeEndpointProfile;
 
 final class OperationManifestGeneratorTest extends TestCase
 {
@@ -21,7 +21,7 @@ final class OperationManifestGeneratorTest extends TestCase
                 outputDir: 'gen',
                 enabledModules: [OperationManifestGenerator::MODULE_NAME => true],
             ),
-            new BaseApiTemplateEndpointProfile(),
+            new BaseApiTemplateLikeEndpointProfile(),
         );
 
         $files = $generator->generateForProtoFile(

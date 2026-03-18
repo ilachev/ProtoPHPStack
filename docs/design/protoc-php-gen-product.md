@@ -35,6 +35,7 @@
 - `.proto` управляет endpoint surface;
 - `protoc-php-gen` генерирует endpoints и operation registry classes;
 - handwritten endpoint implementation остаётся в runtime-коде;
+- project-specific endpoint profile живёт вне тулзы и подключается через `bootstrap + endpoint_profile_class`;
 - generator не подменяет собой business logic.
 
 ## Целевая модель инструмента
@@ -102,6 +103,7 @@
 
 - `protoc-php-gen` остаётся внутренним инструментом репозитория;
 - основной template использует стабильные `endpoints`, `endpoint_validation` и `operation_manifest` modules;
+- project-specific profile проекта находится в `codegen/Protobuf/BaseApiTemplateEndpointProfile.php`, а не внутри `tools/protoc-php-gen`;
 - расширение тулзы допускается только без разрастания основного project path в набор legacy-веток.
 
 ## Текущие архитектурные ограничения

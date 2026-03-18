@@ -8,7 +8,6 @@ use PHPUnit\Framework\TestCase;
 use ProtoPhpGen\Descriptor\ProtoFileDescriptor;
 use ProtoPhpGen\Generator\EndpointGenerator;
 use ProtoPhpGen\Plugin\PluginOptions;
-use ProtoPhpGen\Profile\BaseApiTemplateEndpointProfile;
 use ProtoPhpGen\Profile\EndpointProfile;
 use ProtoPhpGen\Type\TypeResolver;
 
@@ -21,7 +20,7 @@ final class EndpointGeneratorTest extends TestCase
                 namespace: 'App\Generated\Endpoint',
                 outputDir: 'gen',
             ),
-            new BaseApiTemplateEndpointProfile(),
+            new BaseLikeEndpointProfile(),
         );
 
         $files = $generator->generateForProtoFile(
@@ -241,5 +240,116 @@ final readonly class StubEndpointProfile implements EndpointProfile
     public function getSuccessResponseMethodName(): string
     {
         return 'writeResponse';
+    }
+}
+
+final readonly class BaseLikeEndpointProfile implements EndpointProfile
+{
+    public function getName(): string
+    {
+        return 'base_like';
+    }
+
+    public function buildServiceNamespace(string $generatedNamespace, string $fileNamespace, string $serviceName): string
+    {
+        $suffix = str_starts_with($fileNamespace, 'App\\')
+            ? substr($fileNamespace, 4)
+            : $fileNamespace;
+
+        return rtrim($generatedNamespace, '\\') . '\\' . $suffix . '\\' . $serviceName;
+    }
+
+    public function buildEndpointImplementationClass(string $fileNamespace, string $serviceName, string $methodName): string
+    {
+        $suffix = str_starts_with($fileNamespace, 'App\\')
+            ? substr($fileNamespace, 4)
+            : $fileNamespace;
+
+        return 'App\Platform\Http\Endpoint\\' . $suffix . '\\' . $serviceName . '\\' . $methodName . 'Endpoint';
+    }
+
+    public function buildOperationRegistryNamespace(string $generatedNamespace, string $fileNamespace): string
+    {
+        $suffix = str_starts_with($fileNamespace, 'App\\')
+            ? substr($fileNamespace, 4)
+            : $fileNamespace;
+
+        $baseNamespace = str_ends_with($generatedNamespace, '\Endpoint')
+            ? substr($generatedNamespace, 0, -\strlen('\Endpoint')) . '\OperationManifest'
+            : rtrim($generatedNamespace, '\\') . '\OperationManifest';
+
+        return rtrim($baseNamespace, '\\') . '\\' . $suffix;
+    }
+
+    public function buildOperationRegistryClassName(string $sourceName): string
+    {
+        $basename = pathinfo($sourceName, \PATHINFO_FILENAME);
+
+        return ucfirst($basename) . 'OperationRegistry';
+    }
+
+    public function buildEndpointImplementationPath(
+        string $sourceRoot,
+        string $fileNamespace,
+        string $serviceName,
+        string $methodName,
+    ): string {
+        $suffix = str_starts_with($fileNamespace, 'App\\')
+            ? substr($fileNamespace, 4)
+            : $fileNamespace;
+
+        return rtrim($sourceRoot, '/')
+            . '/Platform/Http/Endpoint/'
+            . str_replace('\\', '/', $suffix)
+            . '/'
+            . $serviceName
+            . '/'
+            . $methodName
+            . 'Endpoint.php';
+    }
+
+    public function getHandlerBaseClass(): string
+    {
+        return 'App\Platform\Http\Handler\AbstractProtobufRpcHandler';
+    }
+
+    public function getResponseHelperClass(): string
+    {
+        return 'App\Platform\Http\JsonResponse';
+    }
+
+    public function getOperationDefinitionClass(): string
+    {
+        return 'App\Platform\Http\Operation\OperationDefinition';
+    }
+
+    public function getHttpOperationBindingClass(): string
+    {
+        return 'App\Platform\Http\Operation\HttpOperationBinding';
+    }
+
+    public function getOperationRegistryInterface(): string
+    {
+        return 'App\Platform\Http\Operation\OperationRegistry';
+    }
+
+    public function getResponseHelperParameterName(): string
+    {
+        return 'jsonResponse';
+    }
+
+    public function getDecodeRequestMethodName(): string
+    {
+        return 'decodeRequest';
+    }
+
+    public function getInvalidRequestResponseMethodName(): string
+    {
+        return 'invalidRequestResponse';
+    }
+
+    public function getSuccessResponseMethodName(): string
+    {
+        return 'protobufResponse';
     }
 }

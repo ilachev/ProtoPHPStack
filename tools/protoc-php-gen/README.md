@@ -55,7 +55,7 @@ The detailed product-level rationale is documented in:
 ```bash
 protoc -I=./protos/proto \
   --plugin=protoc-gen-php-endpoint=./tools/protoc-php-gen/bin/protoc-php-gen.php \
-  --php-endpoint_out=namespace=App\\Generated\\Endpoint,output_dir=gen,source_root=src,endpoint_profile=base_api_template,generate_endpoints=true,generate_endpoint_validation=true,generate_operation_manifest=true:. \
+  --php-endpoint_out=namespace=App\\Generated\\Endpoint,output_dir=gen,source_root=src,bootstrap=codegen/protoc-php-gen-bootstrap.php,endpoint_profile_class=ProjectCodegen\\Protobuf\\BaseApiTemplateEndpointProfile,generate_endpoints=true,generate_endpoint_validation=true,generate_operation_manifest=true:. \
   ./protos/proto/app/v1/*.proto
 ```
 
@@ -64,6 +64,8 @@ protoc -I=./protos/proto \
 - `namespace` - Base namespace for generated endpoint classes
 - `output_dir` - Output directory for generated files
 - `source_root` - Root directory for handwritten endpoint implementations
+- `bootstrap` - Optional PHP bootstrap file for loading project-specific profile classes
+- `endpoint_profile_class` - Fully-qualified endpoint profile class used by the project
 - `generate_endpoints` - Enable endpoint generation
 - `generate_endpoint_validation` - Fail generation when handwritten endpoint implementations are missing or declared incorrectly
 - `generate_operation_manifest` - Enable operation registry generation
