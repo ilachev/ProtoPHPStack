@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Generator;
 
 use PHPUnit\Framework\TestCase;
+use ProtoPhpGen\Descriptor\ProtoFileDescriptor;
 use ProtoPhpGen\Generator\CodeGeneratorModule;
 use ProtoPhpGen\Generator\GeneratedFile;
 use ProtoPhpGen\Generator\GeneratorRegistry;
@@ -37,7 +38,7 @@ final class GeneratorRegistryTest extends TestCase
             new PluginOptions(enabledModules: ['transport_contracts' => true]),
         );
 
-        $files = $registry->generateForProtoFile([], []);
+        $files = $registry->generateForProtoFile(ProtoFileDescriptor::fromArray([]), []);
 
         self::assertCount(1, $files);
         self::assertSame('gen/one.php', $files[0]->getName());
@@ -65,7 +66,7 @@ final readonly class StubGeneratorModule implements CodeGeneratorModule
         return $this->enabled && $options->isModuleEnabled($this->name);
     }
 
-    public function generateForProtoFile(array $protoFile, array $typeMap): array
+    public function generateForProtoFile(ProtoFileDescriptor $protoFile, array $typeMap): array
     {
         return $this->files;
     }

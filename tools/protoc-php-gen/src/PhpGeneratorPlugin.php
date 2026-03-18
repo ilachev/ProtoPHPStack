@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace ProtoPhpGen;
 
+use ProtoPhpGen\Descriptor\MessageDescriptor;
+use ProtoPhpGen\Descriptor\ProtoFileDescriptor;
 use ProtoPhpGen\Generator\GeneratorRegistry;
 use ProtoPhpGen\Generator\TransportContractGenerator;
 use ProtoPhpGen\Plugin\PluginOptions;
@@ -34,7 +36,7 @@ final readonly class PhpGeneratorPlugin extends ProtocPlugin
             $typeMap = $this->buildTypeMap($protoFiles);
 
             foreach ($protoFiles as $fileName => $protoFile) {
-                if (!isset($filesToGenerate[$fileName]) || !\is_array($protoFile)) {
+                if (!isset($filesToGenerate[$fileName])) {
                     continue;
                 }
 
@@ -56,7 +58,7 @@ final readonly class PhpGeneratorPlugin extends ProtocPlugin
     }
 
     /**
-     * @param array<string, mixed> $protoFiles
+     * @param array<string, ProtoFileDescriptor> $protoFiles
      * @return array<string, class-string>
      */
     private function buildTypeMap(array $protoFiles): array
@@ -64,60 +66,31 @@ final readonly class PhpGeneratorPlugin extends ProtocPlugin
         $typeMap = [];
 
         foreach ($protoFiles as $protoFile) {
-            if (!\is_array($protoFile)) {
-                continue;
-            }
-
             $namespace = $this->resolveFileNamespace($protoFile);
             if ($namespace === '') {
                 continue;
             }
 
-            $package = $protoFile['package'] ?? null;
-            if (!\is_string($package) || $package === '') {
+            $package = $protoFile->getPackage();
+            if ($package === '') {
                 continue;
             }
 
-            $messageTypes = $protoFile['message_type'] ?? [];
-            if (!\is_array($messageTypes)) {
-                continue;
-            }
-
-            foreach ($messageTypes as $messageType) {
-                if (!\is_array($messageType)) {
-                    continue;
-                }
-
-                $messageName = $messageType['name'] ?? null;
-                if (!\is_string($messageName) || $messageName === '') {
-                    continue;
-                }
-
-                $resolvedClass = "{$namespace}\\{$messageName}";
-
-                /** @var class-string $resolvedClass */
-                $typeMap[".{$package}.{$messageName}"] = $resolvedClass;
-            }
+            $this->addMessagesToTypeMap($typeMap, $protoFile->getMessages(), $namespace, $package);
         }
 
         return $typeMap;
     }
 
-    /**
-     * @param array<string, mixed> $protoFile
-     */
-    private function resolveFileNamespace(array $protoFile): string
+    private function resolveFileNamespace(ProtoFileDescriptor $protoFile): string
     {
-        $options = $protoFile['options'] ?? [];
-        if (\is_array($options)) {
-            $phpNamespace = $options['php_namespace'] ?? null;
-            if (\is_string($phpNamespace) && $phpNamespace !== '') {
-                return $phpNamespace;
-            }
+        $phpNamespace = $protoFile->getOptions()?->getPhpNamespace();
+        if ($phpNamespace !== null && $phpNamespace !== '') {
+            return $phpNamespace;
         }
 
-        $package = $protoFile['package'] ?? null;
-        if (!\is_string($package) || $package === '') {
+        $package = $protoFile->getPackage();
+        if ($package === '') {
             return '';
         }
 
@@ -130,6 +103,34 @@ final readonly class PhpGeneratorPlugin extends ProtocPlugin
         $parts = array_map('ucfirst', $parts);
 
         return 'App\\' . implode('\\', $parts);
+    }
+
+    /**
+     * @param array<string, class-string> $typeMap
+     * @param list<MessageDescriptor> $messages
+     */
+    private function addMessagesToTypeMap(array &$typeMap, array $messages, string $namespace, string $package, string $prefix = ''): void
+    {
+        foreach ($messages as $message) {
+            $messageName = $message->getName();
+            if ($messageName === '') {
+                continue;
+            }
+
+            $protobufPath = $prefix === '' ? $messageName : $prefix . '.' . $messageName;
+            $resolvedClass = $namespace . '\\' . str_replace('.', '\\', $protobufPath);
+
+            /** @var class-string $resolvedClass */
+            $typeMap[".{$package}.{$protobufPath}"] = $resolvedClass;
+
+            $this->addMessagesToTypeMap(
+                $typeMap,
+                $message->getNestedMessages(),
+                $namespace,
+                $package,
+                $protobufPath,
+            );
+        }
     }
 
     private function logDebug(string $message): void

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ProtoPhpGen\Protoc;
 
+use ProtoPhpGen\Descriptor\ProtoFileDescriptor;
 use ProtoPhpGen\Protoc\Binary\CodeGeneratorRequestParser;
 
 /**
@@ -23,7 +24,7 @@ final class PluginRequest
     private string $parameter = '';
 
     /**
-     * @var array<string, mixed> File descriptor sets for all files
+     * @var array<string, ProtoFileDescriptor> File descriptors for all files
      */
     private array $protoFiles = [];
 
@@ -53,7 +54,9 @@ final class PluginRequest
 
                 if (isset($data['protoFiles']) && \is_array($data['protoFiles'])) {
                     foreach ($data['protoFiles'] as $name => $file) {
-                        $request->addProtoFile($name, $file);
+                        if (\is_array($file)) {
+                            $request->addProtoFile($name, ProtoFileDescriptor::fromArray($file));
+                        }
                     }
                 }
             }
@@ -217,7 +220,7 @@ final class PluginRequest
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, ProtoFileDescriptor>
      */
     public function getProtoFiles(): array
     {
@@ -228,9 +231,8 @@ final class PluginRequest
      * Adds a proto file.
      *
      * @param string $name File name
-     * @param array<string, mixed> $data File content
      */
-    public function addProtoFile(string $name, array $data): void
+    public function addProtoFile(string $name, ProtoFileDescriptor $data): void
     {
         $this->protoFiles[$name] = $data;
     }
@@ -239,9 +241,9 @@ final class PluginRequest
      * Returns a proto file by name.
      *
      * @param string $name File name
-     * @return array<string, mixed>|null File content or null if the file is not found
+     * @return ProtoFileDescriptor|null File content or null if the file is not found
      */
-    public function getProtoFile(string $name): ?array
+    public function getProtoFile(string $name): ?ProtoFileDescriptor
     {
         return $this->protoFiles[$name] ?? null;
     }

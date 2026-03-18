@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ProtoPhpGen\Protoc\Binary;
 
+use ProtoPhpGen\Descriptor\ProtoFileDescriptor;
 use ProtoPhpGen\Protoc\PluginRequest;
 
 /**
@@ -157,8 +158,9 @@ final class CodeGeneratorRequestParser
             }
         }
 
-        if (isset($protoFile['name'])) {
-            $request->addProtoFile($protoFile['name'], $protoFile);
+        $name = $protoFile['name'] ?? null;
+        if (\is_string($name)) {
+            $request->addProtoFile($name, ProtoFileDescriptor::fromArray($protoFile));
         }
     }
 

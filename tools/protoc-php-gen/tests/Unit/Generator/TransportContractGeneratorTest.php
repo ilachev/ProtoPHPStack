@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Generator;
 
 use PHPUnit\Framework\TestCase;
+use ProtoPhpGen\Descriptor\ProtoFileDescriptor;
 use ProtoPhpGen\Generator\TransportContractGenerator;
 use ProtoPhpGen\Plugin\PluginOptions;
 
@@ -20,7 +21,7 @@ final class TransportContractGeneratorTest extends TestCase
         );
 
         $files = $generator->generateForProtoFile(
-            [
+            ProtoFileDescriptor::fromArray([
                 'package' => 'app.v1',
                 'options' => [
                     'php_namespace' => 'App\Api\V1',
@@ -37,7 +38,7 @@ final class TransportContractGeneratorTest extends TestCase
                         ],
                     ],
                 ],
-            ],
+            ]),
             [
                 '.app.v1.HealthCheckRequest' => 'App\Api\V1\HealthCheckRequest',
                 '.app.v1.HealthCheckResponse' => 'App\Api\V1\HealthCheckResponse',

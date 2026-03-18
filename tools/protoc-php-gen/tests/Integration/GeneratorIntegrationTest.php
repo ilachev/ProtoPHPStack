@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Integration;
 
 use PHPUnit\Framework\TestCase;
+use ProtoPhpGen\Descriptor\ProtoFileDescriptor;
 use ProtoPhpGen\PhpGeneratorPlugin;
 use ProtoPhpGen\Protoc\PluginRequest;
 
@@ -17,7 +18,7 @@ final class GeneratorIntegrationTest extends TestCase
         $request->addFileToGenerate('app/v1/health.proto');
         $request->addProtoFile(
             'app/v1/health.proto',
-            [
+            ProtoFileDescriptor::fromArray([
                 'name' => 'app/v1/health.proto',
                 'package' => 'app.v1',
                 'options' => [
@@ -43,7 +44,7 @@ final class GeneratorIntegrationTest extends TestCase
                         ],
                     ],
                 ],
-            ],
+            ]),
         );
 
         $plugin = new PhpGeneratorPlugin();

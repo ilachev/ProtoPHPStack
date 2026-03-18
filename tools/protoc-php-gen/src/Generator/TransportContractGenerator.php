@@ -6,6 +6,7 @@ namespace ProtoPhpGen\Generator;
 
 use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PsrPrinter;
+use ProtoPhpGen\Descriptor\ProtoFileDescriptor;
 use ProtoPhpGen\Plugin\PluginOptions;
 
 final readonly class TransportContractGenerator implements CodeGeneratorModule
@@ -31,14 +32,13 @@ final readonly class TransportContractGenerator implements CodeGeneratorModule
     }
 
     /**
-     * @param array<string, mixed> $protoFile
      * @param array<string, class-string> $typeMap
      * @return list<GeneratedFile>
      */
-    public function generateForProtoFile(array $protoFile, array $typeMap): array
+    public function generateForProtoFile(ProtoFileDescriptor $protoFile, array $typeMap): array
     {
-        $services = $protoFile['service'] ?? [];
-        if (!\is_array($services) || $services === []) {
+        $services = $protoFile->getServices();
+        if ($services === []) {
             return [];
         }
 
@@ -50,28 +50,20 @@ final readonly class TransportContractGenerator implements CodeGeneratorModule
         $files = [];
 
         foreach ($services as $service) {
-            if (!\is_array($service)) {
-                continue;
-            }
-
-            $serviceName = isset($service['name']) && \is_string($service['name']) ? $service['name'] : '';
+            $serviceName = $service->getName();
             if ($serviceName === '') {
                 continue;
             }
 
-            $methods = $service['method'] ?? [];
-            if (!\is_array($methods) || $methods === []) {
+            $methods = $service->getMethods();
+            if ($methods === []) {
                 continue;
             }
 
             foreach ($methods as $method) {
-                if (!\is_array($method)) {
-                    continue;
-                }
-
-                $methodName = isset($method['name']) && \is_string($method['name']) ? $method['name'] : '';
-                $inputType = isset($method['input_type']) && \is_string($method['input_type']) ? $method['input_type'] : '';
-                $outputType = isset($method['output_type']) && \is_string($method['output_type']) ? $method['output_type'] : '';
+                $methodName = $method->getName();
+                $inputType = $method->getInputType();
+                $outputType = $method->getOutputType();
 
                 if ($methodName === '' || $inputType === '' || $outputType === '') {
                     continue;
@@ -102,21 +94,16 @@ final readonly class TransportContractGenerator implements CodeGeneratorModule
         return $files;
     }
 
-    /**
-     * @param array<string, mixed> $protoFile
-     */
-    private function resolveFileNamespace(array $protoFile): string
+    private function resolveFileNamespace(ProtoFileDescriptor $protoFile): string
     {
-        $options = $protoFile['options'] ?? [];
-        if (\is_array($options)) {
-            $phpNamespace = $options['php_namespace'] ?? null;
-            if (\is_string($phpNamespace) && $phpNamespace !== '') {
-                return $phpNamespace;
-            }
+        $options = $protoFile->getOptions();
+        $phpNamespace = $options?->getPhpNamespace();
+        if ($phpNamespace !== null && $phpNamespace !== '') {
+            return $phpNamespace;
         }
 
-        $package = $protoFile['package'] ?? null;
-        if (!\is_string($package) || $package === '') {
+        $package = $protoFile->getPackage();
+        if ($package === '') {
             return '';
         }
 

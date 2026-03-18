@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Protoc;
 
 use PHPUnit\Framework\TestCase;
+use ProtoPhpGen\Descriptor\ProtoFileDescriptor;
 use ProtoPhpGen\Protoc\PluginRequest;
 
 /**
@@ -75,8 +76,8 @@ final class PluginRequestTest extends TestCase
     {
         // Arrange
         $request = new PluginRequest();
-        $protoFile1 = ['name' => 'file1.proto', 'package' => 'test.package'];
-        $protoFile2 = ['name' => 'file2.proto', 'package' => 'test.package'];
+        $protoFile1 = ProtoFileDescriptor::fromArray(['name' => 'file1.proto', 'package' => 'test.package']);
+        $protoFile2 = ProtoFileDescriptor::fromArray(['name' => 'file2.proto', 'package' => 'test.package']);
 
         // Act
         $request->addProtoFile('file1.proto', $protoFile1);
