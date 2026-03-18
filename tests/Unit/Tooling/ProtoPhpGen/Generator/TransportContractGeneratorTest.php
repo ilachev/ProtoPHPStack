@@ -5,18 +5,18 @@ declare(strict_types=1);
 namespace Tests\Unit\Tooling\ProtoPhpGen\Generator;
 
 use PHPUnit\Framework\TestCase;
-use ProtoPhpGen\Config\GeneratorConfig;
 use ProtoPhpGen\Generator\TransportContractGenerator;
+use ProtoPhpGen\Plugin\PluginOptions;
 
 final class TransportContractGeneratorTest extends TestCase
 {
     public function testGeneratesEndpointAndHandlerFiles(): void
     {
         $generator = new TransportContractGenerator(
-            (new GeneratorConfig(
+            new PluginOptions(
                 namespace: 'App\Generated\Transport',
                 outputDir: 'gen',
-            ))->setGenerateTransportContracts(true),
+            ),
         );
 
         $files = $generator->generateForProtoFile(

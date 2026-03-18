@@ -6,16 +6,28 @@ namespace ProtoPhpGen\Generator;
 
 use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PsrPrinter;
-use ProtoPhpGen\Config\GeneratorConfig;
+use ProtoPhpGen\Plugin\PluginOptions;
 
-final readonly class TransportContractGenerator
+final readonly class TransportContractGenerator implements CodeGeneratorModule
 {
+    public const MODULE_NAME = 'transport_contracts';
+
     private PsrPrinter $printer;
 
     public function __construct(
-        private GeneratorConfig $config,
+        private PluginOptions $options,
     ) {
         $this->printer = new PsrPrinter();
+    }
+
+    public function getName(): string
+    {
+        return self::MODULE_NAME;
+    }
+
+    public function isEnabled(PluginOptions $options): bool
+    {
+        return $options->isModuleEnabled(self::MODULE_NAME);
     }
 
     /**
@@ -25,10 +37,6 @@ final readonly class TransportContractGenerator
      */
     public function generateForProtoFile(array $protoFile, array $typeMap): array
     {
-        if (!$this->config->shouldGenerateTransportContracts()) {
-            return [];
-        }
-
         $services = $protoFile['service'] ?? [];
         if (!\is_array($services) || $services === []) {
             return [];
@@ -150,7 +158,7 @@ final readonly class TransportContractGenerator
             ? substr($fileNamespace, 4)
             : $fileNamespace;
 
-        return rtrim($this->config->getNamespace(), '\\') . '\\' . $suffix . '\\' . $serviceName;
+        return rtrim($this->options->getNamespace(), '\\') . '\\' . $suffix . '\\' . $serviceName;
     }
 
     private function generateEndpointInterface(
@@ -236,7 +244,7 @@ final readonly class TransportContractGenerator
             ? substr($namespace, 4)
             : $namespace;
 
-        return rtrim($this->config->getOutputDir(), '/')
+        return rtrim($this->options->getOutputDir(), '/')
             . '/'
             . str_replace('\\', '/', $relativeNamespace)
             . '/'

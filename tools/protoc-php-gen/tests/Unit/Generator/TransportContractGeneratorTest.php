@@ -5,25 +5,25 @@ declare(strict_types=1);
 namespace Tests\Unit\Generator;
 
 use PHPUnit\Framework\TestCase;
-use ProtoPhpGen\Config\GeneratorConfig;
 use ProtoPhpGen\Generator\TransportContractGenerator;
+use ProtoPhpGen\Plugin\PluginOptions;
 
 final class TransportContractGeneratorTest extends TestCase
 {
     public function testGeneratesEndpointAndHandlerFiles(): void
     {
         $generator = new TransportContractGenerator(
-            (new GeneratorConfig(
-                namespace: 'App\\Generated\\Transport',
+            new PluginOptions(
+                namespace: 'App\Generated\Transport',
                 outputDir: 'gen',
-            ))->setGenerateTransportContracts(true),
+            ),
         );
 
         $files = $generator->generateForProtoFile(
             [
                 'package' => 'app.v1',
                 'options' => [
-                    'php_namespace' => 'App\\Api\\V1',
+                    'php_namespace' => 'App\Api\V1',
                 ],
                 'service' => [
                     [
@@ -39,14 +39,14 @@ final class TransportContractGeneratorTest extends TestCase
                 ],
             ],
             [
-                '.app.v1.HealthCheckRequest' => 'App\\Api\\V1\\HealthCheckRequest',
-                '.app.v1.HealthCheckResponse' => 'App\\Api\\V1\\HealthCheckResponse',
+                '.app.v1.HealthCheckRequest' => 'App\Api\V1\HealthCheckRequest',
+                '.app.v1.HealthCheckResponse' => 'App\Api\V1\HealthCheckResponse',
             ],
         );
 
         self::assertCount(2, $files);
         self::assertSame('gen/Generated/Transport/Api/V1/HealthService/CheckEndpoint.php', $files[0]->getName());
-        self::assertStringContainsString('namespace App\\Generated\\Transport\\Api\\V1\\HealthService;', $files[0]->getContent());
+        self::assertStringContainsString('namespace App\Generated\Transport\Api\V1\HealthService;', $files[0]->getContent());
         self::assertStringContainsString('interface CheckEndpoint', $files[0]->getContent());
         self::assertStringContainsString('HealthCheckRequest', $files[0]->getContent());
         self::assertStringContainsString('HealthCheckResponse', $files[0]->getContent());

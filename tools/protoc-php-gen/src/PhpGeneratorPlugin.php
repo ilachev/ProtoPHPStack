@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace ProtoPhpGen;
 
-use ProtoPhpGen\Config\GeneratorConfig;
+use ProtoPhpGen\Generator\GeneratorRegistry;
 use ProtoPhpGen\Generator\TransportContractGenerator;
+use ProtoPhpGen\Plugin\PluginOptions;
 use ProtoPhpGen\Protoc\PluginRequest;
 use ProtoPhpGen\Protoc\PluginResponse;
 use ProtoPhpGen\Protoc\ProtocPlugin;
@@ -21,8 +22,13 @@ final readonly class PhpGeneratorPlugin extends ProtocPlugin
             $this->logDebug('Files to generate: ' . implode(', ', $request->getFilesToGenerate()));
             $this->logDebug('Parameters: ' . json_encode($request->getParameters()));
 
-            $config = $this->createConfig($request);
-            $generator = new TransportContractGenerator($config);
+            $options = PluginOptions::fromRequest($request);
+            $registry = new GeneratorRegistry(
+                [
+                    new TransportContractGenerator($options),
+                ],
+                $options,
+            );
             $filesToGenerate = array_flip($request->getFilesToGenerate());
             $protoFiles = $request->getProtoFiles();
             $typeMap = $this->buildTypeMap($protoFiles);
@@ -32,7 +38,7 @@ final readonly class PhpGeneratorPlugin extends ProtocPlugin
                     continue;
                 }
 
-                foreach ($generator->generateForProtoFile($protoFile, $typeMap) as $file) {
+                foreach ($registry->generateForProtoFile($protoFile, $typeMap) as $file) {
                     $response->addFile($file->getName(), $file->getContent());
                     $this->logDebug("Generated file: {$file->getName()}");
                 }
@@ -47,26 +53,6 @@ final readonly class PhpGeneratorPlugin extends ProtocPlugin
         }
 
         return $response;
-    }
-
-    private function createConfig(PluginRequest $request): GeneratorConfig
-    {
-        $config = new GeneratorConfig();
-
-        if ($request->hasParameter('namespace')) {
-            $config->setNamespace($request->getParameter('namespace'));
-        }
-
-        if ($request->hasParameter('output_dir')) {
-            $config->setOutputDir($request->getParameter('output_dir'));
-        }
-
-        if ($request->hasParameter('generate_transport_contracts')) {
-            $value = $request->getParameter('generate_transport_contracts');
-            $config->setGenerateTransportContracts($value === 'true' || $value === '1');
-        }
-
-        return $config;
     }
 
     /**
