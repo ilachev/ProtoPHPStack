@@ -11,6 +11,7 @@
 5. [Инфраструктура и тестирование](./development/infrastructure-and-testing.md) — PostgreSQL, Redis, миграции, quality gates и test profiles.
 6. [Рекомендации по `protoc-php-gen`](./design/protoc-php-gen-guidelines.md) — правила для endpoint-oriented protobuf codegen.
 7. [`protoc-php-gen` как продукт](./design/protoc-php-gen-product.md) — текущий supported scope и целевая modular model генератора.
+8. [`sql-gen` как продукт](./design/sql-gen-product.md) — целевая `sqlc-like` модель для typed SQL generation.
 
 ## Как читать
 
@@ -18,6 +19,7 @@
 - Если нужно понять, какие части проекта реально составляют шаблон, читать `reusable-blocks.md`.
 - Если нужно понять runtime, читать `architecture/request-lifecycle.md`.
 - Если меняется API surface, читать `architecture/protobuf-and-codegen.md`.
+- Если меняется persistence direction и SQL toolchain, читать `design/sql-gen-product.md`.
 - Если меняется storage, cache, миграции или тестовый контур, читать `development/infrastructure-and-testing.md`.
 
 ## Базовые правила
@@ -27,3 +29,4 @@
 - `Platform` должен оставаться маленьким runtime core.
 - `Capabilities` должны оставаться простыми reusable-блоками.
 - Нейтральный `HealthCheck` остаётся минимальным живым примером protobuf-first endpoint flow.
+- Для persistence целевым направлением считается explicit SQL с typed generation поверх него, а не усложнение ORM-like abstractions.

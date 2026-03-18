@@ -4,7 +4,7 @@
 
 ## Что это за проект
 
-`base-api-template` — это backend template на PHP 8.5+ с маленьким runtime core, `protobuf-first` endpoint contracts и набором простых reusable-блоков.
+`base-api-template` — это backend template на PHP 8.5+ с маленьким runtime core, `protobuf-first` endpoint contracts, целевым `sqlc-like` persistence path и набором простых reusable-блоков.
 
 Это не готовый продукт и не framework. Репозиторий должен восприниматься так:
 
@@ -28,6 +28,7 @@
 - `taskfile.yaml` — команды разработки
 - `docs/reusable-blocks.md` — каноническая карта reusable-блоков проекта
 - `docs/design/protoc-php-gen-product.md` — целевая модель protobuf codegen-tooling
+- `docs/design/sql-gen-product.md` — целевая модель typed SQL generation
 
 ## Текущая структура
 
@@ -64,6 +65,7 @@ Reusable blocks:
 - `protos/gen/*` — основной protobuf SDK и metadata
 - `gen/Generated/Endpoint/*` — generated endpoint contracts и handlers
 - `gen/Generated/OperationManifest/*` — generated operation registry classes for each RPC group
+- целевой SQL source of truth должен жить в `sql/queries/*`, а generated SQL artifacts — в `gen/Generated/Sql/*`
 - legacy `gen/Infrastructure/Hydrator/*` больше не является валидным generated output
 
 ## Что важно считать инвариантами
@@ -75,6 +77,7 @@ Reusable blocks:
 - example code должен быть явно вторичен по отношению к runtime
 - default `task verify` не должен требовать поднятых внешних сервисов
 - проект живёт в long-running процессе RoadRunner, значит надо следить за памятью и накоплением состояния
+- persistence должен двигаться в сторону explicit SQL + typed generation, а не в сторону усложняющегося ORM-like слоя
 
 ## Команды
 
@@ -110,7 +113,7 @@ task run
 
 ## Текущие зоны риска
 
-- storage/integration adapters всё ещё требуют аккуратного упрощения
+- storage/query слой всё ещё transitional и со временем должен уступить место более прямому `sqlc-like` пути
 - hydration/data mapping layer всё ещё чувствителен к усложнению
 - endpoint implementations всё ещё пишутся вручную, а generator пока валидирует только наличие файла и корректное объявление класса
 - consistency между generated operation registries, generated handlers и endpoint implementations теперь проверяется в default `verify`, но это всё ещё verify-time guard, а не отдельный generator module

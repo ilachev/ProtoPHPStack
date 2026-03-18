@@ -51,6 +51,7 @@
 - Обязательность: обязательный reusable block для backend template.
 - Что здесь считается core: generic persistence API, migrations, adapters.
 - Optional-часть: дополнительные storage profiles и engine-specific tuning.
+- Целевое направление: explicit SQL с typed generation поверх него, а не разрастание runtime query-builder vocabulary.
 
 ### `Platform/Cache`
 
@@ -121,4 +122,5 @@
 - брать `Platform` как runtime base;
 - подключать только нужные `Capabilities`;
 - использовать `HealthCheck` как минимальный эталон endpoint flow;
-- не переписывать смысл блоков под конкретный продукт.
+- не переписывать смысл блоков под конкретный продукт;
+- для persistence писать явный SQL и получать поверх него typed generated PHP, а не прятать его за ORM-like магией.
