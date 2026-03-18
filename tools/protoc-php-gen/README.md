@@ -1,135 +1,38 @@
-# Proto PHP Hydrator Generator
+# Proto PHP Transport Generator
 
-A protoc plugin that generates PHP hydrators for transforming between domain entities and proto messages.
+`protoc-php-gen` is the internal protoc plugin used by this repository to generate server-side transport contracts from protobuf `service/rpc` definitions.
 
-## Installation
+## Current role
 
-1. Clone the repository
-2. Install dependencies:
-   ```
-   composer install
-   ```
-3. Make the `bin/protoc-php-gen.php` file executable:
-   ```
-   chmod +x bin/protoc-php-gen.php
-   ```
+The supported project path is transport-oriented:
+
+- parse protobuf descriptors;
+- generate endpoint interfaces;
+- generate HTTP handlers for the runtime adapter.
+
+It is not the canonical path for domain-to-proto mapper generation.
 
 ## Usage
 
-First, create your custom options file (options.proto):
-
-```protobuf
-syntax = "proto3";
-
-package app.domain;
-
-import "google/protobuf/descriptor.proto";
-
-option php_namespace = "App\\Domain\\Options";
-
-// Custom options for entities
-extend google.protobuf.MessageOptions {
-  bool is_entity = 50000;
-  string table_name = 50001;
-  string primary_key = 50002;
-}
-
-// Custom options for fields
-extend google.protobuf.FieldOptions {
-  string db_column = 50100;
-  bool is_json = 50101;
-  bool ignore = 50102;
-}
-```
-
-Then add the command to your Taskfile or Makefile:
-
-```
+```bash
 protoc -I=./protos/proto \
-  --plugin=protoc-php-gen=./tools/protoc-php-gen/bin/protoc-php-gen.php \
-  --php-gen_out=namespace=App\\Gen,output_dir=gen,entity_interface=App\\Domain\\Entity \
-  ./protos/proto/app/domain/*.proto
+  --plugin=protoc-gen-php-transport=./tools/protoc-php-gen/bin/protoc-php-gen.php \
+  --php-transport_out=namespace=App\\Generated\\Transport,output_dir=gen,generate_transport_contracts=true:. \
+  ./protos/proto/app/v1/*.proto
 ```
 
-## Parameters
+## Parameters used by the main project
 
-- `namespace` - Base namespace for generated classes (default: `App\Gen`)
-- `output_dir` - Output directory for generated files (default: `gen`)
-- `generate_hydrators` - Whether to generate standard hydrator classes (default: `true`)
-- `generate_proto_hydrators` - Whether to generate proto-specific hydrator classes (default: `false`)
-- `standalone_mode` - Whether to generate code without external dependencies (default: `false`)
+- `namespace` - Base namespace for generated transport classes
+- `output_dir` - Output directory for generated files
+- `generate_transport_contracts` - Enable transport contract generation
 
-Example with parameters:
+## Output
 
-```
-protoc -I=./protos/proto \
-  --plugin=protoc-php-gen=./tools/protoc-php-gen/bin/protoc-php-gen.php \
-  --php-gen_out=namespace=MyApp\\Gen,output_dir=output,generate_hydrators=true,generate_proto_hydrators=true \
-  ./protos/proto/app/domain/*.proto
-```
+The main project expects generated files in:
 
-## Structure of Generated Code
+- `gen/Generated/Transport/...`
 
-The plugin generates the following classes:
+These files are used together with handwritten endpoint implementations in:
 
-- Standard Hydrators - in the `{output_dir}/Infrastructure/Hydrator/` directory
-- Proto Hydrators - in the `{output_dir}/Infrastructure/Hydrator/Proto/` directory (when enabled)
-
-## Proto3 Features Support
-
-This generator fully supports Proto3 syntax, including:
-- All Proto3 scalar types
-- Optional fields (using `optional` keyword)
-- Repeated fields
-- Message types
-- Enum types
-
-Note that in Proto3:
-- All scalar fields are implicitly optional with default values (0, empty string, false)
-- Message fields are always nullable
-- There are no required fields
-- Default values cannot be specified in the proto file
-
-The generator handles Proto3 specificities:
-- Scalar fields are treated as non-nullable in PHP (with default values from Proto3)
-- Fields marked with `optional` keyword are explicitly nullable in PHP
-- Message fields are always nullable
-- Repeated fields are treated as arrays (never null)
-
-## Example Proto File with Additional Options
-
-```protobuf
-syntax = "proto3";
-
-package app.domain;
-
-import "google/protobuf/descriptor.proto";
-
-option php_namespace = "App\\Domain\\Session";
-
-extend google.protobuf.MessageOptions {
-  bool is_entity = 50000;
-  string table_name = 50001;
-  string primary_key = 50002;
-}
-
-extend google.protobuf.FieldOptions {
-  string db_column = 50100;
-  bool is_json = 50101;
-  bool ignore = 50102;
-}
-
-message Session {
-  option (app.domain.is_entity) = true;
-  option (app.domain.table_name) = "sessions";
-  option (app.domain.primary_key) = "id";
-
-  string id = 1;
-  optional int64 user_id = 2; // Explicitly optional in Proto3
-  string payload = 3 [(app.domain.is_json) = true];
-  int64 expires_at = 4;
-  int64 created_at = 5;
-  int64 updated_at = 6;
-  repeated string tags = 7; // Array in PHP
-}
-```
+- `src/Platform/Http/Endpoint/...`

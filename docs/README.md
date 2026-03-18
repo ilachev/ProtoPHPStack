@@ -9,7 +9,7 @@
 3. [Поток запроса](./architecture/request-lifecycle.md) — как запрос проходит через runtime и middleware.
 4. [Protobuf и генерация кода](./architecture/protobuf-and-codegen.md) — как устроен transport-contract слой и codegen.
 5. [Инфраструктура и тестирование](./development/infrastructure-and-testing.md) — PostgreSQL, Redis, миграции, quality gates и test profiles.
-6. [Рекомендации по `protoc-php-gen`](./design/protoc-php-gen-guidelines.md) — правила для генерации и маппинга между Domain и Proto.
+6. [Рекомендации по `protoc-php-gen`](./design/protoc-php-gen-guidelines.md) — правила для transport-oriented protobuf codegen.
 
 ## Как читать
 

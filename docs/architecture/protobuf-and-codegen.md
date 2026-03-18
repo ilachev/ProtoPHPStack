@@ -8,7 +8,6 @@
 - OpenAPI/Swagger;
 - runtime route configuration;
 - generated server-side transport handlers and endpoint contracts;
-- optional mapper/hydrator tooling.
 
 Любая реструктуризация должна сохранять этот поток или осознанно заменить его чем-то другим.
 
@@ -24,17 +23,6 @@
 - `health.proto` — neutral health-check endpoint for the core runtime;
 - `session.proto` — session-related transport models;
 - `users.proto` — user transport model.
-
-### Доменные proto-описания
-
-`protos/proto/app/domain`
-
-Содержит:
-
-- `options.proto` — custom protobuf options для entity/field metadata;
-- `session.proto` — описание доменной сущности session как proto entity.
-
-Это не публичные API-контракты, а технический слой для генерации.
 
 ## Что генерируется
 
@@ -97,21 +85,6 @@ task proto:gen:transport
 
 Это handwritten business logic не заменяет. Разработчик по-прежнему пишет endpoint implementation, а runtime резолвит её по соглашению namespace.
 
-### 5. Mapper/hydrator generation
-
-Команда:
-
-```bash
-task proto:gen:mappers
-```
-
-Результат:
-
-- код в `gen/ProtoMapper`
-
-Эта часть основана не только на `.proto`, но и на PHP attributes в capability/platform моделях.
-Это optional tooling, а не часть default runtime path.
-
 ## Какие generated артефакты считаются каноническими
 
 В default runtime path и в репозитории считаются нормальными только такие generated outputs:
@@ -119,11 +92,6 @@ task proto:gen:mappers
 - `protos/gen/App/...` — protobuf message classes и metadata для core API;
 - `protos/gen/Google/...` и `protos/gen/GPBMetadata/Google/...` — runtime support для `google.api.http`;
 - `gen/Generated/Transport/...` — generated server-side transport contracts и HTTP handlers.
-
-Сознательно не входят в default runtime path:
-
-- `gen/ProtoMapper/...` — optional attribute-based mapper generation;
-- legacy `gen/Infrastructure/Hydrator/...` — удалённый след старой архитектуры.
 
 ## Текущий flow генерации
 
@@ -140,8 +108,6 @@ task proto:gen:all
 3. `proto:gen:docs`
 4. `proto:gen:routes`
 
-`proto:gen:mappers` запускается отдельно только если проекту действительно нужны generated attribute-based mapper-ы.
-
 ## Как устроена генерация маршрутов
 
 Файл `bin/generate-routes.php` создаёт `ProtoRouteProvider`, который:
@@ -157,35 +123,20 @@ task proto:gen:all
 
 Сейчас core surface уже содержит `HealthService.Check`, поэтому default route generation создаёт непустой `config/routes.php` и `docs/api.swagger.json`.
 
-## Custom mapping через атрибуты
-
-Некоторые capability/platform классы размечены атрибутами:
-
-- `ProtoMapping`
-- `ProtoField`
-
-Примеры:
-
-- `src/Capabilities/Session/Domain/Session.php`
-- `src/Capabilities/Session/Application/GeoLocationData.php`
-
-Эти атрибуты нужны для генераторов и маппинга между внутренними моделями и protobuf message classes.
-
 ## `tools/protoc-php-gen`
 
 Это локальный генератор проекта. Он не является временным скриптом; это часть архитектуры toolchain.
 
 Его роль:
 
-- читать custom options и/или PHP attributes;
-- строить descriptors и field mapping;
-- генерировать код для hydrator/mapper сценариев.
+- генерировать server-side transport contracts из protobuf `service/rpc`;
+- поддерживать protobuf-first HTTP surface без ручного boilerplate в runtime.
 
 При реструктуризации нельзя просто "спрятать" этот каталог. Нужно решить:
 
 - остаётся ли генератор внутренним инструментом репозитория;
 - выносится ли он в отдельный пакет;
-- становится ли он обязательной частью build pipeline.
+- как держать его transport-oriented и не превращать обратно в общий mapper framework.
 
 ## Практические правила для изменений
 
@@ -196,19 +147,11 @@ task proto:gen:all
 3. Добавить endpoint implementation в `App\Platform\Http\Endpoint\...` с тем же относительным путём, что и у generated interface.
 4. Проверить, что core артефакты согласованы с кодом.
 
-### Если меняется внутренняя доменная модель, связанная с protobuf mapping
-
-1. Проверить `ProtoMapping`/`ProtoField`.
-2. Проверить `app/domain/*.proto`, если сущность участвует в генерации.
-3. Перегенерировать mapper/hydrator код.
-4. Прогнать тесты и статический анализ.
-
 ## Текущие проблемы codegen-потока
 
 - endpoint implementation резолвится по namespace convention, а не проверяется генератором заранее;
-- есть два направления генерации: protobuf transport и внутренний hydrator generator;
 - verify уже проверяет наличие handwritten endpoint implementation для каждого generated `*Endpoint`, но сам generator пока не выдаёт такую ошибку на этапе generation;
-- в проекте уже есть новый `CodeGeneratingHydrator`, но DI всё ещё регистрирует `ReflectionHydrator` как основной.
+- внутри `tools/protoc-php-gen` ещё остаются legacy mapper/hydrator части, хотя main project path уже transport-only.
 
 ## Что важно сохранить при реструктуризации
 

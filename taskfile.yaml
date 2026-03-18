@@ -118,15 +118,8 @@ tasks:
       - >
         protoc -I={{.PROTO_DIR}}
         --plugin=protoc-gen-php-transport=tools/protoc-php-gen/bin/protoc-php-gen.php
-        --php-transport_out=namespace=App\\Generated\\Transport,output_dir=gen,generate_hydrators=false,generate_proto_hydrators=false,generate_transport_contracts=true:.
+        --php-transport_out=namespace=App\\Generated\\Transport,output_dir=gen,generate_transport_contracts=true:.
         {{.PROTO_DIR}}/app/v1/*.proto
-
-  proto:gen:mappers:
-    desc: Generate optional attribute-based mappers
-    deps: [ tools:proto:setup, install, proto:gen:transport ]
-    cmds:
-      - mkdir -p gen/ProtoMapper
-      - "{{.PHP}} tools/protoc-php-gen/bin/generate-mappers.php"
 
   proto:gen:all:
     desc: Generate the default protobuf-first runtime artifacts

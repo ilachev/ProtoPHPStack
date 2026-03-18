@@ -4,31 +4,19 @@ declare(strict_types=1);
 
 namespace App\Capabilities\Session\Application;
 
-use ProtoPhpGen\Attributes\ProtoField;
-use ProtoPhpGen\Attributes\ProtoMapping;
-
 /**
  * IP geolocation payload.
  */
-#[ProtoMapping(class: 'App\Api\V1\GeoLocationData')]
 final readonly class GeoLocationData
 {
     public function __construct(
-        #[ProtoField(name: 'country')]
         public string $country,
-        #[ProtoField(name: 'country_code')]
         public string $countryCode,
-        #[ProtoField(name: 'region')]
         public string $region,
-        #[ProtoField(name: 'city')]
         public string $city,
-        #[ProtoField(name: 'zip')]
         public string $zip,
-        #[ProtoField(name: 'lat')]
         public float $lat,
-        #[ProtoField(name: 'lon')]
         public float $lon,
-        #[ProtoField(name: 'timezone')]
         public string $timezone,
     ) {}
 
