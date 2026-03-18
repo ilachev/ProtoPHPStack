@@ -100,7 +100,7 @@
 
 ### `HealthService.Check` и `SystemService.Describe`
 
-- Роль: минимальные нейтральные примеры protobuf-first transport flow.
+- Роль: минимальные нейтральные примеры protobuf-first endpoint flow.
 - Обязательность: часть core surface.
 - Назначение: показать, как `.proto` превращается в generated route, generated handler и endpoint implementation без продуктовой логики, и покрыть и `GET`, и `POST` body flow.
 - Что не должно происходить: превращение health-check в demo-модуль с отдельной архитектурой вокруг него.
@@ -120,5 +120,5 @@
 
 - брать `Platform` как runtime base;
 - подключать только нужные `Capabilities`;
-- использовать `HealthCheck` как минимальный эталон transport flow;
+- использовать `HealthCheck` как минимальный эталон endpoint flow;
 - не переписывать смысл блоков под конкретный продукт.

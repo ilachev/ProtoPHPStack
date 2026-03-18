@@ -6,14 +6,14 @@
 
 ## Зачем существует генератор
 
-В основном project path `protoc-php-gen` сейчас нужен не для общего mapper framework, а для двух связанных transport-задач:
+В основном project path `protoc-php-gen` сейчас нужен не для общего mapper framework, а для двух связанных endpoint-задач:
 
 - взять protobuf `service/rpc`;
-- сгенерировать transport contracts;
+- сгенерировать endpoint contracts;
 - сгенерировать operation manifests для каждого RPC;
 - сократить ручной HTTP boilerplate в runtime.
 
-Это transport-oriented codegen path, а не универсальный генератор для внутренних моделей проекта.
+Это endpoint-oriented codegen path, а не универсальный генератор для внутренних моделей проекта.
 
 ## Что считается правильной областью ответственности
 
@@ -24,7 +24,7 @@
 - генерировать HTTP handlers поверх общего runtime adapter;
 - валидировать handwritten endpoint implementations на этапе generation;
 - генерировать operation manifests как явную metadata surface;
-- держать явный generated contract между transport-кодом и handwritten endpoint implementations.
+- держать явный generated contract между endpoint-кодом и handwritten endpoint implementations.
 
 В генераторе недопустимо:
 
@@ -35,7 +35,7 @@
 
 ## Практические правила
 
-### 1. Protobuf управляет transport surface
+### 1. Protobuf управляет endpoint surface
 
 Если меняется публичный API, источник истины только один:
 
@@ -49,7 +49,7 @@
 
 ### 2. Generated code и handwritten code должны быть разделены
 
-Generated transport code:
+Generated endpoint code:
 
 - `gen/Generated/Transport/...`
 - `gen/Generated/OperationManifest/...`
@@ -88,7 +88,7 @@ Handwritten runtime implementation:
 
 Хорошее изменение вокруг `protoc-php-gen`:
 
-- усиливает protobuf-first transport flow;
-- уменьшает ручной transport boilerplate;
-- не тащит protobuf глубже, чем это нужно transport-слою;
+- усиливает protobuf-first endpoint flow;
+- уменьшает ручной endpoint boilerplate;
+- не тащит protobuf глубже, чем это нужно endpoint-слою;
 - не создаёт вторую архитектуру внутри генератора.

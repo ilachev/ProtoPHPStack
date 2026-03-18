@@ -1,6 +1,6 @@
 {
     "name": "app/protoc-php-gen",
-    "description": "Protoc plugin for generating PHP transport contracts from protobuf services",
+    "description": "Protoc plugin for generating PHP endpoints from protobuf services",
     "type": "library",
     "license": "proprietary",
     "autoload": {

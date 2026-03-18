@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace ProtoPhpGen\Plugin;
 
+use ProtoPhpGen\Generator\EndpointGenerator;
 use ProtoPhpGen\Generator\EndpointImplementationValidator;
 use ProtoPhpGen\Generator\OperationManifestGenerator;
-use ProtoPhpGen\Generator\TransportContractGenerator;
 use ProtoPhpGen\Profile\BaseApiTemplateTransportProfile;
 use ProtoPhpGen\Protoc\PluginRequest;
 
@@ -26,9 +26,9 @@ final readonly class PluginOptions
     public static function fromRequest(PluginRequest $request): self
     {
         $enabledModules = [];
-        if ($request->hasParameter('generate_transport_contracts')) {
-            $enabledModules[TransportContractGenerator::MODULE_NAME] = self::toBool(
-                $request->getParameter('generate_transport_contracts'),
+        if ($request->hasParameter('generate_endpoints')) {
+            $enabledModules[EndpointGenerator::MODULE_NAME] = self::toBool(
+                $request->getParameter('generate_endpoints'),
             );
         }
 

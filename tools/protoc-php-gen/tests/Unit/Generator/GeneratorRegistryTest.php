@@ -16,11 +16,11 @@ final class GeneratorRegistryTest extends TestCase
 {
     public function testReturnsOnlyEnabledModules(): void
     {
-        $enabledModule = new StubGeneratorModule('transport_contracts', true);
+        $enabledModule = new StubGeneratorModule('endpoints', true);
         $disabledModule = new StubGeneratorModule('route_manifest', false);
         $registry = new GeneratorRegistry(
             [$enabledModule, $disabledModule],
-            new PluginOptions(enabledModules: ['transport_contracts' => true]),
+            new PluginOptions(enabledModules: ['endpoints' => true]),
         );
 
         self::assertSame([$enabledModule], $registry->getEnabledModules());
@@ -28,7 +28,7 @@ final class GeneratorRegistryTest extends TestCase
 
     public function testGeneratesFilesOnlyFromEnabledModules(): void
     {
-        $enabledModule = new StubGeneratorModule('transport_contracts', true, [
+        $enabledModule = new StubGeneratorModule('endpoints', true, [
             new GeneratedFile('gen/one.php', '<?php'),
         ]);
         $disabledModule = new StubGeneratorModule('route_manifest', false, [
@@ -36,7 +36,7 @@ final class GeneratorRegistryTest extends TestCase
         ]);
         $registry = new GeneratorRegistry(
             [$enabledModule, $disabledModule],
-            new PluginOptions(enabledModules: ['transport_contracts' => true]),
+            new PluginOptions(enabledModules: ['endpoints' => true]),
         );
 
         $files = $registry->generateForProtoFile(

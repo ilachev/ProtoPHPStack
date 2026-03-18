@@ -12,7 +12,7 @@
 
 Сейчас production-grade поддерживаются три generator module:
 
-- `transport_contracts`
+- `endpoints`
 - `endpoint_validation`
 - `operation_manifest`
 
@@ -22,7 +22,7 @@
 - генерацию HTTP handlers поверх runtime adapter;
 - compile-time проверку наличия handwritten endpoint implementations;
 - генерацию operation manifests как канонической metadata surface по каждому RPC;
-- поддержку protobuf-first transport flow в основном шаблоне.
+- поддержку protobuf-first endpoint flow в основном шаблоне.
 
 Это текущий канонический и поддерживаемый путь.
 
@@ -32,8 +32,8 @@
 
 Для основного проекта это означает:
 
-- `.proto` управляет transport surface;
-- `protoc-php-gen` генерирует transport contracts и operation manifests;
+- `.proto` управляет endpoint surface;
+- `protoc-php-gen` генерирует endpoints и operation manifests;
 - handwritten endpoint implementation остаётся в runtime-коде;
 - generator не подменяет собой business logic.
 
@@ -53,7 +53,7 @@
 
 ### Stable now
 
-- `transport_contracts`
+- `endpoints`
 - `endpoint_validation`
 - `operation_manifest`
 
@@ -69,7 +69,7 @@
 - hydrator framework внутри тулзы;
 - смешение runtime abstractions и codegen responsibilities в одном generator module.
 
-Если когда-нибудь снова появится mapping generator, он может существовать только как отдельный module с отдельным contract, а не как скрытая часть transport path.
+Если когда-нибудь снова появится mapping generator, он может существовать только как отдельный module с отдельным contract, а не как скрытая часть endpoint path.
 
 ## Правила добавления нового generator module
 
@@ -92,7 +92,7 @@
 - внутреннюю доменную модель приложения;
 - business workflows;
 - persistence policy;
-- runtime orchestration вне transport/codegen слоя.
+- runtime orchestration вне endpoint/codegen слоя.
 
 Это важная граница: protobuf-first не означает protobuf-everywhere.
 
@@ -101,7 +101,7 @@
 Для `base-api-template` сейчас важно следующее:
 
 - `protoc-php-gen` остаётся внутренним инструментом репозитория;
-- основной template использует стабильные `transport_contracts`, `endpoint_validation` и `operation_manifest` modules;
+- основной template использует стабильные `endpoints`, `endpoint_validation` и `operation_manifest` modules;
 - расширение тулзы допускается только без разрастания основного project path в набор legacy-веток.
 
 ## Текущие архитектурные ограничения
@@ -123,17 +123,17 @@
 - `PluginOptions`, `CodeGeneratorModule`, `GeneratorRegistry`
 - typed descriptors вместо сырого array-flow
 - отдельный `TypeResolver`
-- transport runtime profiles
+- endpoint runtime profiles
 - binary plugin protocol test contour
 
-Эта часть была нужна, чтобы `transport_contracts`, `endpoint_validation` и `operation_manifest` стали честными production-grade модулями.
+Эта часть была нужна, чтобы `endpoints`, `endpoint_validation` и `operation_manifest` стали честными production-grade модулями.
 
 ### Следующий этап развития
 
 Следующая волна работы должна идти не в “ещё больше генераторов”, а в доведение protobuf-first flow верхнего уровня:
 
-1. использовать generated operation manifests как единственный transport metadata source of truth;
-2. уменьшать ручную runtime-склейку между generated transport и handwritten endpoint implementations;
+1. использовать generated operation manifests как единственный endpoint metadata source of truth;
+2. уменьшать ручную runtime-склейку между generated endpoints и handwritten endpoint implementations;
 3. усиливать compile-time и verify-time проверки согласованности generated artifacts;
 4. добавлять новые generator modules только под реальные reusable backend needs.
 
@@ -142,7 +142,7 @@
 Хорошее развитие `protoc-php-gen`:
 
 - усиливает protobuf-first backend flow;
-- уменьшает ручной transport boilerplate;
+- уменьшает ручной endpoint boilerplate;
 - остаётся reusable вне одного конкретного API;
 - развивается модулями, а не историческими слоями;
 - не создаёт вторую архитектуру внутри проекта.

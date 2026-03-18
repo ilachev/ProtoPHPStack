@@ -2,16 +2,16 @@
 
 [![CI](https://github.com/ilachev/base-api-template/actions/workflows/ci.yml/badge.svg)](https://github.com/ilachev/base-api-template/actions/workflows/ci.yml)
 
-A pure PHP backend template with Protocol Buffers for transport contracts, generated transport handlers, protobuf-driven runtime routing, and a small RoadRunner-based runtime core.
+A pure PHP backend template with Protocol Buffers for endpoint contracts, generated endpoint handlers, protobuf-driven runtime routing, and a small RoadRunner-based runtime core.
 
 Current target state for this repository: a production-ready set of reusable backend blocks on pure PHP, without framework coupling. The repository keeps runtime primitives and optional integrations, but it should not feel like a heavy framework.
 
-The default runtime stays focused on reusable blocks. The only built-in endpoint example is a neutral health check that demonstrates the protobuf-first transport flow.
+The default runtime stays focused on reusable blocks. The only built-in endpoint example is a neutral health check that demonstrates the protobuf-first endpoint flow.
 
 ## Features
 
-- Protocol Buffer based transport contracts
-- Generated server-side transport handlers from protobuf services
+- Protocol Buffer based endpoint contracts
+- Generated server-side endpoint handlers from protobuf services
 - Protobuf-driven runtime routing from generated operation metadata
 - OpenAPI documentation generation
 - Small framework-free runtime core

@@ -16,7 +16,7 @@ final class BinaryPluginProtocolTest extends TestCase
     {
         $request = PluginRequest::fromStdin(
             $this->buildCodeGeneratorRequest(
-                parameter: 'namespace=App\\Generated\\Transport,output_dir=gen,generate_transport_contracts=true,generate_operation_manifest=true',
+                parameter: 'namespace=App\\Generated\\Transport,output_dir=gen,generate_endpoints=true,generate_operation_manifest=true',
                 filesToGenerate: ['app/v1/health.proto'],
                 protoFiles: [
                     $this->buildFileDescriptorProto(

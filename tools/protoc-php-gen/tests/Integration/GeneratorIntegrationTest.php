@@ -14,7 +14,7 @@ final class GeneratorIntegrationTest extends TestCase
     public function testPluginGeneratesTransportContractsFromRequest(): void
     {
         $request = new PluginRequest();
-        $request->setParameter('namespace=App\\Generated\\Transport,output_dir=gen,generate_transport_contracts=true,generate_operation_manifest=true');
+        $request->setParameter('namespace=App\\Generated\\Transport,output_dir=gen,generate_endpoints=true,generate_operation_manifest=true');
         $request->addFileToGenerate('app/v1/health.proto');
         $request->addProtoFile(
             'app/v1/health.proto',

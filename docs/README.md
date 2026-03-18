@@ -9,7 +9,7 @@
 3. [Поток запроса](./architecture/request-lifecycle.md) — как запрос проходит через runtime и middleware.
 4. [Protobuf и генерация кода](./architecture/protobuf-and-codegen.md) — как устроен transport-contract слой и codegen.
 5. [Инфраструктура и тестирование](./development/infrastructure-and-testing.md) — PostgreSQL, Redis, миграции, quality gates и test profiles.
-6. [Рекомендации по `protoc-php-gen`](./design/protoc-php-gen-guidelines.md) — правила для transport-oriented protobuf codegen.
+6. [Рекомендации по `protoc-php-gen`](./design/protoc-php-gen-guidelines.md) — правила для endpoint-oriented protobuf codegen.
 7. [`protoc-php-gen` как продукт](./design/protoc-php-gen-product.md) — текущий supported scope и целевая modular model генератора.
 
 ## Как читать
@@ -26,4 +26,4 @@
 - Сгенерированные артефакты нельзя редактировать вручную.
 - `Platform` должен оставаться маленьким runtime core.
 - `Capabilities` должны оставаться простыми reusable-блоками.
-- Нейтральный `HealthCheck` остаётся минимальным живым примером protobuf-first transport flow.
+- Нейтральный `HealthCheck` остаётся минимальным живым примером protobuf-first endpoint flow.

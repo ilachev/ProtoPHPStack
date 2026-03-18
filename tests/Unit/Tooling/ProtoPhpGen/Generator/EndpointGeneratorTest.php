@@ -6,16 +6,16 @@ namespace Tests\Unit\Tooling\ProtoPhpGen\Generator;
 
 use PHPUnit\Framework\TestCase;
 use ProtoPhpGen\Descriptor\ProtoFileDescriptor;
-use ProtoPhpGen\Generator\TransportContractGenerator;
+use ProtoPhpGen\Generator\EndpointGenerator;
 use ProtoPhpGen\Plugin\PluginOptions;
 use ProtoPhpGen\Profile\BaseApiTemplateTransportProfile;
 use ProtoPhpGen\Type\TypeResolver;
 
-final class TransportContractGeneratorTest extends TestCase
+final class EndpointGeneratorTest extends TestCase
 {
     public function testGeneratesEndpointAndHandlerFiles(): void
     {
-        $generator = new TransportContractGenerator(
+        $generator = new EndpointGenerator(
             new PluginOptions(
                 namespace: 'App\Generated\Transport',
                 outputDir: 'gen',

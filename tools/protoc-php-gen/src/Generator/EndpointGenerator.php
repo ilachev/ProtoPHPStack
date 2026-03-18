@@ -11,9 +11,9 @@ use ProtoPhpGen\Plugin\PluginOptions;
 use ProtoPhpGen\Profile\TransportProfile;
 use ProtoPhpGen\Type\TypeResolver;
 
-final readonly class TransportContractGenerator implements CodeGeneratorModule
+final readonly class EndpointGenerator implements CodeGeneratorModule
 {
-    public const MODULE_NAME = 'transport_contracts';
+    public const MODULE_NAME = 'endpoints';
 
     private PsrPrinter $printer;
 

@@ -1,12 +1,12 @@
-# Proto PHP Transport Generator
+# Proto PHP Endpoint Generator
 
-`protoc-php-gen` is the internal protoc plugin used by this repository to generate and validate PHP transport artifacts from protobuf `service/rpc` definitions.
+`protoc-php-gen` is the internal protoc plugin used by this repository to generate and validate PHP endpoint artifacts from protobuf `service/rpc` definitions.
 
-The current production-grade scope is intentionally narrow: the main project path supports `transport_contracts`, `endpoint_validation`, and `operation_manifest`.
+The current production-grade scope is intentionally narrow: the main project path supports `endpoints`, `endpoint_validation`, and `operation_manifest`.
 
 ## Current role
 
-The supported project path is transport-oriented:
+The supported project path is endpoint-oriented:
 
 - parse protobuf descriptors;
 - generate endpoint interfaces;
@@ -20,7 +20,7 @@ It is not the canonical path for domain-to-proto mapper generation.
 
 This tool should be treated as a modular PHP code generation platform around protobuf descriptors, not as a one-off script and not as a grab bag of unrelated generators.
 
-Today, `transport_contracts`, `endpoint_validation`, and `operation_manifest` are stable and supported.
+Today, `endpoints`, `endpoint_validation`, and `operation_manifest` are stable and supported.
 
 Future generators are allowed only if they:
 
@@ -42,8 +42,8 @@ The internal stabilization baseline is already in place:
 
 The next stage is not “more generators at any cost”, but a cleaner protobuf-first flow in the main template:
 
-1. generated operation manifests as the canonical transport metadata surface;
-2. less manual runtime glue between generated transport and handwritten endpoints;
+1. generated operation manifests as the canonical endpoint metadata surface;
+2. less manual runtime glue between generated endpoints and handwritten endpoints;
 3. stricter consistency checks for generated artifacts.
 
 The detailed product-level rationale is documented in:
@@ -55,16 +55,16 @@ The detailed product-level rationale is documented in:
 ```bash
 protoc -I=./protos/proto \
   --plugin=protoc-gen-php-transport=./tools/protoc-php-gen/bin/protoc-php-gen.php \
-  --php-transport_out=namespace=App\\Generated\\Transport,output_dir=gen,source_root=src,transport_profile=base_api_template,generate_transport_contracts=true,generate_endpoint_validation=true,generate_operation_manifest=true:. \
+  --php-transport_out=namespace=App\\Generated\\Transport,output_dir=gen,source_root=src,transport_profile=base_api_template,generate_endpoints=true,generate_endpoint_validation=true,generate_operation_manifest=true:. \
   ./protos/proto/app/v1/*.proto
 ```
 
 ## Parameters used by the main project
 
-- `namespace` - Base namespace for generated transport classes
+- `namespace` - Base namespace for generated endpoint classes
 - `output_dir` - Output directory for generated files
 - `source_root` - Root directory for handwritten endpoint implementations
-- `generate_transport_contracts` - Enable transport contract generation
+- `generate_endpoints` - Enable endpoint generation
 - `generate_endpoint_validation` - Fail generation when handwritten endpoint implementations are missing or declared incorrectly
 - `generate_operation_manifest` - Enable operation manifest generation
 

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace ProtoPhpGen;
 
+use ProtoPhpGen\Generator\EndpointGenerator;
 use ProtoPhpGen\Generator\EndpointImplementationValidator;
 use ProtoPhpGen\Generator\GeneratorRegistry;
 use ProtoPhpGen\Generator\OperationManifestGenerator;
-use ProtoPhpGen\Generator\TransportContractGenerator;
 use ProtoPhpGen\Plugin\PluginOptions;
 use ProtoPhpGen\Profile\TransportProfileRegistry;
 use ProtoPhpGen\Protoc\PluginRequest;
@@ -22,7 +22,7 @@ final readonly class PhpGeneratorPlugin extends ProtocPlugin
         $response = new PluginResponse();
 
         try {
-            $this->logDebug('Starting transport contract generation');
+            $this->logDebug('Starting endpoint generation');
             $this->logDebug('Files to generate: ' . implode(', ', $request->getFilesToGenerate()));
             $this->logDebug('Parameters: ' . json_encode($request->getParameters()));
 
@@ -30,7 +30,7 @@ final readonly class PhpGeneratorPlugin extends ProtocPlugin
             $transportProfile = (new TransportProfileRegistry())->get($options->getTransportProfile());
             $registry = new GeneratorRegistry(
                 [
-                    new TransportContractGenerator($options, $transportProfile),
+                    new EndpointGenerator($options, $transportProfile),
                     new EndpointImplementationValidator($options, $transportProfile),
                     new OperationManifestGenerator($options, $transportProfile),
                 ],
@@ -51,7 +51,7 @@ final readonly class PhpGeneratorPlugin extends ProtocPlugin
                 }
             }
 
-            $this->logDebug('Transport contract generation completed successfully');
+            $this->logDebug('Endpoint generation completed successfully');
         } catch (\Throwable $e) {
             $error = "Code generation error: {$e->getMessage()}";
             $response->setError($error);

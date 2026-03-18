@@ -4,13 +4,13 @@
 
 ## Что это за проект
 
-`base-api-template` — это backend template на PHP 8.4 с маленьким runtime core, `protobuf-first` transport contracts и набором простых reusable-блоков.
+`base-api-template` — это backend template на PHP 8.4 с маленьким runtime core, `protobuf-first` endpoint contracts и набором простых reusable-блоков.
 
 Это не готовый продукт и не framework. Репозиторий должен восприниматься так:
 
 - `Platform` — runtime core;
 - `Capabilities` — reusable blocks;
-- `HealthCheck` и `SystemDescribe` — минимальные нейтральные примеры protobuf-first transport flow внутри core.
+- `HealthCheck` и `SystemDescribe` — минимальные нейтральные примеры protobuf-first endpoint flow внутри core.
 
 ## Цель проекта
 
@@ -56,13 +56,13 @@ Reusable blocks:
 - геолокация по IP
 - request log для API-вызовов
 - protobuf/codegen pipeline
-- generated server-side transport handlers from protobuf `service/rpc`
+- generated server-side endpoint handlers from protobuf `service/rpc`
 - unit и integration profiles
 
 ## Какие generated артефакты считать основными
 
 - `protos/gen/*` — основной protobuf SDK и metadata
-- `gen/Generated/Transport/*` — generated transport contracts и handlers
+- `gen/Generated/Transport/*` — generated endpoint contracts и handlers
 - `gen/Generated/OperationManifest/*` — generated operation metadata for each RPC
 - legacy `gen/Infrastructure/Hydrator/*` больше не является валидным generated output
 
@@ -114,7 +114,7 @@ task run
 - hydration/data mapping layer всё ещё чувствителен к усложнению
 - endpoint implementations всё ещё пишутся вручную, а generator пока валидирует только наличие файла и корректное объявление класса
 - consistency между operation manifests, generated handlers и endpoint implementations теперь проверяется в default `verify`, но это всё ещё verify-time guard, а не отдельный generator module
-- `protoc-php-gen` сейчас стабилен только в transport-контуре; дальнейшее расширение допустимо только как modular codegen, а не как возврат к старой смешанной генерации
+- `protoc-php-gen` сейчас стабилен только в endpoint-контуре; дальнейшее расширение допустимо только как modular codegen, а не как возврат к старой смешанной генерации
 
 ## Как оценивать изменения
 

@@ -12,13 +12,13 @@ final class PluginRequestParametersTest extends TestCase
     public function testParsesProtocStyleCommaSeparatedParameters(): void
     {
         $request = new PluginRequest();
-        $request->setParameter('namespace=App\Generated\Transport,output_dir=gen,generate_transport_contracts=true');
+        $request->setParameter('namespace=App\Generated\Transport,output_dir=gen,generate_endpoints=true');
 
         self::assertTrue($request->hasParameter('namespace'));
         self::assertTrue($request->hasParameter('output_dir'));
-        self::assertTrue($request->hasParameter('generate_transport_contracts'));
+        self::assertTrue($request->hasParameter('generate_endpoints'));
         self::assertSame('App\Generated\Transport', $request->getParameter('namespace'));
         self::assertSame('gen', $request->getParameter('output_dir'));
-        self::assertSame('true', $request->getParameter('generate_transport_contracts'));
+        self::assertSame('true', $request->getParameter('generate_endpoints'));
     }
 }
