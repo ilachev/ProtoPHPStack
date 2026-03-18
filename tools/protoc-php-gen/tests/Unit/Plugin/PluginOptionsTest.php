@@ -6,6 +6,7 @@ namespace Tests\Unit\Plugin;
 
 use PHPUnit\Framework\TestCase;
 use ProtoPhpGen\Generator\EndpointImplementationValidator;
+use ProtoPhpGen\Generator\OperationManifestGenerator;
 use ProtoPhpGen\Generator\TransportContractGenerator;
 use ProtoPhpGen\Plugin\PluginOptions;
 use ProtoPhpGen\Profile\BaseApiTemplateTransportProfile;
@@ -25,12 +26,13 @@ final class PluginOptionsTest extends TestCase
         self::assertFalse($options->isModuleEnabled(TransportContractGenerator::MODULE_NAME));
         self::assertFalse($options->isModuleEnabled('route_manifest'));
         self::assertFalse($options->isModuleEnabled(EndpointImplementationValidator::MODULE_NAME));
+        self::assertFalse($options->isModuleEnabled(OperationManifestGenerator::MODULE_NAME));
     }
 
     public function testCreatesOptionsFromPluginRequest(): void
     {
         $request = new PluginRequest();
-        $request->setParameter('namespace=App\Generated\Transport,output_dir=build/gen,source_root=app/src,transport_profile=base_api_template,generate_transport_contracts=true,generate_route_manifest=true,generate_endpoint_validation=true');
+        $request->setParameter('namespace=App\Generated\Transport,output_dir=build/gen,source_root=app/src,transport_profile=base_api_template,generate_transport_contracts=true,generate_endpoint_validation=true,generate_operation_manifest=true,generate_route_manifest=true');
 
         $options = PluginOptions::fromRequest($request);
 
@@ -41,6 +43,7 @@ final class PluginOptionsTest extends TestCase
         self::assertTrue($options->isModuleEnabled(TransportContractGenerator::MODULE_NAME));
         self::assertTrue($options->isModuleEnabled('route_manifest'));
         self::assertTrue($options->isModuleEnabled(EndpointImplementationValidator::MODULE_NAME));
+        self::assertTrue($options->isModuleEnabled(OperationManifestGenerator::MODULE_NAME));
     }
 
     public function testKeepsTransportModuleDisabledWhenFlagIsFalse(): void

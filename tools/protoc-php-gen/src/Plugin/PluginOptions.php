@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ProtoPhpGen\Plugin;
 
 use ProtoPhpGen\Generator\EndpointImplementationValidator;
+use ProtoPhpGen\Generator\OperationManifestGenerator;
 use ProtoPhpGen\Generator\RouteManifestGenerator;
 use ProtoPhpGen\Generator\TransportContractGenerator;
 use ProtoPhpGen\Profile\BaseApiTemplateTransportProfile;
@@ -41,6 +42,12 @@ final readonly class PluginOptions
         if ($request->hasParameter('generate_endpoint_validation')) {
             $enabledModules[EndpointImplementationValidator::MODULE_NAME] = self::toBool(
                 $request->getParameter('generate_endpoint_validation'),
+            );
+        }
+
+        if ($request->hasParameter('generate_operation_manifest')) {
+            $enabledModules[OperationManifestGenerator::MODULE_NAME] = self::toBool(
+                $request->getParameter('generate_operation_manifest'),
             );
         }
 

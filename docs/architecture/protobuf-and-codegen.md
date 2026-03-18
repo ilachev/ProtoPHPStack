@@ -79,6 +79,7 @@ task proto:gen:transport
 
 - `gen/Generated/Transport`
 - `gen/Generated/EndpointBindings`
+- `gen/Generated/OperationManifest`
 - `gen/Generated/RouteManifest`
 
 Генератор создаёт:
@@ -86,6 +87,7 @@ task proto:gen:transport
 - endpoint interfaces для каждого `service/rpc`;
 - generic HTTP handlers поверх `AbstractProtobufRpcHandler`;
 - endpoint binding manifests для handwritten runtime implementations;
+- operation manifests с полной metadata по каждому `service/rpc`;
 - route manifests из `google.api.http` bindings.
 
 Это handwritten business logic не заменяет. Разработчик по-прежнему пишет endpoint implementation, а runtime резолвит её через generated endpoint binding manifests.
@@ -98,6 +100,7 @@ task proto:gen:transport
 - `protos/gen/Google/...` и `protos/gen/GPBMetadata/Google/...` — runtime support для `google.api.http`;
 - `gen/Generated/Transport/...` — generated server-side transport contracts и HTTP handlers.
 - `gen/Generated/EndpointBindings/...` — generated endpoint binding manifests for handwritten implementations.
+- `gen/Generated/OperationManifest/...` — generated operation metadata for each protobuf RPC.
 - `gen/Generated/RouteManifest/...` — generated route manifests for the core runtime.
 
 ## Текущий flow генерации
@@ -118,7 +121,7 @@ task proto:gen:all
 
 Теперь generation path для маршрутов двухшаговый:
 
-1. `task proto:gen:transport` через `protoc-php-gen` генерирует endpoint binding manifests и route manifests в `gen/Generated/...`
+1. `task proto:gen:transport` через `protoc-php-gen` генерирует endpoint binding manifests, operation manifests и route manifests в `gen/Generated/...`
 2. runtime использует endpoint binding manifests для резолва handwritten endpoint implementations
 3. `task proto:gen:routes` через `bin/generate-routes.php` читает route manifests и пишет `config/routes.php`
 
@@ -136,10 +139,11 @@ task proto:gen:all
 
 - генерировать server-side transport contracts из protobuf `service/rpc`;
 - валидировать наличие и объявление handwritten endpoint implementations;
+- генерировать operation manifests как каноническую metadata surface для RPC;
 - генерировать route manifests из `google.api.http` bindings;
 - поддерживать protobuf-first HTTP surface без ручного boilerplate в runtime.
 
-При этом инструмент надо понимать шире, чем один текущий generator module: `protoc-php-gen` рассматривается как отдельная modular codegen platform, а основной шаблон сейчас использует три стабильных модуля: `transport_contracts`, `endpoint_validation` и `route_manifest`. Отдельно это зафиксировано в `docs/design/protoc-php-gen-product.md`.
+При этом инструмент надо понимать шире, чем один текущий generator module: `protoc-php-gen` рассматривается как отдельная modular codegen platform, а основной шаблон сейчас использует четыре стабильных модуля: `transport_contracts`, `endpoint_validation`, `operation_manifest` и `route_manifest`. Отдельно это зафиксировано в `docs/design/protoc-php-gen-product.md`.
 
 При реструктуризации нельзя просто "спрятать" этот каталог. Нужно решить:
 

@@ -6,6 +6,7 @@ namespace ProtoPhpGen;
 
 use ProtoPhpGen\Generator\EndpointImplementationValidator;
 use ProtoPhpGen\Generator\GeneratorRegistry;
+use ProtoPhpGen\Generator\OperationManifestGenerator;
 use ProtoPhpGen\Generator\RouteManifestGenerator;
 use ProtoPhpGen\Generator\TransportContractGenerator;
 use ProtoPhpGen\Plugin\PluginOptions;
@@ -32,6 +33,7 @@ final readonly class PhpGeneratorPlugin extends ProtocPlugin
                 [
                     new TransportContractGenerator($options, $transportProfile),
                     new EndpointImplementationValidator($options, $transportProfile),
+                    new OperationManifestGenerator($options, $transportProfile),
                     new RouteManifestGenerator($options, $transportProfile),
                 ],
                 $options,

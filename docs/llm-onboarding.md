@@ -65,6 +65,7 @@ Reusable blocks:
 - `protos/gen/*` — основной protobuf SDK и metadata
 - `gen/Generated/Transport/*` — generated transport contracts и handlers
 - `gen/Generated/EndpointBindings/*` — generated endpoint-to-implementation bindings
+- `gen/Generated/OperationManifest/*` — generated operation metadata for each RPC
 - `gen/Generated/RouteManifest/*` — generated route manifests for `config/routes.php`
 - legacy `gen/Infrastructure/Hydrator/*` больше не является валидным generated output
 

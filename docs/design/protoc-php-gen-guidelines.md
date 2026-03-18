@@ -10,6 +10,7 @@
 
 - взять protobuf `service/rpc`;
 - сгенерировать transport contracts;
+- сгенерировать operation manifests для каждого RPC;
 - сгенерировать route manifests из `google.api.http`;
 - сократить ручной HTTP boilerplate в runtime.
 
@@ -23,6 +24,7 @@
 - генерировать endpoint interfaces;
 - генерировать HTTP handlers поверх общего runtime adapter;
 - валидировать handwritten endpoint implementations на этапе generation;
+- генерировать operation manifests как явную metadata surface;
 - генерировать endpoint binding manifests для handwritten runtime implementations;
 - генерировать route manifests для runtime routing;
 - держать явный generated contract между transport-кодом и handwritten endpoint implementations.
@@ -54,6 +56,7 @@ Generated transport code:
 
 - `gen/Generated/Transport/...`
 - `gen/Generated/EndpointBindings/...`
+- `gen/Generated/OperationManifest/...`
 
 Handwritten runtime implementation:
 
