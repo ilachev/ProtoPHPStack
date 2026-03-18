@@ -9,6 +9,7 @@ use App\Platform\DI\Container;
 use App\Platform\DI\ServiceProvider;
 use App\Platform\Logging\Logger;
 use App\Platform\Storage\Query\QueryFactory;
+use App\Platform\Storage\Sql\SqlExecutor;
 use App\Platform\Storage\Storage;
 use App\Platform\Storage\StorageConfig;
 use App\Platform\Storage\StorageFactory;
@@ -80,6 +81,16 @@ final readonly class StorageServiceProvider implements ServiceProvider
                 $factory = $container->get(StorageFactory::class);
 
                 return $factory->createQueryFactory();
+            },
+        );
+
+        $container->set(
+            SqlExecutor::class,
+            static function (Container $container): SqlExecutor {
+                /** @var Storage $storage */
+                $storage = $container->get(Storage::class);
+
+                return new SqlExecutor($storage);
             },
         );
     }

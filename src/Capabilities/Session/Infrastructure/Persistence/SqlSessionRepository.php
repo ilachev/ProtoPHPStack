@@ -6,33 +6,65 @@ namespace App\Capabilities\Session\Infrastructure\Persistence;
 
 use App\Capabilities\Session\Domain\Session;
 use App\Capabilities\Session\Domain\SessionRepository;
+use App\Generated\Sql\Session\DeleteExpiredSessionsParams;
+use App\Generated\Sql\Session\FindSessionByIdParams;
+use App\Generated\Sql\Session\FindSessionsByUserIdParams;
+use App\Generated\Sql\Session\SessionQueries;
+use App\Platform\Hydration\Hydrator;
+use App\Platform\Storage\Query\QueryFactory;
 use App\Platform\Storage\Repository\AbstractRepository;
+use App\Platform\Storage\Sql\SqlExecutor;
+use App\Platform\Storage\Storage;
 
 final class SqlSessionRepository extends AbstractRepository implements SessionRepository
 {
     private const TABLE_NAME = 'sessions';
 
+    public function __construct(
+        Storage $storage,
+        Hydrator $hydrator,
+        QueryFactory $queryBuilderFactory,
+        private readonly SqlExecutor $sqlExecutor,
+        private readonly SessionQueries $sessionQueries,
+    ) {
+        parent::__construct($storage, $hydrator, $queryBuilderFactory);
+    }
+
     public function findById(string $id): ?Session
     {
-        $query = $this->query(self::TABLE_NAME)
-            ->where('id', $id);
+        $row = $this->sqlExecutor->fetchOne(
+            $this->sessionQueries->findSessionById(new FindSessionByIdParams($id)),
+        );
 
-        return $this->fetchOne(Session::class, $query);
+        if ($row === null) {
+            return null;
+        }
+
+        return $this->createEntity(Session::class, $row);
     }
 
     public function findByUserId(int $userId): array
     {
-        $query = $this->query(self::TABLE_NAME)
-            ->where('user_id', $userId);
+        $rows = $this->sqlExecutor->fetchAll(
+            $this->sessionQueries->findSessionsByUserId(new FindSessionsByUserIdParams($userId)),
+        );
 
-        return $this->fetchAll(Session::class, $query);
+        return array_map(
+            fn(array $row): Session => $this->createEntity(Session::class, $row),
+            $rows,
+        );
     }
 
     public function findAll(): array
     {
-        $query = $this->query(self::TABLE_NAME);
+        $rows = $this->sqlExecutor->fetchAll(
+            $this->sessionQueries->findAllSessions(),
+        );
 
-        return $this->fetchAll(Session::class, $query);
+        return array_map(
+            fn(array $row): Session => $this->createEntity(Session::class, $row),
+            $rows,
+        );
     }
 
     public function save(Session $session): void
@@ -47,12 +79,10 @@ final class SqlSessionRepository extends AbstractRepository implements SessionRe
 
     public function deleteExpired(): void
     {
-        $deleteQuery = $this->query(self::TABLE_NAME)
-            ->where('expires_at', time(), '<');
-
-        $query = $deleteQuery->buildDeleteQuery();
-        /** @var array<string, scalar|null> $castParams */
-        $castParams = $query->params;
-        $this->storage->execute($query->sql, $castParams);
+        $this->sqlExecutor->execute(
+            $this->sessionQueries->deleteExpiredSessions(
+                new DeleteExpiredSessionsParams(time()),
+            ),
+        );
     }
 }

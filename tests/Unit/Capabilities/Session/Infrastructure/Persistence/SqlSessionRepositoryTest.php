@@ -6,11 +6,13 @@ namespace Tests\Unit\Capabilities\Session\Infrastructure\Persistence;
 
 use App\Capabilities\Session\Domain\Session;
 use App\Capabilities\Session\Infrastructure\Persistence\SqlSessionRepository;
+use App\Generated\Sql\Session\SessionQueries;
 use App\Platform\Hydration\Hydrator;
 use App\Platform\Hydration\LimitedReflectionCache;
 use App\Platform\Hydration\ReflectionHydrator;
 use App\Platform\Hydration\SetterProtobufHydration;
 use App\Platform\Storage\Query\QueryBuilderFactory;
+use App\Platform\Storage\Sql\SqlExecutor;
 use App\Platform\Storage\Storage;
 use PHPUnit\Framework\TestCase;
 
@@ -36,6 +38,8 @@ final class SqlSessionRepositoryTest extends TestCase
             $this->storage,
             $this->hydrator,
             $this->queryBuilderFactory,
+            new SqlExecutor($this->storage),
+            new SessionQueries(),
         );
     }
 
@@ -193,9 +197,11 @@ final class InMemoryTestStorage implements Storage
      */
     public function query(string $sql, array $params = []): array
     {
-        if (str_starts_with(trim($sql), 'SELECT COUNT(*) as count')) {
+        $normalizedSql = $this->normalizeSql($sql);
+
+        if (str_starts_with($normalizedSql, 'SELECT COUNT(*) as count')) {
             // Handle count query for checking existence
-            preg_match('/FROM\s+(\w+)\s+WHERE\s+(\w+)\s+=\s+:(\w+)/i', $sql, $matches);
+            preg_match('/FROM\s+(\w+)\s+WHERE\s+(\w+)\s+=\s+:(\w+)/i', $normalizedSql, $matches);
             if (\count($matches) >= 4) {
                 $tableName = $matches[1];
                 $column = $matches[2];
@@ -214,7 +220,7 @@ final class InMemoryTestStorage implements Storage
 
                 return [['count' => $count]];
             }
-        } elseif (preg_match('/SELECT.*FROM\s+(\w+)/i', $sql, $matches)) {
+        } elseif (preg_match('/SELECT.*FROM\s+(\w+)/i', $normalizedSql, $matches)) {
             $tableName = $matches[1];
 
             if (!isset($this->tables[$tableName])) {
@@ -224,7 +230,7 @@ final class InMemoryTestStorage implements Storage
             $results = $this->tables[$tableName];
 
             // Handle WHERE conditions
-            if (preg_match('/WHERE\s+(.*?)(?:ORDER BY|LIMIT|$)/is', $sql, $whereMatches)) {
+            if (preg_match('/WHERE\s+(.*?)(?:ORDER BY|LIMIT|$)/i', $normalizedSql, $whereMatches)) {
                 $whereClause = $whereMatches[1];
 
                 // Parse simple equals condition
@@ -248,7 +254,7 @@ final class InMemoryTestStorage implements Storage
             }
 
             // Handle LIMIT (simple implementation)
-            if (preg_match('/LIMIT\s+(\d+)/i', $sql, $limitMatches)) {
+            if (preg_match('/LIMIT\s+(\d+)/i', $normalizedSql, $limitMatches)) {
                 $limit = (int) $limitMatches[1];
                 $results = \array_slice($results, 0, $limit);
             }
@@ -270,9 +276,11 @@ final class InMemoryTestStorage implements Storage
      */
     public function execute(string $sql, array $params = []): bool
     {
-        if (str_starts_with(trim($sql), 'INSERT INTO')) {
+        $normalizedSql = $this->normalizeSql($sql);
+
+        if (str_starts_with($normalizedSql, 'INSERT INTO')) {
             // Handle insert
-            preg_match('/INSERT INTO\s+(\w+)/i', $sql, $matches);
+            preg_match('/INSERT INTO\s+(\w+)/i', $normalizedSql, $matches);
             if (\count($matches) >= 2) {
                 $tableName = $matches[1];
 
@@ -282,13 +290,13 @@ final class InMemoryTestStorage implements Storage
 
                 $this->tables[$tableName][] = $params;
             }
-        } elseif (str_starts_with(trim($sql), 'UPDATE')) {
+        } elseif (str_starts_with($normalizedSql, 'UPDATE')) {
             // Handle update
-            preg_match('/UPDATE\s+(\w+)/i', $sql, $matches);
+            preg_match('/UPDATE\s+(\w+)/i', $normalizedSql, $matches);
             if (\count($matches) >= 2) {
                 $tableName = $matches[1];
 
-                if (isset($this->tables[$tableName]) && preg_match('/WHERE\s+(\w+)\s+=\s+:(\w+)/i', $sql, $whereMatches)) {
+                if (isset($this->tables[$tableName]) && preg_match('/WHERE\s+(\w+)\s+=\s+:(\w+)/i', $normalizedSql, $whereMatches)) {
                     $column = $whereMatches[1];
                     $paramName = $whereMatches[2];
 
@@ -304,14 +312,14 @@ final class InMemoryTestStorage implements Storage
                     }
                 }
             }
-        } elseif (str_starts_with(trim($sql), 'DELETE')) {
+        } elseif (str_starts_with($normalizedSql, 'DELETE')) {
             // Handle delete
-            preg_match('/DELETE FROM\s+(\w+)/i', $sql, $matches);
+            preg_match('/DELETE FROM\s+(\w+)/i', $normalizedSql, $matches);
             if (\count($matches) >= 2) {
                 $tableName = $matches[1];
 
                 if (isset($this->tables[$tableName])) {
-                    if (preg_match('/WHERE\s+(\w+)\s+=\s+:(\w+)/i', $sql, $whereMatches)) {
+                    if (preg_match('/WHERE\s+(\w+)\s+=\s+:(\w+)/i', $normalizedSql, $whereMatches)) {
                         // Delete by specific column
                         $column = $whereMatches[1];
                         $paramName = $whereMatches[2];
@@ -321,7 +329,7 @@ final class InMemoryTestStorage implements Storage
                             static fn($row) => !isset($row[$column]) || $row[$column] !== $params[$paramName],
                         );
                         $this->tables[$tableName] = array_values($this->tables[$tableName]);
-                    } elseif (preg_match('/WHERE\s+(\w+)\s+<\s+:(\w+)/i', $sql, $whereMatches)) {
+                    } elseif (preg_match('/WHERE\s+(\w+)\s+<\s+:(\w+)/i', $normalizedSql, $whereMatches)) {
                         $column = $whereMatches[1];
                         $paramName = $whereMatches[2];
 
@@ -337,6 +345,17 @@ final class InMemoryTestStorage implements Storage
         }
 
         return true;
+    }
+
+    private function normalizeSql(string $sql): string
+    {
+        $normalized = preg_replace('/\s+/', ' ', trim($sql));
+
+        if (!\is_string($normalized)) {
+            return trim($sql);
+        }
+
+        return $normalized;
     }
 
     public function lastInsertId(): string
