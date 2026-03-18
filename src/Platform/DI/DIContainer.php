@@ -10,6 +10,9 @@ namespace App\Platform\DI;
  */
 final class DIContainer implements Container
 {
+    private const GENERATED_ENDPOINT_NAMESPACE_PREFIX = 'App\Generated\Transport\\';
+    private const HANDWRITTEN_ENDPOINT_NAMESPACE_PREFIX = 'App\Platform\Http\Endpoint\\';
+
     /**
      * @var array<class-string, object>
      */
@@ -117,6 +120,10 @@ final class DIContainer implements Container
             return true;
         }
 
+        if (interface_exists($id) && $this->resolveGeneratedEndpointImplementation($id) !== null) {
+            return true;
+        }
+
         // Check if we have the concrete implementation
         $concrete = $this->aliases[$id] ?? $id;
 
@@ -137,13 +144,14 @@ final class DIContainer implements Container
 
         // Handle interface resolution
         if (interface_exists($concrete)) {
-            if (!isset($this->aliases[$concrete])) {
+            $resolvedInterface = $this->aliases[$concrete] ?? $this->resolveGeneratedEndpointImplementation($concrete);
+            if ($resolvedInterface === null) {
                 throw new ContainerException("No binding found for interface {$concrete}");
             }
 
             // Get the concrete implementation for this interface
             /** @var class-string<U> $aliasConcrete */
-            $aliasConcrete = $this->aliases[$concrete];
+            $aliasConcrete = $resolvedInterface;
 
             // Check if we already have the concrete class instance
             if (isset($this->instances[$aliasConcrete])) {
@@ -226,5 +234,30 @@ final class DIContainer implements Container
         }
 
         return $dependencies;
+    }
+
+    /**
+     * @template U of object
+     * @param class-string<U> $interface
+     * @return class-string<U>|null
+     */
+    private function resolveGeneratedEndpointImplementation(string $interface): ?string
+    {
+        if (!str_starts_with($interface, self::GENERATED_ENDPOINT_NAMESPACE_PREFIX)) {
+            return null;
+        }
+
+        $relativeClass = substr($interface, \strlen(self::GENERATED_ENDPOINT_NAMESPACE_PREFIX));
+        if ($relativeClass === '') {
+            return null;
+        }
+
+        $implementation = self::HANDWRITTEN_ENDPOINT_NAMESPACE_PREFIX . $relativeClass;
+        if (!class_exists($implementation)) {
+            return null;
+        }
+
+        /** @var class-string<U> $implementation */
+        return $implementation;
     }
 }

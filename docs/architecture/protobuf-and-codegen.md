@@ -95,7 +95,7 @@ task proto:gen:transport
 - endpoint interfaces для каждого `service/rpc`;
 - generic HTTP handlers поверх `AbstractProtobufRpcHandler`.
 
-Это handwritten business logic не заменяет. Разработчик по-прежнему пишет endpoint implementation и регистрирует его в DI.
+Это handwritten business logic не заменяет. Разработчик по-прежнему пишет endpoint implementation, а runtime резолвит её по соглашению namespace.
 
 ### 5. Mapper/hydrator generation
 
@@ -177,7 +177,7 @@ task proto:gen:all
 
 1. Править `.proto` в `protos/proto/app/v1`.
 2. Перегенерировать артефакты.
-3. Обновить endpoint implementation и DI wiring, если добавился новый RPC.
+3. Добавить endpoint implementation в `App\Platform\Http\Endpoint\...` с тем же относительным путём, что и у generated interface.
 4. Проверить, что core артефакты согласованы с кодом.
 
 ### Если меняется внутренняя доменная модель, связанная с protobuf mapping
@@ -189,7 +189,7 @@ task proto:gen:all
 
 ## Текущие проблемы codegen-потока
 
-- endpoint implementation всё ещё регистрируется вручную в DI;
+- endpoint implementation резолвится по namespace convention, а не проверяется генератором заранее;
 - есть два направления генерации: protobuf transport и внутренний hydrator generator;
 - transport generation пока не проверяет наличие endpoint implementation автоматически;
 - в проекте уже есть новый `CodeGeneratingHydrator`, но DI всё ещё регистрирует `ReflectionHydrator` как основной.

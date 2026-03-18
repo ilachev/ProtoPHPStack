@@ -131,7 +131,7 @@ Pipeline в проекте рекурсивный. Каждый middleware по�
 
 1. router выбирает сгенерированный `CheckHttpHandler`;
 2. handler декодирует protobuf request через `AbstractProtobufRpcHandler`;
-3. handler вызывает `PlatformHealthCheckEndpoint`;
+3. handler вызывает handwritten endpoint implementation `App\Platform\Http\Endpoint\Api\V1\HealthService\CheckEndpoint`;
 4. endpoint implementation создаёт protobuf response model;
 5. handler отдаёт JSON через `JsonResponse`.
 

@@ -106,7 +106,7 @@ task run
 
 - storage/integration adapters всё ещё требуют аккуратного упрощения
 - hydration/codegen layer всё ещё сложнее, чем остальная структура проекта
-- transport generation всё ещё требует ручного binding endpoint implementation в DI
+- transport generation пока опирается на namespace convention для endpoint implementations
 
 ## Как оценивать изменения
 
