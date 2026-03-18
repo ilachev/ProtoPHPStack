@@ -50,7 +50,7 @@ final class GeneratedOperationManifestProviderTest extends TestCase
         rmdir($this->tempDir);
     }
 
-    public function testLoadsAndNormalizesGeneratedOperationManifests(): void
+    public function testLoadsGeneratedOperationRegistries(): void
     {
         $this->writeManifest(
             'Api/V1/HealthOperationRegistry.php',
