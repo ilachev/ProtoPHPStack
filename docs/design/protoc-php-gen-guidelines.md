@@ -11,7 +11,6 @@
 - взять protobuf `service/rpc`;
 - сгенерировать transport contracts;
 - сгенерировать operation manifests для каждого RPC;
-- сгенерировать route manifests из `google.api.http`;
 - сократить ручной HTTP boilerplate в runtime.
 
 Это transport-oriented codegen path, а не универсальный генератор для внутренних моделей проекта.
@@ -25,8 +24,7 @@
 - генерировать HTTP handlers поверх общего runtime adapter;
 - валидировать handwritten endpoint implementations на этапе generation;
 - генерировать operation manifests как явную metadata surface;
-- генерировать endpoint binding manifests для handwritten runtime implementations;
-- генерировать route manifests для runtime routing;
+- генерировать endpoint binding manifests только как производный compatibility artifact;
 - держать явный generated contract между transport-кодом и handwritten endpoint implementations.
 
 В генераторе недопустимо:

@@ -6,7 +6,6 @@ namespace ProtoPhpGen\Plugin;
 
 use ProtoPhpGen\Generator\EndpointImplementationValidator;
 use ProtoPhpGen\Generator\OperationManifestGenerator;
-use ProtoPhpGen\Generator\RouteManifestGenerator;
 use ProtoPhpGen\Generator\TransportContractGenerator;
 use ProtoPhpGen\Profile\BaseApiTemplateTransportProfile;
 use ProtoPhpGen\Protoc\PluginRequest;
@@ -30,12 +29,6 @@ final readonly class PluginOptions
         if ($request->hasParameter('generate_transport_contracts')) {
             $enabledModules[TransportContractGenerator::MODULE_NAME] = self::toBool(
                 $request->getParameter('generate_transport_contracts'),
-            );
-        }
-
-        if ($request->hasParameter('generate_route_manifest')) {
-            $enabledModules[RouteManifestGenerator::MODULE_NAME] = self::toBool(
-                $request->getParameter('generate_route_manifest'),
             );
         }
 

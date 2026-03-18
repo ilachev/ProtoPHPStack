@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Tests\Unit\Platform\Http\Endpoint;
 
 use App\Platform\Http\Endpoint\GeneratedEndpointBindingProvider;
+use App\Platform\Http\GeneratedOperationManifestProvider;
 use App\Platform\Http\Handler\HandlerInterface;
-use App\Platform\Routing\Generator\GeneratedRouteManifestProvider;
+use App\Platform\Routing\Generator\GeneratedOperationRouteProvider;
 use PHPUnit\Framework\TestCase;
 
 final class GeneratedTransportSurfaceConsistencyTest extends TestCase
@@ -14,9 +15,10 @@ final class GeneratedTransportSurfaceConsistencyTest extends TestCase
     public function testGeneratedRoutesHandlersAndEndpointBindingsStayConsistent(): void
     {
         $projectRoot = \dirname(__DIR__, 5);
-        $routeProvider = new GeneratedRouteManifestProvider($projectRoot . '/gen/Generated/RouteManifest');
-        $bindingProvider = new GeneratedEndpointBindingProvider($projectRoot . '/gen/Generated/EndpointBindings');
-        $operations = $this->loadOperationManifest($projectRoot . '/gen/Generated/OperationManifest');
+        $operationProvider = new GeneratedOperationManifestProvider($projectRoot . '/gen/Generated/OperationManifest');
+        $routeProvider = new GeneratedOperationRouteProvider($operationProvider);
+        $bindingProvider = new GeneratedEndpointBindingProvider($operationProvider);
+        $operations = $operationProvider->getOperations();
         $routesByOperation = $this->indexRoutesByOperationId($routeProvider->getRoutes());
         $bindings = $bindingProvider->getBindings();
 
@@ -110,112 +112,5 @@ final class GeneratedTransportSurfaceConsistencyTest extends TestCase
         }
 
         return $indexedRoutes;
-    }
-
-    /**
-     * @return list<array{
-     *     service: string,
-     *     method: string,
-     *     operation_id: string,
-     *     request_class: class-string,
-     *     response_class: class-string,
-     *     handler: class-string,
-     *     endpoint_interface: class-string,
-     *     endpoint_implementation: class-string,
-     *     http_bindings: list<array{method: string, path: string}>
-     * }>
-     */
-    private function loadOperationManifest(string $directory): array
-    {
-        if (!is_dir($directory)) {
-            return [];
-        }
-
-        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($directory));
-        $operations = [];
-
-        foreach ($iterator as $file) {
-            if (!$file instanceof \SplFileInfo) {
-                continue;
-            }
-
-            if (!$file->isFile() || $file->getExtension() !== 'php') {
-                continue;
-            }
-
-            $manifest = require $file->getPathname();
-            if (!\is_array($manifest)) {
-                continue;
-            }
-
-            foreach ($manifest as $operation) {
-                if (!\is_array($operation)) {
-                    continue;
-                }
-
-                $service = $operation['service'] ?? null;
-                $method = $operation['method'] ?? null;
-                $operationId = $operation['operation_id'] ?? null;
-                $requestClass = $operation['request_class'] ?? null;
-                $responseClass = $operation['response_class'] ?? null;
-                $handler = $operation['handler'] ?? null;
-                $endpointInterface = $operation['endpoint_interface'] ?? null;
-                $endpointImplementation = $operation['endpoint_implementation'] ?? null;
-                $httpBindings = $operation['http_bindings'] ?? null;
-
-                if (
-                    !\is_string($service)
-                    || !\is_string($method)
-                    || !\is_string($operationId)
-                    || !\is_string($requestClass)
-                    || !\is_string($responseClass)
-                    || !\is_string($handler)
-                    || !\is_string($endpointInterface)
-                    || !\is_string($endpointImplementation)
-                    || !\is_array($httpBindings)
-                ) {
-                    continue;
-                }
-
-                $normalizedBindings = [];
-
-                foreach ($httpBindings as $binding) {
-                    if (!\is_array($binding)) {
-                        continue 2;
-                    }
-
-                    $bindingMethod = $binding['method'] ?? null;
-                    $bindingPath = $binding['path'] ?? null;
-
-                    if (!\is_string($bindingMethod) || !\is_string($bindingPath)) {
-                        continue 2;
-                    }
-
-                    $normalizedBindings[] = [
-                        'method' => $bindingMethod,
-                        'path' => $bindingPath,
-                    ];
-                }
-
-                /** @var class-string $requestClass */
-                /** @var class-string $responseClass */
-                /** @var class-string $handler */
-                /** @var class-string $endpointInterface */
-                /** @var class-string $endpointImplementation */
-                $operations[] = [
-                    'service' => $service,
-                    'method' => $method,
-                    'operation_id' => $operationId,
-                    'request_class' => $requestClass,
-                    'response_class' => $responseClass,
-                    'handler' => $handler,
-                    'endpoint_interface' => $endpointInterface,
-                    'endpoint_implementation' => $endpointImplementation,
-                    'http_bindings' => $normalizedBindings,
-                ];
-            }
-        }
-
-        return $operations;
     }
 }

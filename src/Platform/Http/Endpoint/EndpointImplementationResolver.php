@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Platform\Http\Endpoint;
 
+use App\Platform\Http\GeneratedOperationManifestProvider;
+
 final readonly class EndpointImplementationResolver
 {
     private GeneratedEndpointBindingProvider $bindingProvider;
@@ -11,7 +13,7 @@ final readonly class EndpointImplementationResolver
     public function __construct(?GeneratedEndpointBindingProvider $bindingProvider = null)
     {
         $this->bindingProvider = $bindingProvider ?? new GeneratedEndpointBindingProvider(
-            \dirname(__DIR__, 4) . '/gen/Generated/EndpointBindings',
+            new GeneratedOperationManifestProvider(\dirname(__DIR__, 4) . '/gen/Generated/OperationManifest'),
         );
     }
 

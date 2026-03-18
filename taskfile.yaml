@@ -106,23 +106,22 @@ tasks:
         {{.PROTO_DIR}}/app/v1/*.proto
 
   proto:gen:routes:
-    desc: Build config/routes.php from generated route manifests
+    desc: Build config/routes.php from generated operation manifests
     deps: [ var, install, proto:gen:transport ]
     cmds:
       - "{{.PHP}} bin/generate-routes.php"
 
   proto:gen:transport:
-    desc: Generate server-side transport contracts, endpoint bindings, and route manifests from core protobuf services
+    desc: Generate server-side transport contracts, endpoint bindings, and operation manifests from core protobuf services
     deps: [ tools:proto:setup, install ]
     cmds:
       - rm -rf gen/Generated/Transport
       - rm -rf gen/Generated/EndpointBindings
       - rm -rf gen/Generated/OperationManifest
-      - rm -rf gen/Generated/RouteManifest
       - >
         protoc -I={{.PROTO_DIR}}
         --plugin=protoc-gen-php-transport=tools/protoc-php-gen/bin/protoc-php-gen.php
-        --php-transport_out=namespace=App\\Generated\\Transport,output_dir=gen,source_root=src,transport_profile=base_api_template,generate_transport_contracts=true,generate_endpoint_validation=true,generate_operation_manifest=true,generate_route_manifest=true:.
+        --php-transport_out=namespace=App\\Generated\\Transport,output_dir=gen,source_root=src,transport_profile=base_api_template,generate_transport_contracts=true,generate_endpoint_validation=true,generate_operation_manifest=true:.
         {{.PROTO_DIR}}/app/v1/*.proto
 
   proto:gen:all:

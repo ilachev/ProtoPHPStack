@@ -10,12 +10,11 @@
 
 ## Текущий поддерживаемый scope
 
-Сейчас production-grade поддерживаются четыре generator module:
+Сейчас production-grade поддерживаются три generator module:
 
 - `transport_contracts`
 - `endpoint_validation`
 - `operation_manifest`
-- `route_manifest`
 
 Он отвечает за:
 
@@ -23,8 +22,7 @@
 - генерацию HTTP handlers поверх runtime adapter;
 - compile-time проверку наличия handwritten endpoint implementations;
 - генерацию operation manifests как канонической metadata surface по каждому RPC;
-- генерацию endpoint binding manifests для handwritten runtime implementations;
-- генерацию route manifests из `google.api.http`;
+- генерацию endpoint binding manifests как производного compatibility artifact;
 - поддержку protobuf-first transport flow в основном шаблоне.
 
 Это текущий канонический и поддерживаемый путь.
@@ -36,7 +34,7 @@
 Для основного проекта это означает:
 
 - `.proto` управляет transport surface;
-- `protoc-php-gen` генерирует transport contracts, endpoint bindings и route manifests;
+- `protoc-php-gen` генерирует transport contracts, operation manifests и совместимый endpoint binding artifact;
 - handwritten endpoint implementation остаётся в runtime-коде;
 - generator не подменяет собой business logic.
 
@@ -59,7 +57,6 @@
 - `transport_contracts`
 - `endpoint_validation`
 - `operation_manifest`
-- `route_manifest`
 
 ### Допустимые будущие направления
 
@@ -105,7 +102,7 @@
 Для `base-api-template` сейчас важно следующее:
 
 - `protoc-php-gen` остаётся внутренним инструментом репозитория;
-- основной template использует стабильные `transport_contracts`, `endpoint_validation`, `operation_manifest` и `route_manifest` modules;
+- основной template использует стабильные `transport_contracts`, `endpoint_validation` и `operation_manifest` modules;
 - расширение тулзы допускается только без разрастания основного project path в набор legacy-веток.
 
 ## Текущие архитектурные ограничения
@@ -130,13 +127,13 @@
 - transport runtime profiles
 - binary plugin protocol test contour
 
-Эта часть была нужна, чтобы `transport_contracts`, `endpoint_validation`, `operation_manifest` и `route_manifest` стали честными production-grade модулями.
+Эта часть была нужна, чтобы `transport_contracts`, `endpoint_validation` и `operation_manifest` стали честными production-grade модулями.
 
 ### Следующий этап развития
 
 Следующая волна работы должна идти не в “ещё больше генераторов”, а в доведение protobuf-first flow верхнего уровня:
 
-1. использовать generated route manifests как единственный route source of truth;
+1. использовать generated operation manifests как единственный transport metadata source of truth;
 2. уменьшать ручную runtime-склейку между generated transport и handwritten endpoint implementations;
 3. усиливать compile-time и verify-time проверки согласованности generated artifacts;
 4. добавлять новые generator modules только под реальные reusable backend needs.

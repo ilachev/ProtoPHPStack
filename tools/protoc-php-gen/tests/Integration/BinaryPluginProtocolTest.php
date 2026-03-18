@@ -16,7 +16,7 @@ final class BinaryPluginProtocolTest extends TestCase
     {
         $request = PluginRequest::fromStdin(
             $this->buildCodeGeneratorRequest(
-                parameter: 'namespace=App\\Generated\\Transport,output_dir=gen,generate_transport_contracts=true,generate_operation_manifest=true,generate_route_manifest=true',
+                parameter: 'namespace=App\\Generated\\Transport,output_dir=gen,generate_transport_contracts=true,generate_operation_manifest=true',
                 filesToGenerate: ['app/v1/health.proto'],
                 protoFiles: [
                     $this->buildFileDescriptorProto(
@@ -51,7 +51,7 @@ final class BinaryPluginProtocolTest extends TestCase
         $decodedResponse = $this->decodeCodeGeneratorResponse($response->serialize());
 
         self::assertNull($decodedResponse['error']);
-        self::assertCount(5, $decodedResponse['files']);
+        self::assertCount(4, $decodedResponse['files']);
         self::assertSame(
             'gen/Generated/Transport/Api/V1/HealthService/CheckEndpoint.php',
             $decodedResponse['files'][0]['name'],
@@ -68,10 +68,6 @@ final class BinaryPluginProtocolTest extends TestCase
             'gen/Generated/OperationManifest/app/v1/health.php',
             $decodedResponse['files'][3]['name'],
         );
-        self::assertSame(
-            'gen/Generated/RouteManifest/app/v1/health.php',
-            $decodedResponse['files'][4]['name'],
-        );
         self::assertStringContainsString(
             'interface CheckEndpoint',
             $decodedResponse['files'][0]['content'],
@@ -87,10 +83,6 @@ final class BinaryPluginProtocolTest extends TestCase
         self::assertStringContainsString(
             "'operation_id' => 'HealthService.Check'",
             $decodedResponse['files'][3]['content'],
-        );
-        self::assertStringContainsString(
-            '/api/v1/health',
-            $decodedResponse['files'][4]['content'],
         );
     }
 

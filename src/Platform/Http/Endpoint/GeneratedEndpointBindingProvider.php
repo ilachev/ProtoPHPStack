@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Platform\Http\Endpoint;
 
+use App\Platform\Http\GeneratedOperationManifestProvider;
+
 final class GeneratedEndpointBindingProvider
 {
     /**
@@ -12,7 +14,7 @@ final class GeneratedEndpointBindingProvider
     private ?array $bindings = null;
 
     public function __construct(
-        private readonly string $manifestDir,
+        private readonly GeneratedOperationManifestProvider $operationProvider,
     ) {}
 
     /**
@@ -26,55 +28,17 @@ final class GeneratedEndpointBindingProvider
 
         $bindings = [];
 
-        foreach ($this->findManifestFiles() as $manifestFile) {
-            $manifest = require $manifestFile;
-            if (!\is_array($manifest)) {
-                continue;
-            }
-
-            foreach ($manifest as $interface => $implementation) {
-                if (!\is_string($interface) || !\is_string($implementation)) {
-                    continue;
-                }
-
-                /** @var class-string $interface */
-                /** @var class-string $implementation */
-                $bindings[$interface] = $implementation;
-            }
+        foreach ($this->operationProvider->getOperations() as $operation) {
+            /** @var class-string $interface */
+            $interface = $operation['endpoint_interface'];
+            /** @var class-string $implementation */
+            $implementation = $operation['endpoint_implementation'];
+            $bindings[$interface] = $implementation;
         }
 
         ksort($bindings);
         $this->bindings = $bindings;
 
         return $this->bindings;
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function findManifestFiles(): array
-    {
-        if (!is_dir($this->manifestDir)) {
-            return [];
-        }
-
-        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($this->manifestDir));
-        $files = [];
-
-        foreach ($iterator as $file) {
-            if (!$file instanceof \SplFileInfo) {
-                continue;
-            }
-
-            if (!$file->isFile() || $file->getExtension() !== 'php') {
-                continue;
-            }
-
-            $files[] = $file->getPathname();
-        }
-
-        sort($files);
-
-        return $files;
     }
 }

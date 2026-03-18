@@ -5,15 +5,16 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use App\Platform\Routing\Generator\GeneratedRouteManifestProvider;
+use App\Platform\Http\GeneratedOperationManifestProvider;
+use App\Platform\Routing\Generator\GeneratedOperationRouteProvider;
 use App\Platform\Routing\Generator\RoutesWriter;
 
 // Configuration
-$manifestDir = __DIR__ . '/../gen/Generated/RouteManifest';
+$manifestDir = __DIR__ . '/../gen/Generated/OperationManifest';
 $outputFile = __DIR__ . '/../config/routes.php';
 
 // Generate routes
-$provider = new GeneratedRouteManifestProvider($manifestDir);
+$provider = new GeneratedOperationRouteProvider(new GeneratedOperationManifestProvider($manifestDir));
 $writer = new RoutesWriter($provider, $outputFile);
 
 try {
