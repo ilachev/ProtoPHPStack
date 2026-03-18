@@ -29,32 +29,23 @@ interface QueryBuilder
 
     public function offset(int $offset): static;
 
-    /**
-     * @return array{string, array<string, mixed>}
-     */
-    public function buildSelectQuery(): array;
+    public function buildSelectQuery(): SqlQuery;
 
     /**
      * @param array<string, mixed> $data
-     * @return array{string, array<string, mixed>}
      */
-    public function buildInsertQuery(array $data): array;
+    public function buildInsertQuery(array $data): SqlQuery;
 
     /**
      * @param array<string, mixed> $data
      * @param string $primaryKey Primary key column name for the UPSERT operation
-     * @return array{string, array<string, mixed>}
      */
-    public function buildUpsertQuery(array $data, string $primaryKey): array;
+    public function buildUpsertQuery(array $data, string $primaryKey): SqlQuery;
 
     /**
      * @param array<string, mixed> $data
-     * @return array{string, array<string, mixed>}
      */
-    public function buildUpdateQuery(array $data): array;
+    public function buildUpdateQuery(array $data): SqlQuery;
 
-    /**
-     * @return array{string, array<string, mixed>}
-     */
-    public function buildDeleteQuery(): array;
+    public function buildDeleteQuery(): SqlQuery;
 }

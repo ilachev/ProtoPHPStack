@@ -19,63 +19,63 @@ final class SQLiteQueryBuilderTest extends TestCase
 
     public function testSelect(): void
     {
-        [$query, $params] = $this->builder
+        $query = $this->builder
             ->select('name')
             ->buildSelectQuery();
 
-        self::assertSame('SELECT name FROM test_table', $query);
-        self::assertEmpty($params);
+        self::assertSame('SELECT name FROM test_table', $query->sql);
+        self::assertEmpty($query->params);
     }
 
     public function testSelectMultipleColumns(): void
     {
-        [$query, $params] = $this->builder
+        $query = $this->builder
             ->select(['id', 'name', 'email'])
             ->buildSelectQuery();
 
-        self::assertSame('SELECT id, name, email FROM test_table', $query);
-        self::assertEmpty($params);
+        self::assertSame('SELECT id, name, email FROM test_table', $query->sql);
+        self::assertEmpty($query->params);
     }
 
     public function testWhere(): void
     {
-        [$query, $params] = $this->builder
+        $query = $this->builder
             ->where('id', 1)
             ->buildSelectQuery();
 
-        self::assertSame('SELECT * FROM test_table WHERE id = :id', $query);
-        self::assertSame(['id' => 1], $params);
+        self::assertSame('SELECT * FROM test_table WHERE id = :id', $query->sql);
+        self::assertSame(['id' => 1], $query->params);
     }
 
     public function testWhereWithCustomOperator(): void
     {
-        [$query, $params] = $this->builder
+        $query = $this->builder
             ->where('age', 18, '>=')
             ->buildSelectQuery();
 
-        self::assertSame('SELECT * FROM test_table WHERE age >= :age', $query);
-        self::assertSame(['age' => 18], $params);
+        self::assertSame('SELECT * FROM test_table WHERE age >= :age', $query->sql);
+        self::assertSame(['age' => 18], $query->params);
     }
 
     public function testMultipleWhereClauses(): void
     {
-        [$query, $params] = $this->builder
+        $query = $this->builder
             ->where('status', 'active')
             ->where('age', 21, '>=')
             ->buildSelectQuery();
 
-        self::assertSame('SELECT * FROM test_table WHERE status = :status AND age >= :age', $query);
-        self::assertSame(['status' => 'active', 'age' => 21], $params);
+        self::assertSame('SELECT * FROM test_table WHERE status = :status AND age >= :age', $query->sql);
+        self::assertSame(['status' => 'active', 'age' => 21], $query->params);
     }
 
     public function testWhereIn(): void
     {
-        [$query, $params] = $this->builder
+        $query = $this->builder
             ->whereIn('status', ['active', 'pending'])
             ->buildSelectQuery();
 
-        self::assertSame('SELECT * FROM test_table WHERE status IN (:status_in_0, :status_in_1)', $query);
-        self::assertSame(['status_in_0' => 'active', 'status_in_1' => 'pending'], $params);
+        self::assertSame('SELECT * FROM test_table WHERE status IN (:status_in_0, :status_in_1)', $query->sql);
+        self::assertSame(['status_in_0' => 'active', 'status_in_1' => 'pending'], $query->params);
     }
 
     public function testWhereInThrowsExceptionWithEmptyArray(): void
@@ -88,53 +88,53 @@ final class SQLiteQueryBuilderTest extends TestCase
 
     public function testWhereRaw(): void
     {
-        [$query, $params] = $this->builder
+        $query = $this->builder
             ->whereRaw('created_at > :date', ['date' => '2023-01-01'])
             ->buildSelectQuery();
 
-        self::assertSame('SELECT * FROM test_table WHERE created_at > :date', $query);
-        self::assertSame(['date' => '2023-01-01'], $params);
+        self::assertSame('SELECT * FROM test_table WHERE created_at > :date', $query->sql);
+        self::assertSame(['date' => '2023-01-01'], $query->params);
     }
 
     public function testOrderBy(): void
     {
-        [$query, $params] = $this->builder
+        $query = $this->builder
             ->orderBy('name')
             ->buildSelectQuery();
 
-        self::assertSame('SELECT * FROM test_table ORDER BY name ASC', $query);
-        self::assertEmpty($params);
+        self::assertSame('SELECT * FROM test_table ORDER BY name ASC', $query->sql);
+        self::assertEmpty($query->params);
     }
 
     public function testOrderByDesc(): void
     {
-        [$query, $params] = $this->builder
+        $query = $this->builder
             ->orderBy('created_at', 'DESC')
             ->buildSelectQuery();
 
-        self::assertSame('SELECT * FROM test_table ORDER BY created_at DESC', $query);
-        self::assertEmpty($params);
+        self::assertSame('SELECT * FROM test_table ORDER BY created_at DESC', $query->sql);
+        self::assertEmpty($query->params);
     }
 
     public function testOrderByMultipleColumns(): void
     {
-        [$query, $params] = $this->builder
+        $query = $this->builder
             ->orderBy('status', 'ASC')
             ->orderBy('created_at', 'DESC')
             ->buildSelectQuery();
 
-        self::assertSame('SELECT * FROM test_table ORDER BY status ASC, created_at DESC', $query);
-        self::assertEmpty($params);
+        self::assertSame('SELECT * FROM test_table ORDER BY status ASC, created_at DESC', $query->sql);
+        self::assertEmpty($query->params);
     }
 
     public function testLimit(): void
     {
-        [$query, $params] = $this->builder
+        $query = $this->builder
             ->limit(10)
             ->buildSelectQuery();
 
-        self::assertSame('SELECT * FROM test_table LIMIT 10', $query);
-        self::assertEmpty($params);
+        self::assertSame('SELECT * FROM test_table LIMIT 10', $query->sql);
+        self::assertEmpty($query->params);
     }
 
     public function testLimitWithNegativeValueThrowsException(): void
@@ -147,13 +147,13 @@ final class SQLiteQueryBuilderTest extends TestCase
 
     public function testOffset(): void
     {
-        [$query, $params] = $this->builder
+        $query = $this->builder
             ->limit(10)
             ->offset(20)
             ->buildSelectQuery();
 
-        self::assertSame('SELECT * FROM test_table LIMIT 10 OFFSET 20', $query);
-        self::assertEmpty($params);
+        self::assertSame('SELECT * FROM test_table LIMIT 10 OFFSET 20', $query->sql);
+        self::assertEmpty($query->params);
     }
 
     public function testOffsetWithNegativeValueThrowsException(): void
@@ -172,13 +172,13 @@ final class SQLiteQueryBuilderTest extends TestCase
             'created_at' => time(),
         ];
 
-        [$query, $params] = $this->builder->buildInsertQuery($data);
+        $query = $this->builder->buildInsertQuery($data);
 
         self::assertSame(
             'INSERT INTO test_table (name, email, created_at) VALUES (:name, :email, :created_at)',
-            $query,
+            $query->sql,
         );
-        self::assertSame($data, $params);
+        self::assertSame($data, $query->params);
     }
 
     public function testBuildInsertQueryWithEmptyDataThrowsException(): void
@@ -198,13 +198,13 @@ final class SQLiteQueryBuilderTest extends TestCase
 
         $this->builder->where('id', 1);
 
-        [$query, $params] = $this->builder->buildUpdateQuery($data);
+        $query = $this->builder->buildUpdateQuery($data);
 
         self::assertSame(
             'UPDATE test_table SET name = :name, updated_at = :updated_at WHERE id = :id',
-            $query,
+            $query->sql,
         );
-        self::assertSame(['name' => 'Updated Name', 'updated_at' => $data['updated_at'], 'id' => 1], $params);
+        self::assertSame(['name' => 'Updated Name', 'updated_at' => $data['updated_at'], 'id' => 1], $query->params);
     }
 
     public function testBuildUpdateQueryWithoutWhereThrowsException(): void
@@ -227,10 +227,10 @@ final class SQLiteQueryBuilderTest extends TestCase
     {
         $this->builder->where('id', 1);
 
-        [$query, $params] = $this->builder->buildDeleteQuery();
+        $query = $this->builder->buildDeleteQuery();
 
-        self::assertSame('DELETE FROM test_table WHERE id = :id', $query);
-        self::assertSame(['id' => 1], $params);
+        self::assertSame('DELETE FROM test_table WHERE id = :id', $query->sql);
+        self::assertSame(['id' => 1], $query->params);
     }
 
     public function testBuildDeleteQueryWithoutWhereThrowsException(): void

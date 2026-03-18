@@ -26,10 +26,7 @@ final class PostgreSQLQueryBuilder extends BaseQueryBuilder
         $this->dialect = new PostgreSQLDialect($schema);
     }
 
-    /**
-     * @return array{0: string, 1: array<string, mixed>}
-     */
-    public function buildSelectQuery(): array
+    public function buildSelectQuery(): SqlQuery
     {
         $quotedTable = $this->dialect->quoteTable($this->table);
         $columns = implode(', ', array_map(fn($column) => $column === '*' ? $column : $this->dialect->quoteColumn($column), $this->select));
@@ -46,14 +43,13 @@ final class PostgreSQLQueryBuilder extends BaseQueryBuilder
 
         $sql .= $this->dialect->limit($this->limit, $this->offset);
 
-        return [$sql, $this->params];
+        return new SqlQuery($sql, $this->params);
     }
 
     /**
      * @param array<string, mixed> $data
-     * @return array{0: string, 1: array<string, mixed>}
      */
-    public function buildInsertQuery(array $data, string $primaryKey = 'id'): array
+    public function buildInsertQuery(array $data, string $primaryKey = 'id'): SqlQuery
     {
         if (empty($data)) {
             throw new StorageException('Cannot insert with empty data');
@@ -78,14 +74,13 @@ final class PostgreSQLQueryBuilder extends BaseQueryBuilder
 
         $sql = "INSERT INTO {$quotedTable} ({$columnList}) VALUES ({$placeholderList})";
 
-        return [$sql, $params];
+        return new SqlQuery($sql, $params);
     }
 
     /**
      * @param array<string, mixed> $data
-     * @return array{0: string, 1: array<string, mixed>}
      */
-    public function buildUpdateQuery(array $data, string $primaryKey = 'id'): array
+    public function buildUpdateQuery(array $data, string $primaryKey = 'id'): SqlQuery
     {
         if (empty($data)) {
             throw new StorageException('Cannot update with empty data');
@@ -120,14 +115,13 @@ final class PostgreSQLQueryBuilder extends BaseQueryBuilder
 
         $sql .= ' WHERE ' . implode(' AND ', $this->where);
 
-        return [$sql, array_merge($params, $this->params)];
+        return new SqlQuery($sql, array_merge($params, $this->params));
     }
 
     /**
      * @param array<string, mixed> $data
-     * @return array{0: string, 1: array<string, mixed>}
      */
-    public function buildUpsertQuery(array $data, string $primaryKey = 'id'): array
+    public function buildUpsertQuery(array $data, string $primaryKey = 'id'): SqlQuery
     {
         if (empty($data)) {
             throw new StorageException('Cannot upsert with empty data');
@@ -161,13 +155,10 @@ final class PostgreSQLQueryBuilder extends BaseQueryBuilder
         $sql = "INSERT INTO {$quotedTable} ({$columnList}) VALUES ({$placeholderList}) "
                . "ON CONFLICT ({$primaryKey}) DO UPDATE SET {$updateList}";
 
-        return [$sql, $params];
+        return new SqlQuery($sql, $params);
     }
 
-    /**
-     * @return array{0: string, 1: array<string, mixed>}
-     */
-    public function buildDeleteQuery(): array
+    public function buildDeleteQuery(): SqlQuery
     {
         if (empty($this->where)) {
             throw new StorageException('Cannot delete without WHERE clause');
@@ -177,6 +168,6 @@ final class PostgreSQLQueryBuilder extends BaseQueryBuilder
 
         $sql = "DELETE FROM {$quotedTable} WHERE " . implode(' AND ', $this->where);
 
-        return [$sql, $this->params];
+        return new SqlQuery($sql, $this->params);
     }
 }

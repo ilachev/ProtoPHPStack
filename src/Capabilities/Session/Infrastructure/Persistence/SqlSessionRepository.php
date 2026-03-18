@@ -50,9 +50,9 @@ final class SqlSessionRepository extends AbstractRepository implements SessionRe
         $deleteQuery = $this->query(self::TABLE_NAME)
             ->where('expires_at', time(), '<');
 
-        [$sql, $params] = $deleteQuery->buildDeleteQuery();
+        $query = $deleteQuery->buildDeleteQuery();
         /** @var array<string, scalar|null> $castParams */
-        $castParams = $params;
-        $this->storage->execute($sql, $castParams);
+        $castParams = $query->params;
+        $this->storage->execute($query->sql, $castParams);
     }
 }

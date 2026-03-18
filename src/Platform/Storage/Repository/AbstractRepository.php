@@ -65,11 +65,11 @@ abstract class AbstractRepository
     protected function fetchOne(string $className, QueryBuilder $queryBuilder): ?object
     {
         $queryBuilder->limit(1);
-        [$sql, $params] = $queryBuilder->buildSelectQuery();
+        $query = $queryBuilder->buildSelectQuery();
 
         /** @var array<string, scalar|null> $castParams */
-        $castParams = $params;
-        $result = $this->storage->query($sql, $castParams);
+        $castParams = $query->params;
+        $result = $this->storage->query($query->sql, $castParams);
 
         if (empty($result)) {
             return null;
@@ -87,11 +87,11 @@ abstract class AbstractRepository
      */
     protected function fetchAll(string $className, QueryBuilder $queryBuilder): array
     {
-        [$sql, $params] = $queryBuilder->buildSelectQuery();
+        $query = $queryBuilder->buildSelectQuery();
 
         /** @var array<string, scalar|null> $castParams */
-        $castParams = $params;
-        $result = $this->storage->query($sql, $castParams);
+        $castParams = $query->params;
+        $result = $this->storage->query($query->sql, $castParams);
 
         return array_map(
             fn(array $row) => $this->createEntity($className, $row),
@@ -119,7 +119,7 @@ abstract class AbstractRepository
             unset($data[$primaryKey]);
 
             $insertQuery = $this->query($table);
-            [$sql, $params] = $insertQuery->buildInsertQuery($data);
+            $query = $insertQuery->buildInsertQuery($data);
         } else {
             // For updates, make sure the primary key is included
             if (!isset($data[$primaryKey])) {
@@ -128,12 +128,12 @@ abstract class AbstractRepository
             }
 
             $insertQuery = $this->query($table);
-            [$sql, $params] = $insertQuery->buildUpsertQuery($data, $primaryKey);
+            $query = $insertQuery->buildUpsertQuery($data, $primaryKey);
         }
 
         /** @var array<string, scalar|null> $castParams */
-        $castParams = $params;
-        $this->storage->execute($sql, $castParams);
+        $castParams = $query->params;
+        $this->storage->execute($query->sql, $castParams);
 
         // If this was an insert, update the entity with the new ID
         if ($isInsert) {
@@ -154,19 +154,19 @@ abstract class AbstractRepository
         if ($isInsert) {
             unset($data[$primaryKey]);
             $insertQuery = $this->query($table);
-            [$sql, $params] = $insertQuery->buildInsertQuery($data);
+            $query = $insertQuery->buildInsertQuery($data);
         } else {
             if (!isset($data[$primaryKey])) {
                 $data[$primaryKey] = $primaryKeyValue;
             }
 
             $insertQuery = $this->query($table);
-            [$sql, $params] = $insertQuery->buildUpsertQuery($data, $primaryKey);
+            $query = $insertQuery->buildUpsertQuery($data, $primaryKey);
         }
 
         /** @var array<string, scalar|null> $castParams */
-        $castParams = $params;
-        $this->storage->execute($sql, $castParams);
+        $castParams = $query->params;
+        $this->storage->execute($query->sql, $castParams);
     }
 
     /**
@@ -177,10 +177,10 @@ abstract class AbstractRepository
         $deleteQuery = $this->query($table)
             ->where($primaryKey, $primaryKeyValue);
 
-        [$sql, $params] = $deleteQuery->buildDeleteQuery();
+        $query = $deleteQuery->buildDeleteQuery();
         /** @var array<string, scalar|null> $castParams */
-        $castParams = $params;
-        $this->storage->execute($sql, $castParams);
+        $castParams = $query->params;
+        $this->storage->execute($query->sql, $castParams);
     }
 
     /**

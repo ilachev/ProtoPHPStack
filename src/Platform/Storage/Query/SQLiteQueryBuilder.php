@@ -16,10 +16,7 @@ final class SQLiteQueryBuilder extends BaseQueryBuilder
         return $instance;
     }
 
-    /**
-     * @return array{string, array<string, mixed>}
-     */
-    public function buildSelectQuery(): array
+    public function buildSelectQuery(): SqlQuery
     {
         $query = 'SELECT ' . implode(', ', $this->select) . " FROM {$this->table}";
 
@@ -39,14 +36,13 @@ final class SQLiteQueryBuilder extends BaseQueryBuilder
             $query .= " OFFSET {$this->offset}";
         }
 
-        return [$query, $this->params];
+        return new SqlQuery($query, $this->params);
     }
 
     /**
      * @param array<string, mixed> $data
-     * @return array{string, array<string, mixed>}
      */
-    public function buildInsertQuery(array $data): array
+    public function buildInsertQuery(array $data): SqlQuery
     {
         if (empty($data)) {
             throw new StorageException('Cannot insert empty data');
@@ -57,15 +53,14 @@ final class SQLiteQueryBuilder extends BaseQueryBuilder
 
         $query = "INSERT INTO {$this->table} ({$columns}) VALUES ({$placeholders})";
 
-        return [$query, $data];
+        return new SqlQuery($query, $data);
     }
 
     /**
      * @param array<string, mixed> $data
      * @param string $primaryKey Primary key column name
-     * @return array{string, array<string, mixed>}
      */
-    public function buildUpsertQuery(array $data, string $primaryKey): array
+    public function buildUpsertQuery(array $data, string $primaryKey): SqlQuery
     {
         if (empty($data)) {
             throw new StorageException('Cannot insert or update empty data');
@@ -85,14 +80,13 @@ final class SQLiteQueryBuilder extends BaseQueryBuilder
         $query = "INSERT INTO {$this->table} ({$columns}) VALUES ({$placeholders}) "
              . "ON CONFLICT({$primaryKey}) DO UPDATE SET {$updateClause}";
 
-        return [$query, $data];
+        return new SqlQuery($query, $data);
     }
 
     /**
      * @param array<string, mixed> $data
-     * @return array{string, array<string, mixed>}
      */
-    public function buildUpdateQuery(array $data): array
+    public function buildUpdateQuery(array $data): SqlQuery
     {
         if (empty($data)) {
             throw new StorageException('Cannot update with empty data');
@@ -111,13 +105,10 @@ final class SQLiteQueryBuilder extends BaseQueryBuilder
 
         $query .= ' WHERE ' . implode(' AND ', $this->where);
 
-        return [$query, array_merge($data, $this->params)];
+        return new SqlQuery($query, array_merge($data, $this->params));
     }
 
-    /**
-     * @return array{string, array<string, mixed>}
-     */
-    public function buildDeleteQuery(): array
+    public function buildDeleteQuery(): SqlQuery
     {
         if (empty($this->where)) {
             throw new StorageException('Delete query must have WHERE clause for safety');
@@ -126,6 +117,6 @@ final class SQLiteQueryBuilder extends BaseQueryBuilder
         $query = "DELETE FROM {$this->table}";
         $query .= ' WHERE ' . implode(' AND ', $this->where);
 
-        return [$query, $this->params];
+        return new SqlQuery($query, $this->params);
     }
 }
