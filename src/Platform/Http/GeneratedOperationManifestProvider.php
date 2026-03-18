@@ -4,20 +4,12 @@ declare(strict_types=1);
 
 namespace App\Platform\Http;
 
+use App\Platform\Http\Operation\OperationDefinition;
+
 final class GeneratedOperationManifestProvider
 {
     /**
-     * @var list<array{
-     *     service: string,
-     *     method: string,
-     *     operation_id: string,
-     *     request_class: class-string,
-     *     response_class: class-string,
-     *     handler: class-string,
-     *     endpoint_interface: class-string,
-     *     endpoint_implementation: class-string,
-     *     http_bindings: list<array{method: string, path: string}>
-     * }>|null
+     * @var list<OperationDefinition>|null
      */
     private ?array $operations = null;
 
@@ -26,17 +18,7 @@ final class GeneratedOperationManifestProvider
     ) {}
 
     /**
-     * @return list<array{
-     *     service: string,
-     *     method: string,
-     *     operation_id: string,
-     *     request_class: class-string,
-     *     response_class: class-string,
-     *     handler: class-string,
-     *     endpoint_interface: class-string,
-     *     endpoint_implementation: class-string,
-     *     http_bindings: list<array{method: string, path: string}>
-     * }>
+     * @return list<OperationDefinition>
      */
     public function getOperations(): array
     {
@@ -57,66 +39,13 @@ final class GeneratedOperationManifestProvider
                     continue;
                 }
 
-                $service = $operation['service'] ?? null;
-                $method = $operation['method'] ?? null;
-                $operationId = $operation['operation_id'] ?? null;
-                $requestClass = $operation['request_class'] ?? null;
-                $responseClass = $operation['response_class'] ?? null;
-                $handler = $operation['handler'] ?? null;
-                $endpointInterface = $operation['endpoint_interface'] ?? null;
-                $endpointImplementation = $operation['endpoint_implementation'] ?? null;
-                $httpBindings = $operation['http_bindings'] ?? null;
-
-                if (
-                    !\is_string($service)
-                    || !\is_string($method)
-                    || !\is_string($operationId)
-                    || !\is_string($requestClass)
-                    || !\is_string($responseClass)
-                    || !\is_string($handler)
-                    || !\is_string($endpointInterface)
-                    || !\is_string($endpointImplementation)
-                    || !\is_array($httpBindings)
-                ) {
+                /** @var array<string, mixed> $operation */
+                $operationDefinition = OperationDefinition::fromArray($operation);
+                if ($operationDefinition === null) {
                     continue;
                 }
 
-                $normalizedBindings = [];
-
-                foreach ($httpBindings as $binding) {
-                    if (!\is_array($binding)) {
-                        continue 2;
-                    }
-
-                    $bindingMethod = $binding['method'] ?? null;
-                    $bindingPath = $binding['path'] ?? null;
-
-                    if (!\is_string($bindingMethod) || !\is_string($bindingPath)) {
-                        continue 2;
-                    }
-
-                    $normalizedBindings[] = [
-                        'method' => $bindingMethod,
-                        'path' => $bindingPath,
-                    ];
-                }
-
-                /** @var class-string $requestClass */
-                /** @var class-string $responseClass */
-                /** @var class-string $handler */
-                /** @var class-string $endpointInterface */
-                /** @var class-string $endpointImplementation */
-                $operations[] = [
-                    'service' => $service,
-                    'method' => $method,
-                    'operation_id' => $operationId,
-                    'request_class' => $requestClass,
-                    'response_class' => $responseClass,
-                    'handler' => $handler,
-                    'endpoint_interface' => $endpointInterface,
-                    'endpoint_implementation' => $endpointImplementation,
-                    'http_bindings' => $normalizedBindings,
-                ];
+                $operations[] = $operationDefinition;
             }
         }
 

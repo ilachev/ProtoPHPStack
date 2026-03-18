@@ -30,9 +30,9 @@ final class GeneratedEndpointImplementationMapProvider
 
         foreach ($this->operationProvider->getOperations() as $operation) {
             /** @var class-string $interface */
-            $interface = $operation['endpoint_interface'];
+            $interface = $operation->endpointInterface;
             /** @var class-string $implementation */
-            $implementation = $operation['endpoint_implementation'];
+            $implementation = $operation->endpointImplementation;
             $implementations[$interface] = $implementation;
         }
 

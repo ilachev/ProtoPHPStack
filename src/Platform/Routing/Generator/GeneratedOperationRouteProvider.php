@@ -17,12 +17,12 @@ final readonly class GeneratedOperationRouteProvider implements RouteProvider
         $routes = [];
 
         foreach ($this->operationProvider->getOperations() as $operation) {
-            foreach ($operation['http_bindings'] as $binding) {
+            foreach ($operation->httpBindings as $binding) {
                 $routes[] = [
-                    'method' => $binding['method'],
-                    'path' => $binding['path'],
-                    'handler' => $operation['handler'],
-                    'operation_id' => $operation['operation_id'],
+                    'method' => $binding->method,
+                    'path' => $binding->path,
+                    'handler' => $operation->handler,
+                    'operation_id' => $operation->operationId,
                 ];
             }
         }

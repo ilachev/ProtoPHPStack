@@ -23,11 +23,11 @@ final class GeneratedTransportSurfaceConsistencyTest extends TestCase
         $implementations = $implementationMapProvider->getImplementations();
 
         foreach ($operations as $operation) {
-            $handlerClass = $operation['handler'];
-            $operationId = $operation['operation_id'];
-            $endpointInterface = $operation['endpoint_interface'];
-            $implementation = $operation['endpoint_implementation'];
-            $httpBindings = $operation['http_bindings'];
+            $handlerClass = $operation->handler;
+            $operationId = $operation->operationId;
+            $endpointInterface = $operation->endpointInterface;
+            $implementation = $operation->endpointImplementation;
+            $httpBindings = $operation->httpBindings;
 
             self::assertTrue(class_exists($handlerClass), "Generated handler {$handlerClass} must exist");
             self::assertTrue(is_a($handlerClass, HandlerInterface::class, true), "{$handlerClass} must implement HandlerInterface");
@@ -52,12 +52,12 @@ final class GeneratedTransportSurfaceConsistencyTest extends TestCase
             foreach ($httpBindings as $binding) {
                 self::assertContains(
                     [
-                        'method' => $binding['method'],
-                        'path' => $binding['path'],
+                        'method' => $binding->method,
+                        'path' => $binding->path,
                         'handler' => $handlerClass,
                     ],
                     $routesByOperation[$operationId],
-                    "Route surface for {$operationId} must contain {$binding['method']} {$binding['path']}",
+                    "Route surface for {$operationId} must contain {$binding->method} {$binding->path}",
                 );
             }
         }

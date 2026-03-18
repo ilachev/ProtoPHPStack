@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests\Unit\Platform\Http;
 
 use App\Platform\Http\GeneratedOperationManifestProvider;
+use App\Platform\Http\Operation\HttpOperationBinding;
+use App\Platform\Http\Operation\OperationDefinition;
 use PHPUnit\Framework\TestCase;
 
 final class GeneratedOperationManifestProviderTest extends TestCase
@@ -71,24 +73,24 @@ final class GeneratedOperationManifestProviderTest extends TestCase
 
         $provider = new GeneratedOperationManifestProvider($this->tempDir);
 
-        self::assertSame(
+        self::assertEquals(
             [
-                [
-                    'service' => 'HealthService',
-                    'method' => 'Check',
-                    'operation_id' => 'HealthService.Check',
-                    'request_class' => 'App\Api\V1\HealthCheckRequest',
-                    'response_class' => 'App\Api\V1\HealthCheckResponse',
-                    'handler' => 'App\Generated\Endpoint\Api\V1\HealthService\CheckHttpHandler',
-                    'endpoint_interface' => 'App\Generated\Endpoint\Api\V1\HealthService\CheckEndpoint',
-                    'endpoint_implementation' => 'App\Platform\Http\Endpoint\Api\V1\HealthService\CheckEndpoint',
-                    'http_bindings' => [
-                        [
-                            'method' => 'GET',
-                            'path' => '/api/v1/health',
-                        ],
+                new OperationDefinition(
+                    service: 'HealthService',
+                    method: 'Check',
+                    operationId: 'HealthService.Check',
+                    requestClass: 'App\Api\V1\HealthCheckRequest',
+                    responseClass: 'App\Api\V1\HealthCheckResponse',
+                    handler: 'App\Generated\Endpoint\Api\V1\HealthService\CheckHttpHandler',
+                    endpointInterface: 'App\Generated\Endpoint\Api\V1\HealthService\CheckEndpoint',
+                    endpointImplementation: 'App\Platform\Http\Endpoint\Api\V1\HealthService\CheckEndpoint',
+                    httpBindings: [
+                        new HttpOperationBinding(
+                            method: 'GET',
+                            path: '/api/v1/health',
+                        ),
                     ],
-                ],
+                ),
             ],
             $provider->getOperations(),
         );

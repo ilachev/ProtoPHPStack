@@ -132,16 +132,16 @@ final class GeneratedOperationRouteProviderTest extends TestCase
      *     endpoint_interface: string,
      *     endpoint_implementation: string,
      *     http_bindings: list<array{method: string, path: string}>
-     * }> $routes
+     * }> $operations
      */
-    private function writeManifest(string $path, array $routes): void
+    private function writeManifest(string $path, array $operations): void
     {
         $directory = \dirname($path);
         if (!is_dir($directory)) {
             mkdir($directory, 0o777, true);
         }
 
-        $content = "<?php\n\ndeclare(strict_types=1);\n\nreturn " . var_export($routes, true) . ";\n";
+        $content = "<?php\n\ndeclare(strict_types=1);\n\nreturn " . var_export($operations, true) . ";\n";
         file_put_contents($path, $content);
     }
 
