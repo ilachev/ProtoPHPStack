@@ -12,22 +12,8 @@ use App\Platform\Storage\Query\QueryFactory;
  */
 final readonly class StorageFactory
 {
-    /**
-     * @param array{
-     *     engine: string,
-     *     sqlite?: array{database: string},
-     *     pgsql?: array{
-     *         host: string,
-     *         port: int,
-     *         database: string,
-     *         username: string,
-     *         password: string,
-     *         schema?: string
-     *     }
-     * } $config
-     */
     public function __construct(
-        private array $config,
+        private StorageConfig $config,
         private Logger $logger,
     ) {}
 
@@ -55,9 +41,7 @@ final readonly class StorageFactory
         $engine = $this->getEngine();
 
         if ($engine === 'pgsql') {
-            $schema = $this->config['pgsql']['schema'] ?? 'public';
-
-            return new Query\PostgreSQLQueryFactory($schema);
+            return new Query\PostgreSQLQueryFactory($this->config->pgsql->schema);
         }
 
         return new Query\SQLiteQueryFactory();
@@ -65,7 +49,7 @@ final readonly class StorageFactory
 
     private function createSQLiteStorage(): SQLiteStorage
     {
-        $databasePath = $this->config['sqlite']['database'] ?? __DIR__ . '/../../../db/app.sqlite';
+        $databasePath = $this->config->sqlite->database;
         $databaseDir = \dirname($databasePath);
 
         if (!is_dir($databaseDir)) {
@@ -77,27 +61,20 @@ final readonly class StorageFactory
 
     private function createPostgreSQLStorage(): PostgreSQLStorage
     {
-        $pgConfig = $this->config['pgsql'] ?? [];
-
-        $host = $pgConfig['host'] ?? 'localhost';
-        $port = $pgConfig['port'] ?? 5432;
-        $database = $pgConfig['database'] ?? 'app';
-        $username = $pgConfig['username'] ?? 'app';
-        $password = $pgConfig['password'] ?? 'password';
-        $schema = $pgConfig['schema'] ?? 'public';
+        $pgConfig = $this->config->pgsql;
 
         return new PostgreSQLStorage(
-            host: $host,
-            port: $port,
-            dbname: $database,
-            username: $username,
-            password: $password,
-            schema: $schema,
+            host: $pgConfig->host,
+            port: $pgConfig->port,
+            dbname: $pgConfig->database,
+            username: $pgConfig->username,
+            password: $pgConfig->password,
+            schema: $pgConfig->schema,
         );
     }
 
     public function getEngine(): string
     {
-        return $this->config['engine'];
+        return $this->config->engine;
     }
 }

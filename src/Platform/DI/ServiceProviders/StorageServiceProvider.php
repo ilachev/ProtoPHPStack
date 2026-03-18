@@ -10,6 +10,7 @@ use App\Platform\DI\ServiceProvider;
 use App\Platform\Logging\Logger;
 use App\Platform\Storage\Query\QueryFactory;
 use App\Platform\Storage\Storage;
+use App\Platform\Storage\StorageConfig;
 use App\Platform\Storage\StorageFactory;
 
 /**
@@ -19,26 +20,42 @@ final readonly class StorageServiceProvider implements ServiceProvider
 {
     public function register(Container $container): void
     {
-        // Storage factory
+        // Storage configuration
         $container->set(
-            StorageFactory::class,
-            static function (Container $container): StorageFactory {
+            StorageConfig::class,
+            static function (): StorageConfig {
                 /** @var array{
                  *     engine: string,
-                 *     pgsql?: array{
+                 *     sqlite: array{
+                 *         database: string,
+                 *         migrations_path: string,
+                 *     },
+                 *     pgsql: array{
                  *         host: string,
                  *         port: int,
                  *         database: string,
                  *         username: string,
                  *         password: string,
-                 *         schema?: string
+                 *         schema?: string,
+                 *         migrations_path: string,
                  *     }
                  * } $storageConfig
                  */
                 $storageConfig = require ProjectPath::getConfigPath('storage.php');
 
+                return StorageConfig::fromArray($storageConfig);
+            },
+        );
+
+        // Storage factory
+        $container->set(
+            StorageFactory::class,
+            static function (Container $container): StorageFactory {
                 /** @var Logger $logger */
                 $logger = $container->get(Logger::class);
+
+                /** @var StorageConfig $storageConfig */
+                $storageConfig = $container->get(StorageConfig::class);
 
                 return new StorageFactory($storageConfig, $logger);
             },

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Platform\DI\ServiceProviders;
 
-use App\Platform\Config\ProjectPath;
 use App\Platform\DI\Container;
 use App\Platform\DI\ServiceProvider;
 use App\Platform\Logging\Logger;
@@ -12,6 +11,7 @@ use App\Platform\Storage\Migration\MigrationLoader;
 use App\Platform\Storage\Migration\MigrationRepository;
 use App\Platform\Storage\Migration\MigrationService;
 use App\Platform\Storage\Storage;
+use App\Platform\Storage\StorageConfig;
 
 /**
  * @implements ServiceProvider<object>
@@ -24,16 +24,9 @@ final readonly class MigrationServiceProvider implements ServiceProvider
         $container->set(
             MigrationLoader::class,
             static function (Container $container): MigrationLoader {
-                /** @var array{
-                 *     engine: string,
-                 *     sqlite?: array{migrations_path: string},
-                 *     pgsql?: array{migrations_path: string}
-                 * } $storageConfig
-                 */
-                $storageConfig = require ProjectPath::getConfigPath('storage.php');
-
-                $engine = $storageConfig['engine'];
-                $migrationsPath = $storageConfig[$engine]['migrations_path'] ?? '';
+                /** @var StorageConfig $storageConfig */
+                $storageConfig = $container->get(StorageConfig::class);
+                $migrationsPath = $storageConfig->getMigrationsPath();
 
                 /** @var Logger $logger */
                 $logger = $container->get(Logger::class);
