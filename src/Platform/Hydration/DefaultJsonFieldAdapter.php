@@ -16,12 +16,10 @@ final readonly class DefaultJsonFieldAdapter implements JsonFieldAdapter
     /**
      * @param string $jsonValue JSON string read from storage
      * @param class-string<object> $targetClass
-     * @param (callable(array<string, mixed>): array<string, mixed>)|null $fieldTransformer
      */
     public function deserialize(
         string $jsonValue,
         string $targetClass,
-        ?callable $fieldTransformer = null,
     ): object {
         $data = json_decode($jsonValue, true);
 
@@ -32,10 +30,6 @@ final readonly class DefaultJsonFieldAdapter implements JsonFieldAdapter
         /** @var array<string, mixed> $typedData */
         $typedData = $data;
 
-        if ($fieldTransformer !== null) {
-            $typedData = $fieldTransformer($typedData);
-        }
-
         if (!class_exists($targetClass)) {
             throw new HydratorException("Target class {$targetClass} does not exist");
         }
@@ -45,19 +39,12 @@ final readonly class DefaultJsonFieldAdapter implements JsonFieldAdapter
         return $result;
     }
 
-    /**
-     * @param (callable(array<string, mixed>): array<string, mixed>)|null $fieldTransformer
-     */
-    public function serialize(object $object, ?callable $fieldTransformer = null): string
+    public function serialize(object $object): string
     {
         $data = $this->hydrator->extract($object);
 
         /** @var array<string, mixed> $typedData */
         $typedData = $data;
-
-        if ($fieldTransformer !== null) {
-            $typedData = $fieldTransformer($typedData);
-        }
 
         $json = json_encode($typedData);
 
@@ -73,16 +60,14 @@ final readonly class DefaultJsonFieldAdapter implements JsonFieldAdapter
     /**
      * @param string $jsonValue JSON string read from storage
      * @param class-string<object> $targetClass
-     * @param (callable(array<string, mixed>): array<string, mixed>)|null $fieldTransformer
      */
     public function tryDeserialize(
         string $jsonValue,
         string $targetClass,
         object $defaultValue,
-        ?callable $fieldTransformer = null,
     ): object {
         try {
-            return $this->deserialize($jsonValue, $targetClass, $fieldTransformer);
+            return $this->deserialize($jsonValue, $targetClass);
         } catch (HydratorException $e) {
             return $defaultValue;
         }
@@ -90,15 +75,13 @@ final readonly class DefaultJsonFieldAdapter implements JsonFieldAdapter
 
     /**
      * @param string $defaultJson JSON value returned on failure
-     * @param (callable(array<string, mixed>): array<string, mixed>)|null $fieldTransformer
      */
     public function trySerialize(
         object $object,
         string $defaultJson = '{}',
-        ?callable $fieldTransformer = null,
     ): string {
         try {
-            return $this->serialize($object, $fieldTransformer);
+            return $this->serialize($object);
         } catch (HydratorException $e) {
             return $defaultJson;
         }

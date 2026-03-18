@@ -489,7 +489,7 @@ final readonly class TestSessionPayloadFactoryImpl implements SessionPayloadFact
  */
 final readonly class TestJsonFieldAdapterImpl implements JsonFieldAdapter
 {
-    public function serialize(object $object, ?callable $fieldTransformer = null): string
+    public function serialize(object $object): string
     {
         return '{"ip":"127.0.0.1","userAgent":"Test Agent"}';
     }
@@ -497,7 +497,7 @@ final readonly class TestJsonFieldAdapterImpl implements JsonFieldAdapter
     /**
      * Deserializes JSON into the requested object type.
      */
-    public function deserialize(string $jsonValue, string $targetClass, ?callable $fieldTransformer = null): object
+    public function deserialize(string $jsonValue, string $targetClass): object
     {
         // Always return a SessionPayload object for tests
         $result = new SessionPayload(
@@ -523,18 +523,18 @@ final readonly class TestJsonFieldAdapterImpl implements JsonFieldAdapter
     /**
      * Deserializes JSON and falls back to the provided default value on failure.
      */
-    public function tryDeserialize(string $jsonValue, string $targetClass, object $defaultValue, ?callable $fieldTransformer = null): object
+    public function tryDeserialize(string $jsonValue, string $targetClass, object $defaultValue): object
     {
         try {
-            return $this->deserialize($jsonValue, $targetClass, $fieldTransformer);
+            return $this->deserialize($jsonValue, $targetClass);
         } catch (\Throwable) {
             return $defaultValue;
         }
     }
 
-    public function trySerialize(object $object, string $defaultJson = '{}', ?callable $fieldTransformer = null): string
+    public function trySerialize(object $object, string $defaultJson = '{}'): string
     {
-        return $this->serialize($object, $fieldTransformer);
+        return $this->serialize($object);
     }
 }
 
