@@ -4,7 +4,7 @@
 
 ## Что это за проект
 
-`base-api-template` — это backend template на PHP 8.4 с маленьким runtime core, `protobuf-first` endpoint contracts и набором простых reusable-блоков.
+`base-api-template` — это backend template на PHP 8.5+ с маленьким runtime core, `protobuf-first` endpoint contracts и набором простых reusable-блоков.
 
 Это не готовый продукт и не framework. Репозиторий должен восприниматься так:
 

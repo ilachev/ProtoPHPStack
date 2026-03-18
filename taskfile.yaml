@@ -27,7 +27,7 @@ tasks:
     desc: Fix code style issues
     deps: [ var, install ]
     cmds:
-      - "PHP_CS_FIXER_IGNORE_ENV=true {{.PHP}} vendor/bin/php-cs-fixer fix --verbose {{.CLI_ARGS}}"
+      - "{{.PHP}} vendor/bin/php-cs-fixer fix --verbose {{.CLI_ARGS}}"
 
   lint:
     desc: Check code style (dry-run)

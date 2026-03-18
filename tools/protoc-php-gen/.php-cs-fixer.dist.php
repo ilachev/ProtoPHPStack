@@ -5,7 +5,7 @@ declare(strict_types=1);
 use PhpCsFixer\Config;
 use PhpCsFixer\Finder;
 
-// Set PHP version requirements to work with PHP 8.1+
+// Keep future mode enabled so fixer rules stay aligned with the current baseline.
 $_SERVER['PHP_CS_FIXER_FUTURE_MODE'] = true;
 
 $config = new Config()
@@ -23,13 +23,14 @@ $config = new Config()
     )
     ->setCacheFile(__DIR__ . '/.php-cs-fixer.cache')
     ->setRiskyAllowed(true)
+    ->setUnsupportedPhpVersionAllowed(false)
     ->setRules([
-        '@PHP80Migration:risky' => true,
-        '@PHP83Migration' => true,
+        '@PHP8x0Migration:risky' => true,
+        '@PHP8x3Migration' => true,
         '@PhpCsFixer' => true,
         '@PhpCsFixer:risky' => true,
-        '@PER-CS2.0' => true,
-        '@PER-CS2.0:risky' => true,
+        '@PER-CS2x0' => true,
+        '@PER-CS2x0:risky' => true,
         'blank_line_before_statement' => ['statements' => [
             'continue',
             'declare',

@@ -4,17 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Generator;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ProtoPhpGen\Generator\GeneratedFile;
 
-/**
- * @covers \ProtoPhpGen\Generator\GeneratedFile
- */
+#[CoversClass(GeneratedFile::class)]
 final class GeneratedFileTest extends TestCase
 {
-    /**
-     * Тест конструктора и геттеров.
-     */
     public function testConstructorAndGetters(): void
     {
         // Arrange & Act

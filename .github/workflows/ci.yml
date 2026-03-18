@@ -6,10 +6,6 @@ on:
   pull_request:
     branches: [ master ]
 
-env:
-  PHP_CS_FIXER_IGNORE_ENV: true
-  PHP_CS_FIXER_FUTURE_MODE: true
-
 jobs:
   validate:
     name: Validate and Test
@@ -45,7 +41,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'
+          php-version: '8.5'
           extensions: mbstring, intl, sqlite3, pdo_sqlite, pgsql, pdo_pgsql
           coverage: none
           tools: composer:v2
@@ -62,8 +58,6 @@ jobs:
       - name: Debug PHP and environment
         run: |
           php --version
-          echo "PHP_CS_FIXER_IGNORE_ENV=$PHP_CS_FIXER_IGNORE_ENV"
-          echo "PHP_CS_FIXER_FUTURE_MODE=$PHP_CS_FIXER_FUTURE_MODE"
           php -r "var_dump(get_loaded_extensions());"
           php -r "var_dump(ini_get_all());" | grep -i "memor"
       

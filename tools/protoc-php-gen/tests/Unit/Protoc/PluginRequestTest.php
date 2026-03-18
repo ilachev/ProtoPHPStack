@@ -4,18 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Protoc;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ProtoPhpGen\Descriptor\ProtoFileDescriptor;
 use ProtoPhpGen\Protoc\PluginRequest;
 
-/**
- * @covers \ProtoPhpGen\Protoc\PluginRequest
- */
+#[CoversClass(PluginRequest::class)]
 final class PluginRequestTest extends TestCase
 {
-    /**
-     * Тест получения параметров.
-     */
     public function testGetParameter(): void
     {
         // Arrange
@@ -30,9 +26,6 @@ final class PluginRequestTest extends TestCase
         self::assertSame('default', $request->getParameter('nonexistent', 'default'));
     }
 
-    /**
-     * Тест получения всех параметров.
-     */
     public function testGetParameters(): void
     {
         // Arrange
@@ -50,9 +43,6 @@ final class PluginRequestTest extends TestCase
         ], $parameters);
     }
 
-    /**
-     * Тест добавления файлов для генерации.
-     */
     public function testAddFileToGenerate(): void
     {
         // Arrange
@@ -69,9 +59,6 @@ final class PluginRequestTest extends TestCase
         self::assertSame('file2.proto', $files[1]);
     }
 
-    /**
-     * Тест добавления proto файлов.
-     */
     public function testAddProtoFile(): void
     {
         // Arrange

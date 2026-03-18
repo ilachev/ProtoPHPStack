@@ -38,7 +38,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'
+          php-version: '8.5'
           extensions: mbstring, intl, sqlite3, pgsql, pdo_pgsql
           coverage: none
           tools: composer:v2
@@ -113,9 +113,6 @@ jobs:
               --openapiv2_opt=json_names_for_fields=true,allow_merge=true,merge_file_name=api \
               "$proto_file"
           done
-          
-          echo "Generating routes..."
-          PHP_CS_FIXER_IGNORE_ENV=true php bin/generate-routes.php
           
           # Fix permissions if needed
           if [ "$(stat -c %u protos/gen)" != "$(id -u)" ]; then

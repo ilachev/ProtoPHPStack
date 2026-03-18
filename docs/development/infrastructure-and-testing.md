@@ -4,7 +4,7 @@
 
 Проект использует:
 
-- PHP 8.4
+- PHP 8.5+
 - RoadRunner HTTP worker
 - PostgreSQL
 - Redis через RoadRunner KV
