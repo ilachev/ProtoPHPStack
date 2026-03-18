@@ -8,11 +8,11 @@ use App\Platform\Http\GeneratedOperationManifestProvider;
 
 final readonly class EndpointImplementationResolver
 {
-    private GeneratedEndpointBindingProvider $bindingProvider;
+    private GeneratedEndpointImplementationMapProvider $implementationMapProvider;
 
-    public function __construct(?GeneratedEndpointBindingProvider $bindingProvider = null)
+    public function __construct(?GeneratedEndpointImplementationMapProvider $implementationMapProvider = null)
     {
-        $this->bindingProvider = $bindingProvider ?? new GeneratedEndpointBindingProvider(
+        $this->implementationMapProvider = $implementationMapProvider ?? new GeneratedEndpointImplementationMapProvider(
             new GeneratedOperationManifestProvider(\dirname(__DIR__, 4) . '/gen/Generated/OperationManifest'),
         );
     }
@@ -40,7 +40,7 @@ final readonly class EndpointImplementationResolver
      */
     public function resolveExpectedClass(string $interface): ?string
     {
-        $implementation = $this->bindingProvider->getBindings()[$interface] ?? null;
+        $implementation = $this->implementationMapProvider->getImplementations()[$interface] ?? null;
         if ($implementation === null) {
             return null;
         }

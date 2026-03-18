@@ -6,12 +6,12 @@ namespace App\Platform\Http\Endpoint;
 
 use App\Platform\Http\GeneratedOperationManifestProvider;
 
-final class GeneratedEndpointBindingProvider
+final class GeneratedEndpointImplementationMapProvider
 {
     /**
      * @var array<class-string, class-string>|null
      */
-    private ?array $bindings = null;
+    private ?array $implementations = null;
 
     public function __construct(
         private readonly GeneratedOperationManifestProvider $operationProvider,
@@ -20,25 +20,25 @@ final class GeneratedEndpointBindingProvider
     /**
      * @return array<class-string, class-string>
      */
-    public function getBindings(): array
+    public function getImplementations(): array
     {
-        if ($this->bindings !== null) {
-            return $this->bindings;
+        if ($this->implementations !== null) {
+            return $this->implementations;
         }
 
-        $bindings = [];
+        $implementations = [];
 
         foreach ($this->operationProvider->getOperations() as $operation) {
             /** @var class-string $interface */
             $interface = $operation['endpoint_interface'];
             /** @var class-string $implementation */
             $implementation = $operation['endpoint_implementation'];
-            $bindings[$interface] = $implementation;
+            $implementations[$interface] = $implementation;
         }
 
-        ksort($bindings);
-        $this->bindings = $bindings;
+        ksort($implementations);
+        $this->implementations = $implementations;
 
-        return $this->bindings;
+        return $this->implementations;
     }
 }

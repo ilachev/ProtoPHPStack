@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace Tests\Unit\Platform\Http\Endpoint;
 
 use App\Platform\Http\Endpoint\EndpointImplementationResolver;
-use App\Platform\Http\Endpoint\GeneratedEndpointBindingProvider;
+use App\Platform\Http\Endpoint\GeneratedEndpointImplementationMapProvider;
 use App\Platform\Http\GeneratedOperationManifestProvider;
 use PHPUnit\Framework\TestCase;
 
-final class GeneratedEndpointConventionTest extends TestCase
+final class GeneratedEndpointImplementationConventionTest extends TestCase
 {
-    public function testEveryGeneratedEndpointBindingHasAHandwrittenImplementation(): void
+    public function testEveryGeneratedEndpointHasAHandwrittenImplementation(): void
     {
         $resolver = new EndpointImplementationResolver(
-            new GeneratedEndpointBindingProvider(
+            new GeneratedEndpointImplementationMapProvider(
                 new GeneratedOperationManifestProvider(\dirname(__DIR__, 5) . '/gen/Generated/OperationManifest'),
             ),
         );

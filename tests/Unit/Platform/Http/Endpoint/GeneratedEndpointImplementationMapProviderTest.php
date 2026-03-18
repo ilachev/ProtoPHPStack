@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Platform\Http\Endpoint;
 
-use App\Platform\Http\Endpoint\GeneratedEndpointBindingProvider;
+use App\Platform\Http\Endpoint\GeneratedEndpointImplementationMapProvider;
 use App\Platform\Http\GeneratedOperationManifestProvider;
 use PHPUnit\Framework\TestCase;
 
-final class GeneratedEndpointBindingProviderTest extends TestCase
+final class GeneratedEndpointImplementationMapProviderTest extends TestCase
 {
     private string $tempDir;
 
     protected function setUp(): void
     {
-        $this->tempDir = sys_get_temp_dir() . '/endpoint-bindings-' . bin2hex(random_bytes(8));
+        $this->tempDir = sys_get_temp_dir() . '/endpoint-implementations-' . bin2hex(random_bytes(8));
         mkdir($this->tempDir, recursive: true);
     }
 
@@ -46,7 +46,7 @@ final class GeneratedEndpointBindingProviderTest extends TestCase
         rmdir($this->tempDir);
     }
 
-    public function testLoadsAndMergesGeneratedEndpointBindings(): void
+    public function testLoadsAndMergesGeneratedEndpointImplementations(): void
     {
         $this->writeManifest(
             'app/v1/health.php',
@@ -80,24 +80,24 @@ final class GeneratedEndpointBindingProviderTest extends TestCase
             ),
         );
 
-        $provider = new GeneratedEndpointBindingProvider(new GeneratedOperationManifestProvider($this->tempDir));
+        $provider = new GeneratedEndpointImplementationMapProvider(new GeneratedOperationManifestProvider($this->tempDir));
 
         self::assertSame(
             [
                 'App\Generated\Transport\Api\V1\HealthService\CheckEndpoint' => 'App\Platform\Http\Endpoint\Api\V1\HealthService\CheckEndpoint',
                 'App\Generated\Transport\Api\V1\SystemService\DescribeEndpoint' => 'App\Platform\Http\Endpoint\Api\V1\SystemService\DescribeEndpoint',
             ],
-            $provider->getBindings(),
+            $provider->getImplementations(),
         );
     }
 
     public function testReturnsEmptyArrayWhenManifestDirectoryDoesNotExist(): void
     {
-        $provider = new GeneratedEndpointBindingProvider(
+        $provider = new GeneratedEndpointImplementationMapProvider(
             new GeneratedOperationManifestProvider($this->tempDir . '/missing'),
         );
 
-        self::assertSame([], $provider->getBindings());
+        self::assertSame([], $provider->getImplementations());
     }
 
     /**

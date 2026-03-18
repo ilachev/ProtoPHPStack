@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Platform\Http\Endpoint;
 
-use App\Platform\Http\Endpoint\GeneratedEndpointBindingProvider;
+use App\Platform\Http\Endpoint\GeneratedEndpointImplementationMapProvider;
 use App\Platform\Http\GeneratedOperationManifestProvider;
 use App\Platform\Http\Handler\HandlerInterface;
 use App\Platform\Routing\Generator\GeneratedOperationRouteProvider;
@@ -12,15 +12,15 @@ use PHPUnit\Framework\TestCase;
 
 final class GeneratedTransportSurfaceConsistencyTest extends TestCase
 {
-    public function testGeneratedRoutesHandlersAndEndpointBindingsStayConsistent(): void
+    public function testGeneratedRoutesHandlersAndEndpointImplementationsStayConsistent(): void
     {
         $projectRoot = \dirname(__DIR__, 5);
         $operationProvider = new GeneratedOperationManifestProvider($projectRoot . '/gen/Generated/OperationManifest');
         $routeProvider = new GeneratedOperationRouteProvider($operationProvider);
-        $bindingProvider = new GeneratedEndpointBindingProvider($operationProvider);
+        $implementationMapProvider = new GeneratedEndpointImplementationMapProvider($operationProvider);
         $operations = $operationProvider->getOperations();
         $routesByOperation = $this->indexRoutesByOperationId($routeProvider->getRoutes());
-        $bindings = $bindingProvider->getBindings();
+        $implementations = $implementationMapProvider->getImplementations();
 
         foreach ($operations as $operation) {
             $handlerClass = $operation['handler'];
@@ -37,8 +37,8 @@ final class GeneratedTransportSurfaceConsistencyTest extends TestCase
                 $this->resolveEndpointInterface($handlerClass),
                 "Generated handler {$handlerClass} must depend on {$endpointInterface}",
             );
-            self::assertArrayHasKey($endpointInterface, $bindings, "Endpoint binding for {$endpointInterface} is missing");
-            self::assertSame($implementation, $bindings[$endpointInterface]);
+            self::assertArrayHasKey($endpointInterface, $implementations, "Endpoint implementation for {$endpointInterface} is missing");
+            self::assertSame($implementation, $implementations[$endpointInterface]);
             self::assertTrue(class_exists($implementation), "Handwritten endpoint {$implementation} must exist");
             self::assertTrue(is_a($implementation, $endpointInterface, true), "{$implementation} must implement {$endpointInterface}");
 
