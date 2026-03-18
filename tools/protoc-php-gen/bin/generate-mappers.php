@@ -6,85 +6,48 @@ declare(strict_types=1);
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../../../vendor/autoload.php';
 
+use ProtoPhpGen\Config\StandaloneConfig;
 use ProtoPhpGen\Generator\ProtoDomainMapperGenerator;
-use ProtoPhpGen\Parser\AttributeParser;
+use ProtoPhpGen\Parser\DomainClassScanner;
 
-// Конфигурация генератора
-$domainDir = __DIR__ . '/../../../src/Domain';
+// Generator configuration
+$sourceDir = __DIR__ . '/../../../src';
 $protoDir = __DIR__ . '/../../../protos/proto';
-$outputDir = __DIR__ . '/../../../gen/Infrastructure/Hydrator';
-$domainNamespace = 'App\Domain';
+$outputDir = __DIR__ . '/../../../gen/ProtoMapper';
+$sourceNamespace = 'App';
 $protoNamespace = 'App\Api';
+$outputNamespace = 'App\Gen\ProtoMapper';
 
-// Создаем директорию для гидраторов, если она не существует
+// Create the output directory if it does not exist yet.
 if (!is_dir($outputDir)) {
     mkdir($outputDir, 0o755, true);
 }
 
-$attributeParser = new AttributeParser();
+$config = new StandaloneConfig(
+    domainDir: $sourceDir,
+    protoDir: $protoDir,
+    outputDir: $outputDir,
+    domainNamespace: $sourceNamespace,
+    protoNamespace: $protoNamespace,
+);
+$scanner = new DomainClassScanner($config);
 $generator = new ProtoDomainMapperGenerator();
 
-echo "Scanning domain classes in {$domainDir}\n";
+echo "Scanning mapped classes in {$sourceDir}\n";
 
-// Поиск PHP-файлов в доменной директории
-$files = new RecursiveIteratorIterator(
-    new RecursiveDirectoryIterator($domainDir),
-);
+$mappings = $scanner->scan();
 
-$classNames = [];
-foreach ($files as $file) {
-    if ($file->isFile() && $file->getExtension() === 'php') {
-        $content = file_get_contents($file->getPathname());
-        if ($content === false) {
-            continue;
-        }
-
-        // Получаем пространство имен
-        $namespaceMatches = [];
-        preg_match('/namespace\s+([^;]+);/', $content, $namespaceMatches);
-        if (empty($namespaceMatches)) {
-            continue;
-        }
-        $namespace = $namespaceMatches[1];
-
-        // Получаем имя класса
-        $classMatches = [];
-        preg_match('/class\s+([^\s{]+)/', $content, $classMatches);
-        if (empty($classMatches)) {
-            continue;
-        }
-        $className = $classMatches[1];
-
-        // Полное имя класса
-        $classNames[] = $namespace . '\\' . $className;
-    }
-}
-
-// Загружаем и обрабатываем классы
+// Generate mapper classes for every discovered mapping.
 $generatedFiles = 0;
-foreach ($classNames as $className) {
+foreach ($mappings as $mapping) {
     try {
-        if (!class_exists($className)) {
-            // Пытаемся загрузить класс
-            @include_once str_replace('\\', '/', $className) . '.php';
-        }
+        echo "Found mapping for class: {$mapping->getDomainClass()} -> {$mapping->getProtoClass()}\n";
 
-        if (!class_exists($className, false)) {
-            continue;
-        }
-
-        // Анализируем атрибуты и создаем маппинг
-        $mapping = $attributeParser->parse($className);
-        if ($mapping !== null) {
-            echo "Found mapping for class: {$className} -> {$mapping->getProtoClass()}\n";
-
-            // Генерируем гидратор
-            $outputPath = $generator->generateFromMapping($mapping, $outputDir);
-            echo "Generated: {$outputPath}\n";
-            ++$generatedFiles;
-        }
+        $outputPath = $generator->generateFromMapping($mapping, $outputDir, $outputNamespace);
+        echo "Generated: {$outputPath}\n";
+        ++$generatedFiles;
     } catch (Throwable $e) {
-        echo "Error processing {$className}: {$e->getMessage()}\n";
+        echo "Error processing {$mapping->getDomainClass()}: {$e->getMessage()}\n";
     }
 }
 

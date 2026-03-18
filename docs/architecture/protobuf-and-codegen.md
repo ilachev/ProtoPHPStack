@@ -95,7 +95,7 @@ task proto:gen:mappers
 
 Результат:
 
-- код в `gen/Infrastructure/Hydrator`
+- код в `gen/ProtoMapper`
 
 Эта часть основана не только на `.proto`, но и на PHP attributes в capability/example/platform моделях.
 

@@ -108,7 +108,7 @@ tasks:
     desc: Generate mappers from PHP attributes in domain classes
     deps: [ tools:proto:setup ]
     cmds:
-      - mkdir -p gen/Infrastructure/Hydrator
+      - mkdir -p gen/ProtoMapper
       - "{{.PHP}} tools/protoc-php-gen/bin/generate-mappers.php"
 
   proto:gen:all:
