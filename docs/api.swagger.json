@@ -4,13 +4,44 @@
     "title": "app/v1/api.proto",
     "version": "version not set"
   },
+  "tags": [
+    {
+      "name": "HealthService",
+      "description": "Core runtime health endpoints"
+    }
+  ],
   "consumes": [
     "application/json"
   ],
   "produces": [
     "application/json"
   ],
-  "paths": {},
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "summary": "Health check",
+        "description": "Returns a minimal liveness response for the core runtime",
+        "operationId": "HealthService_Check",
+        "responses": {
+          "200": {
+            "description": "Runtime is healthy",
+            "schema": {
+              "$ref": "#/definitions/v1HealthCheckResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "system"
+        ]
+      }
+    }
+  },
   "definitions": {
     "protobufAny": {
       "type": "object",
@@ -39,6 +70,23 @@
           }
         }
       }
+    },
+    "v1HealthCheckResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "example": "ok",
+          "description": "Current health status"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "int64",
+          "example": "1710000000",
+          "description": "Unix timestamp when the response was created"
+        }
+      },
+      "description": "HealthCheckResponse describes the current runtime state."
     }
   }
 }

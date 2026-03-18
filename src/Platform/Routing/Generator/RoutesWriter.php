@@ -39,26 +39,19 @@ final readonly class RoutesWriter
         ];
 
         foreach ($routes as $route) {
-            // Extract the handler class name
-            preg_match('/^(.+)::class$/', $route['handler'], $matches);
-            if (isset($matches[1])) {
-                $handlerClass = $matches[1];
-                $imports[] = $handlerClass;
-
-                // Replace full namespace with short class name for the handler
-                $className = substr($handlerClass, strrpos($handlerClass, '\\') + 1);
-                $route['handler'] = $className;
-            }
+            $handlerClass = $route['handler'];
+            $imports[] = $handlerClass;
+            $route['handler'] = substr($handlerClass, strrpos($handlerClass, '\\') + 1);
 
             $comment = isset($route['operation_id']) ? "    // {$route['operation_id']}\n" : '';
             $routesCode[] = "{$comment}    [
         'method' => '{$route['method']}',
         'path' => '{$route['path']}',
         'handler' => {$route['handler']}::class,
-    ]";
+    ],";
         }
 
-        $routesStr = implode(",\n", $routesCode);
+        $routesStr = implode("\n", $routesCode);
 
         // Remove duplicates and sort imports
         $imports = array_unique($imports);

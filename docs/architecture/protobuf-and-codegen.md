@@ -20,6 +20,7 @@
 Содержит:
 
 - `api.proto` — общие transport structures;
+- `health.proto` — neutral health-check endpoint for the core runtime;
 - `session.proto` — session-related transport models;
 - `users.proto` — user transport model.
 
@@ -120,10 +121,11 @@ task proto:gen:all
 
 - читает generated metadata из `protos/gen/App/Api/V1/Metadata`;
 - извлекает `service`, `rpc`, `option (google.api.http)` из protobuf descriptors;
+- фильтрует descriptors по source prefix `app/v1/`, чтобы default route surface оставался core-only;
 - строит массив route definitions;
 - пишет `config/routes.php` для core runtime.
 
-Поскольку core surface сейчас не содержит HTTP services с `google.api.http`, результатом генерации является пустой `config/routes.php`.
+Сейчас core surface уже содержит `HealthService.Check`, поэтому default route generation создаёт непустой `config/routes.php` и `docs/api.swagger.json`.
 
 ## Custom mapping через атрибуты
 

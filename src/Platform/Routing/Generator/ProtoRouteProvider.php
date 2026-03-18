@@ -17,10 +17,12 @@ final readonly class ProtoRouteProvider implements RouteProvider
     /**
      * @param string $metadataDir Directory containing generated metadata PHP files
      * @param array<string, string> $handlerMapping Mapping of service.method => handler
+     * @param list<string> $sourceFilePrefixes Restrict route extraction to descriptor source file prefixes
      */
     public function __construct(
         private string $metadataDir,
         private array $handlerMapping = [],
+        private array $sourceFilePrefixes = [],
     ) {}
 
     /**
@@ -45,6 +47,10 @@ final readonly class ProtoRouteProvider implements RouteProvider
             /** @var iterable<FileDescriptorProto> $fileDescriptors */
             $fileDescriptors = $descriptorSet->getFile();
             foreach ($fileDescriptors as $fileDescriptor) {
+                if (!$this->shouldIncludeDescriptor($fileDescriptor)) {
+                    continue;
+                }
+
                 /** @var iterable<ServiceDescriptorProto> $serviceDescriptors */
                 $serviceDescriptors = $fileDescriptor->getService();
                 foreach ($serviceDescriptors as $serviceDescriptor) {
@@ -142,6 +148,26 @@ final readonly class ProtoRouteProvider implements RouteProvider
         $moduleName = str_replace('Service', '', $serviceName);
 
         return "App\\Examples\\{$moduleName}\\Transport\\Http\\{$handlerName}";
+    }
+
+    private function shouldIncludeDescriptor(FileDescriptorProto $fileDescriptor): bool
+    {
+        if ($this->sourceFilePrefixes === []) {
+            return true;
+        }
+
+        $sourceName = $fileDescriptor->getName();
+        if ($sourceName === '') {
+            return false;
+        }
+
+        foreach ($this->sourceFilePrefixes as $prefix) {
+            if (str_starts_with($sourceName, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function extractDescriptorSet(string $metadataFile): ?FileDescriptorSet

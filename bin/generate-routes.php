@@ -5,6 +5,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
+use App\Platform\Http\Handler\HealthCheckHandler;
 use App\Platform\Routing\Generator\ProtoRouteProvider;
 use App\Platform\Routing\Generator\RoutesWriter;
 
@@ -12,11 +13,18 @@ use App\Platform\Routing\Generator\RoutesWriter;
 $metadataDir = __DIR__ . '/../protos/gen/App/Api/V1/Metadata';
 $outputFile = __DIR__ . '/../config/routes.php';
 
-// Core template surface intentionally has no example-specific handler mapping.
-$handlerMapping = [];
+// Core template surface keeps explicit mappings only for runtime-native handlers.
+$handlerMapping = [
+    'HealthService.Check' => HealthCheckHandler::class,
+];
+
+// Only app/v1 participates in the default core route surface.
+$sourceFilePrefixes = [
+    'app/v1/',
+];
 
 // Generate routes
-$provider = new ProtoRouteProvider($metadataDir, $handlerMapping);
+$provider = new ProtoRouteProvider($metadataDir, $handlerMapping, $sourceFilePrefixes);
 $writer = new RoutesWriter($provider, $outputFile);
 
 try {

@@ -83,6 +83,27 @@ final class ProtoRouteProviderTest extends TestCase
         self::assertEquals('App\Examples\Custom\Transport\Http\SpecialHandler', $routes[0]['handler']);
     }
 
+    public function testGetRoutesCanFilterByDescriptorSourcePrefix(): void
+    {
+        $this->copyMetadataFixture('Health.php', "{$this->tempDir}/Health.php");
+        $this->copyMetadataFixture('Home.php', "{$this->tempDir}/Home.php");
+
+        $provider = new ProtoRouteProvider(
+            $this->tempDir,
+            [
+                'HealthService.Check' => 'App\Platform\Http\Handler\HealthCheckHandler',
+            ],
+            ['app/v1/'],
+        );
+        $routes = $provider->getRoutes();
+
+        self::assertCount(1, $routes);
+        self::assertSame('GET', $routes[0]['method']);
+        self::assertSame('/api/v1/health', $routes[0]['path']);
+        self::assertSame('App\Platform\Http\Handler\HealthCheckHandler', $routes[0]['handler']);
+        self::assertSame('HealthService.Check', $routes[0]['operation_id'] ?? null);
+    }
+
     public function testGetRoutesWithMultipleHttpMethods(): void
     {
         $this->copyMetadataFixture('Auth.php', "{$this->tempDir}/Auth.php");
