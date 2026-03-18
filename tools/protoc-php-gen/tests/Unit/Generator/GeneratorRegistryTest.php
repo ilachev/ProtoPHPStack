@@ -10,6 +10,7 @@ use ProtoPhpGen\Generator\CodeGeneratorModule;
 use ProtoPhpGen\Generator\GeneratedFile;
 use ProtoPhpGen\Generator\GeneratorRegistry;
 use ProtoPhpGen\Plugin\PluginOptions;
+use ProtoPhpGen\Type\TypeResolver;
 
 final class GeneratorRegistryTest extends TestCase
 {
@@ -38,7 +39,10 @@ final class GeneratorRegistryTest extends TestCase
             new PluginOptions(enabledModules: ['transport_contracts' => true]),
         );
 
-        $files = $registry->generateForProtoFile(ProtoFileDescriptor::fromArray([]), []);
+        $files = $registry->generateForProtoFile(
+            ProtoFileDescriptor::fromArray([]),
+            TypeResolver::fromProtoFiles([]),
+        );
 
         self::assertCount(1, $files);
         self::assertSame('gen/one.php', $files[0]->getName());
@@ -66,7 +70,7 @@ final readonly class StubGeneratorModule implements CodeGeneratorModule
         return $this->enabled && $options->isModuleEnabled($this->name);
     }
 
-    public function generateForProtoFile(ProtoFileDescriptor $protoFile, array $typeMap): array
+    public function generateForProtoFile(ProtoFileDescriptor $protoFile, TypeResolver $typeResolver): array
     {
         return $this->files;
     }

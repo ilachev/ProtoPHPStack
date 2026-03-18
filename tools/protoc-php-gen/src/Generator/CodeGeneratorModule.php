@@ -6,6 +6,7 @@ namespace ProtoPhpGen\Generator;
 
 use ProtoPhpGen\Descriptor\ProtoFileDescriptor;
 use ProtoPhpGen\Plugin\PluginOptions;
+use ProtoPhpGen\Type\TypeResolver;
 
 interface CodeGeneratorModule
 {
@@ -14,8 +15,7 @@ interface CodeGeneratorModule
     public function isEnabled(PluginOptions $options): bool;
 
     /**
-     * @param array<string, class-string> $typeMap
      * @return list<GeneratedFile>
      */
-    public function generateForProtoFile(ProtoFileDescriptor $protoFile, array $typeMap): array;
+    public function generateForProtoFile(ProtoFileDescriptor $protoFile, TypeResolver $typeResolver): array;
 }

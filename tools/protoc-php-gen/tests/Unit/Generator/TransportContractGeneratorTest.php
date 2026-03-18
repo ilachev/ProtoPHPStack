@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use ProtoPhpGen\Descriptor\ProtoFileDescriptor;
 use ProtoPhpGen\Generator\TransportContractGenerator;
 use ProtoPhpGen\Plugin\PluginOptions;
+use ProtoPhpGen\Type\TypeResolver;
 
 final class TransportContractGeneratorTest extends TestCase
 {
@@ -39,10 +40,23 @@ final class TransportContractGeneratorTest extends TestCase
                     ],
                 ],
             ]),
-            [
-                '.app.v1.HealthCheckRequest' => 'App\Api\V1\HealthCheckRequest',
-                '.app.v1.HealthCheckResponse' => 'App\Api\V1\HealthCheckResponse',
-            ],
+            TypeResolver::fromProtoFiles([
+                'app/v1/health.proto' => ProtoFileDescriptor::fromArray([
+                    'name' => 'app/v1/health.proto',
+                    'package' => 'app.v1',
+                    'options' => [
+                        'php_namespace' => 'App\Api\V1',
+                    ],
+                    'message_type' => [
+                        [
+                            'name' => 'HealthCheckRequest',
+                        ],
+                        [
+                            'name' => 'HealthCheckResponse',
+                        ],
+                    ],
+                ]),
+            ]),
         );
 
         self::assertCount(2, $files);

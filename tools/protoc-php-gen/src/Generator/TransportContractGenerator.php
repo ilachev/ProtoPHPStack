@@ -8,6 +8,7 @@ use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PsrPrinter;
 use ProtoPhpGen\Descriptor\ProtoFileDescriptor;
 use ProtoPhpGen\Plugin\PluginOptions;
+use ProtoPhpGen\Type\TypeResolver;
 
 final readonly class TransportContractGenerator implements CodeGeneratorModule
 {
@@ -32,17 +33,16 @@ final readonly class TransportContractGenerator implements CodeGeneratorModule
     }
 
     /**
-     * @param array<string, class-string> $typeMap
      * @return list<GeneratedFile>
      */
-    public function generateForProtoFile(ProtoFileDescriptor $protoFile, array $typeMap): array
+    public function generateForProtoFile(ProtoFileDescriptor $protoFile, TypeResolver $typeResolver): array
     {
         $services = $protoFile->getServices();
         if ($services === []) {
             return [];
         }
 
-        $fileNamespace = $this->resolveFileNamespace($protoFile);
+        $fileNamespace = $typeResolver->resolveFileNamespace($protoFile);
         if ($fileNamespace === '') {
             return [];
         }
@@ -69,8 +69,8 @@ final readonly class TransportContractGenerator implements CodeGeneratorModule
                     continue;
                 }
 
-                $inputClass = $this->resolveTypeClass($inputType, $typeMap, $fileNamespace);
-                $outputClass = $this->resolveTypeClass($outputType, $typeMap, $fileNamespace);
+                $inputClass = $typeResolver->resolveTypeClass($inputType);
+                $outputClass = $typeResolver->resolveTypeClass($outputType);
                 if ($inputClass === null || $outputClass === null) {
                     continue;
                 }
@@ -92,51 +92,6 @@ final readonly class TransportContractGenerator implements CodeGeneratorModule
         }
 
         return $files;
-    }
-
-    private function resolveFileNamespace(ProtoFileDescriptor $protoFile): string
-    {
-        $options = $protoFile->getOptions();
-        $phpNamespace = $options?->getPhpNamespace();
-        if ($phpNamespace !== null && $phpNamespace !== '') {
-            return $phpNamespace;
-        }
-
-        $package = $protoFile->getPackage();
-        if ($package === '') {
-            return '';
-        }
-
-        $parts = array_map('ucfirst', explode('.', $package));
-
-        return 'App\\' . implode('\\', $parts);
-    }
-
-    /**
-     * @param array<string, class-string> $typeMap
-     * @return class-string|null
-     */
-    private function resolveTypeClass(string $typeName, array $typeMap, string $fileNamespace): ?string
-    {
-        if (isset($typeMap[$typeName])) {
-            return $typeMap[$typeName];
-        }
-
-        $trimmedType = ltrim($typeName, '.');
-        if ($trimmedType === '') {
-            return null;
-        }
-
-        $shortName = substr($trimmedType, (int) strrpos('.' . $trimmedType, '.'));
-        $shortName = ltrim($shortName, '.');
-        if ($shortName === '') {
-            return null;
-        }
-
-        $resolvedClass = "{$fileNamespace}\\{$shortName}";
-
-        /** @var class-string $resolvedClass */
-        return $resolvedClass;
     }
 
     private function buildServiceNamespace(string $fileNamespace, string $serviceName): string

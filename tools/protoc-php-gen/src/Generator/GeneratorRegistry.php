@@ -6,6 +6,7 @@ namespace ProtoPhpGen\Generator;
 
 use ProtoPhpGen\Descriptor\ProtoFileDescriptor;
 use ProtoPhpGen\Plugin\PluginOptions;
+use ProtoPhpGen\Type\TypeResolver;
 
 final readonly class GeneratorRegistry
 {
@@ -31,15 +32,14 @@ final readonly class GeneratorRegistry
     }
 
     /**
-     * @param array<string, class-string> $typeMap
      * @return list<GeneratedFile>
      */
-    public function generateForProtoFile(ProtoFileDescriptor $protoFile, array $typeMap): array
+    public function generateForProtoFile(ProtoFileDescriptor $protoFile, TypeResolver $typeResolver): array
     {
         $files = [];
 
         foreach ($this->getEnabledModules() as $module) {
-            array_push($files, ...$module->generateForProtoFile($protoFile, $typeMap));
+            array_push($files, ...$module->generateForProtoFile($protoFile, $typeResolver));
         }
 
         return $files;
