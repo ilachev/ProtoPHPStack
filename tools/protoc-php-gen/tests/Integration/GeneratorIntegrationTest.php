@@ -51,7 +51,7 @@ final class GeneratorIntegrationTest extends TestCase
         $response = $plugin->process($request);
 
         self::assertNull($response->getError());
-        self::assertCount(2, $response->getFiles());
+        self::assertCount(3, $response->getFiles());
         self::assertSame(
             'gen/Generated/Transport/Api/V1/HealthService/CheckEndpoint.php',
             $response->getFiles()[0]->getName(),
@@ -59,6 +59,10 @@ final class GeneratorIntegrationTest extends TestCase
         self::assertSame(
             'gen/Generated/Transport/Api/V1/HealthService/CheckHttpHandler.php',
             $response->getFiles()[1]->getName(),
+        );
+        self::assertSame(
+            'gen/Generated/EndpointBindings/app/v1/health.php',
+            $response->getFiles()[2]->getName(),
         );
     }
 }

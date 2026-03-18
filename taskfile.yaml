@@ -111,10 +111,11 @@ tasks:
       - "{{.PHP}} bin/generate-routes.php"
 
   proto:gen:transport:
-    desc: Generate server-side transport contracts and route manifests from core protobuf services
+    desc: Generate server-side transport contracts, endpoint bindings, and route manifests from core protobuf services
     deps: [ tools:proto:setup, install ]
     cmds:
       - rm -rf gen/Generated/Transport
+      - rm -rf gen/Generated/EndpointBindings
       - rm -rf gen/Generated/RouteManifest
       - >
         protoc -I={{.PROTO_DIR}}

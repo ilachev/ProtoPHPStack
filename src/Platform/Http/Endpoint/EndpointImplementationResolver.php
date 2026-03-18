@@ -6,8 +6,14 @@ namespace App\Platform\Http\Endpoint;
 
 final readonly class EndpointImplementationResolver
 {
-    private const GENERATED_ENDPOINT_NAMESPACE_PREFIX = 'App\Generated\Transport\\';
-    private const HANDWRITTEN_ENDPOINT_NAMESPACE_PREFIX = 'App\Platform\Http\Endpoint\\';
+    private GeneratedEndpointBindingProvider $bindingProvider;
+
+    public function __construct(?GeneratedEndpointBindingProvider $bindingProvider = null)
+    {
+        $this->bindingProvider = $bindingProvider ?? new GeneratedEndpointBindingProvider(
+            \dirname(__DIR__, 4) . '/gen/Generated/EndpointBindings',
+        );
+    }
 
     /**
      * @template T of object
@@ -32,16 +38,12 @@ final readonly class EndpointImplementationResolver
      */
     public function resolveExpectedClass(string $interface): ?string
     {
-        if (!str_starts_with($interface, self::GENERATED_ENDPOINT_NAMESPACE_PREFIX)) {
+        $implementation = $this->bindingProvider->getBindings()[$interface] ?? null;
+        if ($implementation === null) {
             return null;
         }
 
-        $relativeClass = substr($interface, \strlen(self::GENERATED_ENDPOINT_NAMESPACE_PREFIX));
-        if ($relativeClass === '') {
-            return null;
-        }
-
-        /** @var class-string<T> */
-        return self::HANDWRITTEN_ENDPOINT_NAMESPACE_PREFIX . $relativeClass;
+        /** @var class-string<T> $implementation */
+        return $implementation;
     }
 }

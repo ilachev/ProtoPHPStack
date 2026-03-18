@@ -19,6 +19,7 @@
 
 - генерацию endpoint interfaces из `service/rpc`;
 - генерацию HTTP handlers поверх runtime adapter;
+- генерацию endpoint binding manifests для handwritten runtime implementations;
 - генерацию route manifests из `google.api.http`;
 - поддержку protobuf-first transport flow в основном шаблоне.
 
@@ -31,7 +32,7 @@
 Для основного проекта это означает:
 
 - `.proto` управляет transport surface;
-- `protoc-php-gen` генерирует transport contracts и route manifests;
+- `protoc-php-gen` генерирует transport contracts, endpoint bindings и route manifests;
 - handwritten endpoint implementation остаётся в runtime-коде;
 - generator не подменяет собой business logic.
 

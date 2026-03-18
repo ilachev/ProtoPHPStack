@@ -25,6 +25,7 @@ final class TransportContractGeneratorTest extends TestCase
 
         $files = $generator->generateForProtoFile(
             ProtoFileDescriptor::fromArray([
+                'name' => 'app/v1/health.proto',
                 'package' => 'app.v1',
                 'options' => [
                     'php_namespace' => 'App\Api\V1',
@@ -61,7 +62,7 @@ final class TransportContractGeneratorTest extends TestCase
             ]),
         );
 
-        self::assertCount(2, $files);
+        self::assertCount(3, $files);
         self::assertSame('gen/Generated/Transport/Api/V1/HealthService/CheckEndpoint.php', $files[0]->getName());
         self::assertStringContainsString('namespace App\Generated\Transport\Api\V1\HealthService;', $files[0]->getContent());
         self::assertStringContainsString('interface CheckEndpoint', $files[0]->getContent());
@@ -72,5 +73,11 @@ final class TransportContractGeneratorTest extends TestCase
         self::assertStringContainsString('final readonly class CheckHttpHandler', $files[1]->getContent());
         self::assertStringContainsString('extends AbstractProtobufRpcHandler', $files[1]->getContent());
         self::assertStringContainsString('return $this->protobufResponse($response);', $files[1]->getContent());
+
+        self::assertSame('gen/Generated/EndpointBindings/app/v1/health.php', $files[2]->getName());
+        self::assertStringContainsString(
+            "'App\\\\Generated\\\\Transport\\\\Api\\\\V1\\\\HealthService\\\\CheckEndpoint' => 'App\\\\Platform\\\\Http\\\\Endpoint\\\\Api\\\\V1\\\\HealthService\\\\CheckEndpoint'",
+            $files[2]->getContent(),
+        );
     }
 }

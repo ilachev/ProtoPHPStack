@@ -77,15 +77,17 @@ task proto:gen:transport
 Результат:
 
 - `gen/Generated/Transport`
+- `gen/Generated/EndpointBindings`
 - `gen/Generated/RouteManifest`
 
 Генератор создаёт:
 
 - endpoint interfaces для каждого `service/rpc`;
-- generic HTTP handlers поверх `AbstractProtobufRpcHandler`.
+- generic HTTP handlers поверх `AbstractProtobufRpcHandler`;
+- endpoint binding manifests для handwritten runtime implementations;
 - route manifests из `google.api.http` bindings.
 
-Это handwritten business logic не заменяет. Разработчик по-прежнему пишет endpoint implementation, а runtime резолвит её по соглашению namespace.
+Это handwritten business logic не заменяет. Разработчик по-прежнему пишет endpoint implementation, а runtime резолвит её через generated endpoint binding manifests.
 
 ## Какие generated артефакты считаются каноническими
 
@@ -94,6 +96,7 @@ task proto:gen:transport
 - `protos/gen/App/...` — protobuf message classes и metadata для core API;
 - `protos/gen/Google/...` и `protos/gen/GPBMetadata/Google/...` — runtime support для `google.api.http`;
 - `gen/Generated/Transport/...` — generated server-side transport contracts и HTTP handlers.
+- `gen/Generated/EndpointBindings/...` — generated endpoint binding manifests for handwritten implementations.
 - `gen/Generated/RouteManifest/...` — generated route manifests for the core runtime.
 
 ## Текущий flow генерации
@@ -114,8 +117,9 @@ task proto:gen:all
 
 Теперь generation path для маршрутов двухшаговый:
 
-1. `task proto:gen:transport` через `protoc-php-gen` генерирует route manifests в `gen/Generated/RouteManifest/...`
-2. `task proto:gen:routes` через `bin/generate-routes.php` читает эти manifests и пишет `config/routes.php`
+1. `task proto:gen:transport` через `protoc-php-gen` генерирует endpoint binding manifests и route manifests в `gen/Generated/...`
+2. runtime использует endpoint binding manifests для резолва handwritten endpoint implementations
+3. `task proto:gen:routes` через `bin/generate-routes.php` читает route manifests и пишет `config/routes.php`
 
 Файл `bin/generate-routes.php` больше не интерпретирует protobuf descriptors сам. Он только собирает итоговый routes config из generated manifests через `GeneratedRouteManifestProvider`.
 
@@ -147,12 +151,12 @@ task proto:gen:all
 
 1. Править `.proto` в `protos/proto/app/v1`.
 2. Перегенерировать артефакты.
-3. Добавить endpoint implementation в `App\Platform\Http\Endpoint\...` с тем же относительным путём, что и у generated interface.
+3. Добавить endpoint implementation в `App\Platform\Http\Endpoint\...` с тем же относительным путём, который ожидает generated endpoint binding manifest.
 4. Проверить, что core артефакты согласованы с кодом.
 
 ## Текущие проблемы codegen-потока
 
-- endpoint implementation резолвится по namespace convention, а не проверяется генератором заранее;
+- endpoint implementation пока не валидируется генератором на этапе generation;
 - verify уже проверяет наличие handwritten endpoint implementation для каждого generated `*Endpoint`, но сам generator пока не выдаёт такую ошибку на этапе generation.
 
 ## Что важно сохранить при реструктуризации

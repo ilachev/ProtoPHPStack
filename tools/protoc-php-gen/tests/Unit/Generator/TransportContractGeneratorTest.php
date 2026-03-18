@@ -26,6 +26,7 @@ final class TransportContractGeneratorTest extends TestCase
 
         $files = $generator->generateForProtoFile(
             ProtoFileDescriptor::fromArray([
+                'name' => 'app/v1/health.proto',
                 'package' => 'app.v1',
                 'options' => [
                     'php_namespace' => 'App\Api\V1',
@@ -62,7 +63,7 @@ final class TransportContractGeneratorTest extends TestCase
             ]),
         );
 
-        self::assertCount(2, $files);
+        self::assertCount(3, $files);
         self::assertSame('gen/Generated/Transport/Api/V1/HealthService/CheckEndpoint.php', $files[0]->getName());
         self::assertStringContainsString('namespace App\Generated\Transport\Api\V1\HealthService;', $files[0]->getContent());
         self::assertStringContainsString('interface CheckEndpoint', $files[0]->getContent());
@@ -73,6 +74,12 @@ final class TransportContractGeneratorTest extends TestCase
         self::assertStringContainsString('final readonly class CheckHttpHandler', $files[1]->getContent());
         self::assertStringContainsString('extends AbstractProtobufRpcHandler', $files[1]->getContent());
         self::assertStringContainsString('return $this->protobufResponse($response);', $files[1]->getContent());
+
+        self::assertSame('gen/Generated/EndpointBindings/app/v1/health.php', $files[2]->getName());
+        self::assertStringContainsString(
+            "'App\\\\Generated\\\\Transport\\\\Api\\\\V1\\\\HealthService\\\\CheckEndpoint' => 'App\\\\Platform\\\\Http\\\\Endpoint\\\\Api\\\\V1\\\\HealthService\\\\CheckEndpoint'",
+            $files[2]->getContent(),
+        );
     }
 
     public function testUsesTransportProfileRuntimeBindings(): void
@@ -87,6 +94,7 @@ final class TransportContractGeneratorTest extends TestCase
 
         $files = $generator->generateForProtoFile(
             ProtoFileDescriptor::fromArray([
+                'name' => 'app/v1/health.proto',
                 'package' => 'app.v1',
                 'options' => [
                     'php_namespace' => 'Vendor\Api\V1',
@@ -134,6 +142,14 @@ final class TransportContractGeneratorTest extends TestCase
         self::assertStringContainsString('$message = $this->parseRequest($request, HealthCheckRequest::class);', $files[1]->getContent());
         self::assertStringContainsString('return $this->rejectInvalidRequest();', $files[1]->getContent());
         self::assertStringContainsString('return $this->writeResponse($response);', $files[1]->getContent());
+        self::assertSame(
+            'build/Generated/EndpointBindings/app/v1/health.php',
+            $files[2]->getName(),
+        );
+        self::assertStringContainsString(
+            "'Vendor\\\\Generated\\\\Transport\\\\Generated\\\\Api\\\\V1\\\\HealthService\\\\CheckEndpoint' => 'Vendor\\\\Runtime\\\\Endpoint\\\\Api\\\\V1\\\\HealthService\\\\CheckEndpoint'",
+            $files[2]->getContent(),
+        );
     }
 }
 
@@ -156,6 +172,15 @@ final readonly class StubTransportProfile implements TransportProfile
     public function getHandlerBaseClass(): string
     {
         return 'Vendor\\Runtime\\Http\\CustomRpcHandler';
+    }
+
+    public function buildEndpointImplementationClass(string $fileNamespace, string $serviceName, string $methodName): string
+    {
+        $suffix = str_starts_with($fileNamespace, 'Vendor\\')
+            ? substr($fileNamespace, 7)
+            : $fileNamespace;
+
+        return 'Vendor\\Runtime\\Endpoint\\' . $suffix . '\\' . $serviceName . '\\' . $methodName . 'Endpoint';
     }
 
     public function getResponseHelperClass(): string

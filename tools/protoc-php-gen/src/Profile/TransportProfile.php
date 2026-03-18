@@ -10,6 +10,8 @@ interface TransportProfile
 
     public function buildServiceNamespace(string $generatedNamespace, string $fileNamespace, string $serviceName): string;
 
+    public function buildEndpointImplementationClass(string $fileNamespace, string $serviceName, string $methodName): string;
+
     public function getHandlerBaseClass(): string;
 
     public function getResponseHelperClass(): string;

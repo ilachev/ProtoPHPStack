@@ -22,8 +22,9 @@
 - читать protobuf descriptors;
 - генерировать endpoint interfaces;
 - генерировать HTTP handlers поверх общего runtime adapter;
+- генерировать endpoint binding manifests для handwritten runtime implementations;
 - генерировать route manifests для runtime routing;
-- держать naming conventions между generated transport-кодом и handwritten endpoint implementations.
+- держать явный generated contract между transport-кодом и handwritten endpoint implementations.
 
 В генераторе недопустимо:
 
@@ -51,6 +52,7 @@
 Generated transport code:
 
 - `gen/Generated/Transport/...`
+- `gen/Generated/EndpointBindings/...`
 
 Handwritten runtime implementation:
 

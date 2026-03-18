@@ -5,13 +5,16 @@ declare(strict_types=1);
 namespace Tests\Unit\Platform\Http\Endpoint;
 
 use App\Platform\Http\Endpoint\EndpointImplementationResolver;
+use App\Platform\Http\Endpoint\GeneratedEndpointBindingProvider;
 use PHPUnit\Framework\TestCase;
 
 final class GeneratedEndpointConventionTest extends TestCase
 {
-    public function testEveryGeneratedEndpointHasAHandwrittenImplementation(): void
+    public function testEveryGeneratedEndpointBindingHasAHandwrittenImplementation(): void
     {
-        $resolver = new EndpointImplementationResolver();
+        $resolver = new EndpointImplementationResolver(
+            new GeneratedEndpointBindingProvider(\dirname(__DIR__, 5) . '/gen/Generated/EndpointBindings'),
+        );
 
         foreach ($this->findGeneratedEndpointInterfaces() as $interface) {
             $implementation = $resolver->resolve($interface);

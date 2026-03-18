@@ -11,6 +11,7 @@ The supported project path is transport-oriented:
 - parse protobuf descriptors;
 - generate endpoint interfaces;
 - generate HTTP handlers for the runtime adapter;
+- generate endpoint binding manifests for handwritten runtime implementations;
 - generate route manifests from `google.api.http`.
 
 It is not the canonical path for domain-to-proto mapper generation.
@@ -70,6 +71,7 @@ protoc -I=./protos/proto \
 The main project expects generated files in:
 
 - `gen/Generated/Transport/...`
+- `gen/Generated/EndpointBindings/...`
 - `gen/Generated/RouteManifest/...`
 
 These files are used together with handwritten endpoint implementations in:

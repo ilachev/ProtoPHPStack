@@ -216,7 +216,7 @@ final class ContainerTest extends TestCase
         self::assertInstanceOf(Implementation2::class, $second);
     }
 
-    public function testResolvesGeneratedEndpointImplementationByConvention(): void
+    public function testResolvesGeneratedEndpointImplementationFromManifest(): void
     {
         $endpoint = $this->container->get(CheckEndpoint::class);
 

@@ -51,7 +51,7 @@ final class BinaryPluginProtocolTest extends TestCase
         $decodedResponse = $this->decodeCodeGeneratorResponse($response->serialize());
 
         self::assertNull($decodedResponse['error']);
-        self::assertCount(3, $decodedResponse['files']);
+        self::assertCount(4, $decodedResponse['files']);
         self::assertSame(
             'gen/Generated/Transport/Api/V1/HealthService/CheckEndpoint.php',
             $decodedResponse['files'][0]['name'],
@@ -61,8 +61,12 @@ final class BinaryPluginProtocolTest extends TestCase
             $decodedResponse['files'][1]['name'],
         );
         self::assertSame(
-            'gen/Generated/RouteManifest/app/v1/health.php',
+            'gen/Generated/EndpointBindings/app/v1/health.php',
             $decodedResponse['files'][2]['name'],
+        );
+        self::assertSame(
+            'gen/Generated/RouteManifest/app/v1/health.php',
+            $decodedResponse['files'][3]['name'],
         );
         self::assertStringContainsString(
             'interface CheckEndpoint',
@@ -73,8 +77,12 @@ final class BinaryPluginProtocolTest extends TestCase
             $decodedResponse['files'][1]['content'],
         );
         self::assertStringContainsString(
-            '/api/v1/health',
+            'App\\\\Platform\\\\Http\\\\Endpoint\\\\Api\\\\V1\\\\HealthService\\\\CheckEndpoint',
             $decodedResponse['files'][2]['content'],
+        );
+        self::assertStringContainsString(
+            '/api/v1/health',
+            $decodedResponse['files'][3]['content'],
         );
     }
 

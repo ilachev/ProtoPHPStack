@@ -64,6 +64,7 @@ Reusable blocks:
 
 - `protos/gen/*` — основной protobuf SDK и metadata
 - `gen/Generated/Transport/*` — generated transport contracts и handlers
+- `gen/Generated/EndpointBindings/*` — generated endpoint-to-implementation bindings
 - `gen/Generated/RouteManifest/*` — generated route manifests for `config/routes.php`
 - legacy `gen/Infrastructure/Hydrator/*` больше не является валидным generated output
 
@@ -114,7 +115,7 @@ task run
 
 - storage/integration adapters всё ещё требуют аккуратного упрощения
 - hydration/data mapping layer всё ещё чувствителен к усложнению
-- transport generation пока опирается на namespace convention для endpoint implementations
+- endpoint implementations всё ещё пишутся вручную, хотя binding к ним уже generated
 - `protoc-php-gen` сейчас стабилен только в transport-контуре; дальнейшее расширение допустимо только как modular codegen, а не как возврат к старой смешанной генерации
 
 ## Как оценивать изменения
