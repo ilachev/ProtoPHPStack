@@ -9,7 +9,7 @@ use Psr\Http\Message\ServerRequestInterface;
 final class Router implements RouterInterface
 {
     /**
-     * @var array<string, array<string, array{handler: string, params: array<string, string>}>>
+     * @var array<string, array<string, RouteMapEntry>>
      */
     private array $routes = [];
 
@@ -32,19 +32,23 @@ final class Router implements RouterInterface
 
         // Check for exact path match
         if (isset($this->routes[$method][$path])) {
+            $route = $this->routes[$method][$path];
+
             return new RouteResult(
                 status: RouteStatus::FOUND,
-                handler: $this->routes[$method][$path]['handler'],
-                params: $this->routes[$method][$path]['params'],
+                handler: $route->handler,
+                params: $route->params,
             );
         }
 
         // Check for trailing slash match
         if (str_ends_with($path, '/') && isset($this->routes[$method][rtrim($path, '/')])) {
+            $route = $this->routes[$method][rtrim($path, '/')];
+
             return new RouteResult(
                 status: RouteStatus::FOUND,
-                handler: $this->routes[$method][rtrim($path, '/')]['handler'],
-                params: $this->routes[$method][rtrim($path, '/')]['params'],
+                handler: $route->handler,
+                params: $route->params,
             );
         }
 
@@ -62,8 +66,8 @@ final class Router implements RouterInterface
             if ($params !== null) {
                 return new RouteResult(
                     status: RouteStatus::FOUND,
-                    handler: $routeData['handler'],
-                    params: array_merge($routeData['params'], $params),
+                    handler: $routeData->handler,
+                    params: $routeData->params->merge($params),
                 );
             }
         }
@@ -81,19 +85,10 @@ final class Router implements RouterInterface
             $path = $route->path;
             $handler = $route->handler;
 
-            // Check for parameters in path
-            $params = [];
-            $pathPattern = $path;
-
-            // Process parameters in {name} format
-            if (str_contains($path, '{') && str_contains($path, '}')) {
-                $pathPattern = preg_replace('/{([^}]+)}/', '([^/]+)', $path);
-            }
-
-            $this->routes[$method][$path] = [
-                'handler' => $handler,
-                'params' => $params,
-            ];
+            $this->routes[$method][$path] = new RouteMapEntry(
+                handler: $handler,
+                params: RouteParameters::empty(),
+            );
 
             // Store available methods for each path
             $this->methodsByPath[$path][] = $method;
@@ -128,14 +123,12 @@ final class Router implements RouterInterface
 
     /**
      * Checks if path matches a route pattern and extracts parameters.
-     *
-     * @return array<string, string>|null
      */
-    private function matchPath(string $routePath, string $requestPath): ?array
+    private function matchPath(string $routePath, string $requestPath): ?RouteParameters
     {
         // Simple comparison for paths without parameters
         if ($routePath === $requestPath) {
-            return [];
+            return RouteParameters::empty();
         }
 
         // Check for parameters in the path
@@ -166,7 +159,7 @@ final class Router implements RouterInterface
                 }
             }
 
-            return $params;
+            return RouteParameters::fromArray($params);
         }
 
         return null;

@@ -6,12 +6,20 @@ namespace App\Platform\Routing;
 
 final readonly class RouteResult
 {
+    private RouteParameters $routeParameters;
+
+    /**
+     * @param array<string, string>|RouteParameters $params
+     */
     public function __construct(
         private RouteStatus $status,
         private ?string $handler = null,
-        /** @var array<string, string> */
-        private array $params = [],
-    ) {}
+        array|RouteParameters $params = [],
+    ) {
+        $this->routeParameters = $params instanceof RouteParameters
+            ? $params
+            : RouteParameters::fromArray($params);
+    }
 
     public function isFound(): bool
     {
@@ -39,7 +47,16 @@ final readonly class RouteResult
             throw RouteException::routeNotFound();
         }
 
-        return $this->params;
+        return $this->routeParameters->toArray();
+    }
+
+    public function getRouteParameters(): RouteParameters
+    {
+        if (!$this->isFound()) {
+            throw RouteException::routeNotFound();
+        }
+
+        return $this->routeParameters;
     }
 
     public function getStatusCode(): int

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Platform\Routing;
 
+use App\Platform\Routing\RouteParameters;
 use App\Platform\Routing\RouteResult;
 use App\Platform\Routing\RouteStatus;
 use PHPUnit\Framework\TestCase;
@@ -64,6 +65,20 @@ final class RouteResultTest extends TestCase
         );
 
         self::assertEquals($params, $routeResult->getParams());
+    }
+
+    public function testGetRouteParametersReturnsTypedParameters(): void
+    {
+        $routeResult = new RouteResult(
+            RouteStatus::FOUND,
+            'App\Handler',
+            ['id' => '1'],
+        );
+
+        self::assertEquals(
+            new RouteParameters(['id' => '1']),
+            $routeResult->getRouteParameters(),
+        );
     }
 
     public function testGetParamsReturnsEmptyArrayWhenNoParams(): void
