@@ -35,44 +35,30 @@ final readonly class SessionModule implements Capability
         $container->set(
             SessionConfig::class,
             static function (): SessionConfig {
-                /** @var array{cookie_name?: string, cookie_ttl?: int, session_ttl?: int, use_fingerprint?: bool, browser_new_session?: bool} $sessionConfig */
-                $sessionConfig = require ProjectPath::getConfigPath('session.php');
+                /** @var SessionConfig $config */
+                $config = require ProjectPath::getConfigPath('session.php');
 
-                return SessionConfig::fromArray($sessionConfig);
+                return $config;
             },
         );
 
         $container->set(
             ClientConfig::class,
             static function (): ClientConfig {
-                /** @var array{
-                 *     similarity_threshold?: float,
-                 *     max_sessions_per_ip?: int,
-                 *     ip_match_weight?: float,
-                 *     user_agent_match_weight?: float,
-                 *     attributes_match_weight?: float,
-                 * } $clientConfig
-                 */
-                $clientConfig = require ProjectPath::getConfigPath('client.php');
+                /** @var ClientConfig $config */
+                $config = require ProjectPath::getConfigPath('client.php');
 
-                return ClientConfig::fromArray($clientConfig);
+                return $config;
             },
         );
 
         $container->set(
             GeoLocationConfig::class,
             static function (): GeoLocationConfig {
-                /** @var array{
-                 *     db_path: string,
-                 *     download_token: string,
-                 *     download_url: string,
-                 *     database_code: string,
-                 *     cache_ttl: int,
-                 * } $geoConfig
-                 */
-                $geoConfig = require ProjectPath::getConfigPath('geolocation.php');
+                /** @var GeoLocationConfig $config */
+                $config = require ProjectPath::getConfigPath('geolocation.php');
 
-                return GeoLocationConfig::fromArray($geoConfig);
+                return $config;
             },
         );
 

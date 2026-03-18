@@ -2,10 +2,12 @@
 
 declare(strict_types=1);
 
-return [
-    'db_path' => __DIR__ . '/../db/geoip/IP2LOCATION-LITE-DB11.BIN',
-    'download_token' => getenv('IP2LOCATION_TOKEN') ?: '',
-    'download_url' => 'https://www.ip2location.com/download',
-    'database_code' => 'DB11LITEBIN',
-    'cache_ttl' => 3600, // 1 час
-];
+use App\Capabilities\Session\Application\GeoLocationConfig;
+
+return new GeoLocationConfig(
+    dbPath: __DIR__ . '/../db/geoip/IP2LOCATION-LITE-DB11.BIN',
+    downloadToken: getenv('IP2LOCATION_TOKEN') ?: '',
+    downloadUrl: 'https://www.ip2location.com/download',
+    databaseCode: 'DB11LITEBIN',
+    cacheTtl: 3600,
+);
