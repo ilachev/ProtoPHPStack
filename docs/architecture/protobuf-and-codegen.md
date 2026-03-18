@@ -8,7 +8,7 @@
 - OpenAPI/Swagger;
 - runtime route configuration;
 - generated server-side transport handlers and endpoint contracts;
-- часть mapper/hydrator инфраструктуры.
+- optional mapper/hydrator tooling.
 
 Любая реструктуризация должна сохранять этот поток или осознанно заменить его чем-то другим.
 
@@ -109,7 +109,21 @@ task proto:gen:mappers
 
 - код в `gen/ProtoMapper`
 
-Эта часть основана не только на `.proto`, но и на PHP attributes в capability/example/platform моделях.
+Эта часть основана не только на `.proto`, но и на PHP attributes в capability/platform моделях.
+Это optional tooling, а не часть default runtime path.
+
+## Какие generated артефакты считаются каноническими
+
+В default runtime path и в репозитории считаются нормальными только такие generated outputs:
+
+- `protos/gen/App/...` — protobuf message classes и metadata для core API;
+- `protos/gen/Google/...` и `protos/gen/GPBMetadata/Google/...` — runtime support для `google.api.http`;
+- `gen/Generated/Transport/...` — generated server-side transport contracts и HTTP handlers.
+
+Сознательно не входят в default runtime path:
+
+- `gen/ProtoMapper/...` — optional attribute-based mapper generation;
+- legacy `gen/Infrastructure/Hydrator/...` — удалённый след старой архитектуры.
 
 ## Текущий flow генерации
 
@@ -123,9 +137,10 @@ task proto:gen:all
 
 1. `proto:gen:sdk`
 2. `proto:gen:transport`
-3. `proto:gen:mappers`
-4. `proto:gen:docs`
-5. `proto:gen:routes`
+3. `proto:gen:docs`
+4. `proto:gen:routes`
+
+`proto:gen:mappers` запускается отдельно только если проекту действительно нужны generated attribute-based mapper-ы.
 
 ## Как устроена генерация маршрутов
 
@@ -144,7 +159,6 @@ task proto:gen:all
 
 ## Custom mapping через атрибуты
 
-Некоторые capability/example классы размечены атрибутами:
 Некоторые capability/platform классы размечены атрибутами:
 
 - `ProtoMapping`

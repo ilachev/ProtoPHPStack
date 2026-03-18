@@ -38,15 +38,23 @@ tasks:
 
   verify:
     desc: Run the default verification gate (lint, phpstan, unit tests)
-    deps: [ var, install, lint, phpstan, test ]
+    deps: [ var, install ]
+    cmds:
+      - task: lint
+      - task: phpstan
+      - task: test
 
   verify:integration:
     desc: Run integration verification against real PostgreSQL
-    deps: [ var, install, test:integration ]
+    deps: [ var, install ]
+    cmds:
+      - task: test:integration
 
   verify:full:
     desc: Run all verification steps including integration tests
-    deps: [ verify, verify:integration ]
+    cmds:
+      - task: verify
+      - task: verify:integration
 
   phpstan:
     desc: Run static analysis
@@ -114,17 +122,17 @@ tasks:
         {{.PROTO_DIR}}/app/v1/*.proto
 
   proto:gen:mappers:
-    desc: Generate mappers from PHP attributes in domain classes
+    desc: Generate optional attribute-based mappers
     deps: [ tools:proto:setup, install, proto:gen:transport ]
     cmds:
       - mkdir -p gen/ProtoMapper
       - "{{.PHP}} tools/protoc-php-gen/bin/generate-mappers.php"
 
   proto:gen:all:
-    desc: Generate all artifacts from proto files and attributes
+    desc: Generate the default protobuf-first runtime artifacts
     cmds:
       - task: proto:gen:sdk
-      - task: proto:gen:mappers
+      - task: proto:gen:transport
       - task: proto:gen:docs
       - task: proto:gen:routes
 

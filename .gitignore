@@ -24,6 +24,8 @@ Thumbs.db
 # Build artifacts
 dist/
 db/app.sqlite-*
+gen/Infrastructure/
+gen/ProtoMapper/
 
 
 .claude/

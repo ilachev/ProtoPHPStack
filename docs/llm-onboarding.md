@@ -57,7 +57,15 @@ Reusable blocks:
 - request log для API-вызовов
 - protobuf/codegen pipeline
 - generated server-side transport handlers from protobuf `service/rpc`
+- optional attribute-based mapper generation
 - unit и integration profiles
+
+## Какие generated артефакты считать основными
+
+- `protos/gen/*` — основной protobuf SDK и metadata
+- `gen/Generated/Transport/*` — generated transport contracts и handlers
+- `gen/ProtoMapper/*` — optional tooling, не часть default runtime path
+- legacy `gen/Infrastructure/Hydrator/*` больше не является валидным generated output
 
 ## Что важно считать инвариантами
 
