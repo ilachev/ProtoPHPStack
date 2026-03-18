@@ -4,18 +4,17 @@ declare(strict_types=1);
 
 namespace App\Platform\Routing;
 
+use App\Platform\Routing\Generator\RouteProvider;
+
 final readonly class RouteDefinition implements RouteDefinitionInterface
 {
     public function __construct(
-        private string $configPath,
+        private RouteProvider $routeProvider,
     ) {}
 
     public function defineRoutes(RouteCollectorInterface $collector): void
     {
-        /** @var array<array{method: string, path: string, handler: class-string}> $routes */
-        $routes = require $this->configPath;
-
-        foreach ($routes as $route) {
+        foreach ($this->routeProvider->getRoutes() as $route) {
             $collector->addRoute($route['method'], $route['path'], $route['handler']);
         }
     }

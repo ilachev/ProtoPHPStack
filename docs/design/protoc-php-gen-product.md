@@ -22,7 +22,6 @@
 - генерацию HTTP handlers поверх runtime adapter;
 - compile-time проверку наличия handwritten endpoint implementations;
 - генерацию operation manifests как канонической metadata surface по каждому RPC;
-- генерацию endpoint binding manifests как производного compatibility artifact;
 - поддержку protobuf-first transport flow в основном шаблоне.
 
 Это текущий канонический и поддерживаемый путь.
@@ -34,7 +33,7 @@
 Для основного проекта это означает:
 
 - `.proto` управляет transport surface;
-- `protoc-php-gen` генерирует transport contracts, operation manifests и совместимый endpoint binding artifact;
+- `protoc-php-gen` генерирует transport contracts и operation manifests;
 - handwritten endpoint implementation остаётся в runtime-коде;
 - generator не подменяет собой business logic.
 

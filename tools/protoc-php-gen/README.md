@@ -12,8 +12,7 @@ The supported project path is transport-oriented:
 - generate endpoint interfaces;
 - generate HTTP handlers for the runtime adapter;
 - validate handwritten endpoint implementations against generated expectations;
-- generate operation manifests for each protobuf RPC;
-- generate endpoint binding manifests as a derived compatibility artifact.
+- generate operation manifests for each protobuf RPC.
 
 It is not the canonical path for domain-to-proto mapper generation.
 
@@ -74,7 +73,6 @@ protoc -I=./protos/proto \
 The main project expects generated files in:
 
 - `gen/Generated/Transport/...`
-- `gen/Generated/EndpointBindings/...`
 - `gen/Generated/OperationManifest/...`
 
 These files are used together with handwritten endpoint implementations in:

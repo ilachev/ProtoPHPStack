@@ -53,19 +53,13 @@ task proto:gen:docs
 
 - `docs/api.swagger.json`
 
-### 3. Routes config
-
-Команда:
-
-```bash
-task proto:gen:routes
-```
+### 3. Runtime routing metadata
 
 Результат:
 
-- `config/routes.php`
+- `gen/Generated/OperationManifest/...`
 
-Маршруты больше не строятся отдельным descriptor-parser в runtime. Сначала `protoc-php-gen` генерирует operation manifests, а затем `bin/generate-routes.php` собирает из них итоговый `config/routes.php`.
+Маршруты больше не строятся отдельным descriptor-parser в runtime и больше не компилируются в отдельный `config/routes.php`. Runtime читает `operation manifests` напрямую.
 
 ### 4. Server-side transport generation
 
@@ -78,14 +72,12 @@ task proto:gen:transport
 Результат:
 
 - `gen/Generated/Transport`
-- `gen/Generated/EndpointBindings`
 - `gen/Generated/OperationManifest`
 
 Генератор создаёт:
 
 - endpoint interfaces для каждого `service/rpc`;
 - generic HTTP handlers поверх `AbstractProtobufRpcHandler`;
-- endpoint binding manifests как производный generated artifact;
 - operation manifests с полной metadata по каждому `service/rpc`, включая `google.api.http` bindings.
 
 Это handwritten business logic не заменяет. Разработчик по-прежнему пишет endpoint implementation, а runtime резолвит её через operation manifests как каноническую metadata surface.
@@ -97,7 +89,6 @@ task proto:gen:transport
 - `protos/gen/App/...` — protobuf message classes и metadata для core API;
 - `protos/gen/Google/...` и `protos/gen/GPBMetadata/Google/...` — runtime support для `google.api.http`;
 - `gen/Generated/Transport/...` — generated server-side transport contracts и HTTP handlers.
-- `gen/Generated/EndpointBindings/...` — generated endpoint binding manifests for handwritten implementations.
 - `gen/Generated/OperationManifest/...` — generated operation metadata for each protobuf RPC.
 
 ## Текущий flow генерации
@@ -112,21 +103,18 @@ task proto:gen:all
 
 1. `proto:gen:sdk`
 2. `proto:gen:docs`
-3. `proto:gen:routes`
+3. `proto:gen:transport`
 
-## Как устроена генерация маршрутов
+## Как устроен runtime routing
 
-Теперь generation path для маршрутов двухшаговый:
+Теперь generation path линейный:
 
-1. `task proto:gen:transport` через `protoc-php-gen` генерирует endpoint binding manifests и operation manifests в `gen/Generated/...`
-2. runtime использует operation manifests как канонический transport metadata source и по ним строит routes и endpoint bindings
-3. `task proto:gen:routes` через `bin/generate-routes.php` читает operation manifests и пишет `config/routes.php`
-
-Файл `bin/generate-routes.php` больше не интерпретирует protobuf descriptors сам. Он только собирает итоговый routes config из generated manifests через `GeneratedOperationManifestProvider` и `GeneratedOperationRouteProvider`.
+1. `task proto:gen:transport` через `protoc-php-gen` генерирует transport contracts и operation manifests в `gen/Generated/...`
+2. runtime использует operation manifests как канонический transport metadata source и по ним строит routes и endpoint resolution
 
 Это важно: `service/rpc + google.api.http` теперь проходят через тот же основной toolchain, что и transport contracts, а не через отдельную runtime-ветку parsing logic.
 
-Сейчас core surface уже содержит `HealthService.Check` и `SystemService.Describe`, поэтому default route generation создаёт непустой `config/routes.php` и `docs/api.swagger.json`, а transport pipeline покрывается и `GET`, и `POST` сценарием с body.
+Сейчас core surface уже содержит `HealthService.Check` и `SystemService.Describe`, поэтому transport pipeline покрывается и `GET`, и `POST` сценарием с body, а `docs/api.swagger.json` остаётся непустым.
 
 ## `tools/protoc-php-gen`
 
@@ -153,7 +141,7 @@ task proto:gen:all
 
 1. Править `.proto` в `protos/proto/app/v1`.
 2. Перегенерировать артефакты.
-3. Добавить endpoint implementation в `App\Platform\Http\Endpoint\...` с тем же относительным путём, который ожидает generated endpoint binding manifest.
+3. Добавить endpoint implementation в `App\Platform\Http\Endpoint\...` с тем же относительным путём, который ожидает generated endpoint contract.
 4. Проверить, что core артефакты согласованы с кодом.
 
 ## Текущие проблемы codegen-потока

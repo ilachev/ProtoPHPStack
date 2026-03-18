@@ -24,7 +24,6 @@
 - `public/index.php` — HTTP entrypoint
 - `src/Platform/Runtime/App.php` — bootstrap и pipeline
 - `config/container.php` — DI wiring
-- `config/routes.php` — core runtime routes
 - `protos/proto/app/v1/*.proto` — core API contracts
 - `taskfile.yaml` — команды разработки
 - `docs/reusable-blocks.md` — каноническая карта reusable-блоков проекта
@@ -64,14 +63,12 @@ Reusable blocks:
 
 - `protos/gen/*` — основной protobuf SDK и metadata
 - `gen/Generated/Transport/*` — generated transport contracts и handlers
-- `gen/Generated/EndpointBindings/*` — generated endpoint-to-implementation bindings
 - `gen/Generated/OperationManifest/*` — generated operation metadata for each RPC
 - legacy `gen/Infrastructure/Hydrator/*` больше не является валидным generated output
 
 ## Что важно считать инвариантами
 
 - не редактировать вручную `protos/gen/*`
-- не редактировать вручную `config/routes.php`
 - для нового публичного API сначала менять `.proto`, потом запускать генерацию
 - `Platform` не должен содержать продуктовую политику
 - reusable block должен оставаться полезным вне конкретного продукта

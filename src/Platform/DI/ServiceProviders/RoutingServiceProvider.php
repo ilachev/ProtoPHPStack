@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Platform\DI\ServiceProviders;
 
-use App\Platform\Config\ProjectPath;
 use App\Platform\DI\Container;
 use App\Platform\DI\ServiceProvider;
+use App\Platform\Http\GeneratedOperationManifestProvider;
+use App\Platform\Routing\Generator\GeneratedOperationRouteProvider;
 use App\Platform\Routing\RouteDefinition;
 use App\Platform\Routing\RouteDefinitionInterface;
 use App\Platform\Routing\Router;
@@ -22,10 +23,25 @@ final readonly class RoutingServiceProvider implements ServiceProvider
         // Router
         $container->bind(RouterInterface::class, Router::class);
 
+        $container->set(
+            GeneratedOperationManifestProvider::class,
+            static fn() => new GeneratedOperationManifestProvider(
+                \dirname(__DIR__, 4) . '/gen/Generated/OperationManifest',
+            ),
+        );
+        $container->set(
+            GeneratedOperationRouteProvider::class,
+            static fn(Container $container) => new GeneratedOperationRouteProvider(
+                $container->get(GeneratedOperationManifestProvider::class),
+            ),
+        );
+
         // Route definition
         $container->set(
             RouteDefinitionInterface::class,
-            static fn() => new RouteDefinition(ProjectPath::getConfigPath('routes.php')),
+            static fn(Container $container) => new RouteDefinition(
+                $container->get(GeneratedOperationRouteProvider::class),
+            ),
         );
     }
 }

@@ -105,18 +105,11 @@ tasks:
         --openapiv2_opt=json_names_for_fields=true,allow_merge=true,merge_file_name=api
         {{.PROTO_DIR}}/app/v1/*.proto
 
-  proto:gen:routes:
-    desc: Build config/routes.php from generated operation manifests
-    deps: [ var, install, proto:gen:transport ]
-    cmds:
-      - "{{.PHP}} bin/generate-routes.php"
-
   proto:gen:transport:
-    desc: Generate server-side transport contracts, endpoint bindings, and operation manifests from core protobuf services
+    desc: Generate server-side transport contracts and operation manifests from core protobuf services
     deps: [ tools:proto:setup, install ]
     cmds:
       - rm -rf gen/Generated/Transport
-      - rm -rf gen/Generated/EndpointBindings
       - rm -rf gen/Generated/OperationManifest
       - >
         protoc -I={{.PROTO_DIR}}
@@ -129,7 +122,7 @@ tasks:
     cmds:
       - task: proto:gen:sdk
       - task: proto:gen:docs
-      - task: proto:gen:routes
+      - task: proto:gen:transport
 
   tools:proto:setup:
     desc: Setup protoc-php-gen plugin

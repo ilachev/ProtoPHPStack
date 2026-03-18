@@ -24,7 +24,6 @@
 - генерировать HTTP handlers поверх общего runtime adapter;
 - валидировать handwritten endpoint implementations на этапе generation;
 - генерировать operation manifests как явную metadata surface;
-- генерировать endpoint binding manifests только как производный compatibility artifact;
 - держать явный generated contract между transport-кодом и handwritten endpoint implementations.
 
 В генераторе недопустимо:
@@ -53,7 +52,6 @@
 Generated transport code:
 
 - `gen/Generated/Transport/...`
-- `gen/Generated/EndpointBindings/...`
 - `gen/Generated/OperationManifest/...`
 
 Handwritten runtime implementation:
