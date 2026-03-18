@@ -51,24 +51,7 @@ final class GeneratedOperationManifestProviderTest extends TestCase
     {
         $this->writeManifest(
             'app/v1/health.php',
-            [
-                [
-                    'service' => 'HealthService',
-                    'method' => 'Check',
-                    'operation_id' => 'HealthService.Check',
-                    'request_class' => 'App\Api\V1\HealthCheckRequest',
-                    'response_class' => 'App\Api\V1\HealthCheckResponse',
-                    'handler' => 'App\Generated\Endpoint\Api\V1\HealthService\CheckHttpHandler',
-                    'endpoint_interface' => 'App\Generated\Endpoint\Api\V1\HealthService\CheckEndpoint',
-                    'endpoint_implementation' => 'App\Platform\Http\Endpoint\Api\V1\HealthService\CheckEndpoint',
-                    'http_bindings' => [
-                        [
-                            'method' => 'GET',
-                            'path' => '/api/v1/health',
-                        ],
-                    ],
-                ],
-            ],
+            "<?php\n\ndeclare(strict_types=1);\n\nuse App\\Platform\\Http\\Operation\\HttpOperationBinding;\nuse App\\Platform\\Http\\Operation\\OperationDefinition;\n\nreturn [\n    new OperationDefinition(\n        service: 'HealthService',\n        method: 'Check',\n        operationId: 'HealthService.Check',\n        requestClass: 'App\\Api\\V1\\HealthCheckRequest',\n        responseClass: 'App\\Api\\V1\\HealthCheckResponse',\n        handler: 'App\\Generated\\Endpoint\\Api\\V1\\HealthService\\CheckHttpHandler',\n        endpointInterface: 'App\\Generated\\Endpoint\\Api\\V1\\HealthService\\CheckEndpoint',\n        endpointImplementation: 'App\\Platform\\Http\\Endpoint\\Api\\V1\\HealthService\\CheckEndpoint',\n        httpBindings: [\n            new HttpOperationBinding(\n                method: 'GET',\n                path: '/api/v1/health',\n            ),\n        ],\n    ),\n];\n",
         );
 
         $provider = new GeneratedOperationManifestProvider($this->tempDir);
@@ -103,20 +86,7 @@ final class GeneratedOperationManifestProviderTest extends TestCase
         self::assertSame([], $provider->getOperations());
     }
 
-    /**
-     * @param list<array{
-     *     service: string,
-     *     method: string,
-     *     operation_id: string,
-     *     request_class: class-string,
-     *     response_class: class-string,
-     *     handler: class-string,
-     *     endpoint_interface: class-string,
-     *     endpoint_implementation: class-string,
-     *     http_bindings: list<array{method: string, path: string}>
-     * }> $operations
-     */
-    private function writeManifest(string $relativePath, array $operations): void
+    private function writeManifest(string $relativePath, string $content): void
     {
         $fullPath = $this->tempDir . '/' . $relativePath;
         $directory = \dirname($fullPath);
@@ -124,9 +94,6 @@ final class GeneratedOperationManifestProviderTest extends TestCase
             mkdir($directory, recursive: true);
         }
 
-        file_put_contents(
-            $fullPath,
-            "<?php\n\ndeclare(strict_types=1);\n\nreturn " . var_export($operations, true) . ";\n",
-        );
+        file_put_contents($fullPath, $content);
     }
 }

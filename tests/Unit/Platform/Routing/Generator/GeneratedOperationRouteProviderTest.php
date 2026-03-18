@@ -27,24 +27,18 @@ final class GeneratedOperationRouteProviderTest extends TestCase
     {
         $this->writeManifest(
             $this->tempDir . '/app/v1/health.php',
-            [
-                [
-                    'service' => 'HealthService',
-                    'method' => 'Check',
-                    'operation_id' => 'HealthService.Check',
-                    'request_class' => 'App\Api\V1\HealthCheckRequest',
-                    'response_class' => 'App\Api\V1\HealthCheckResponse',
-                    'handler' => 'App\Generated\Endpoint\Api\V1\HealthService\CheckHttpHandler',
-                    'endpoint_interface' => 'App\Generated\Endpoint\Api\V1\HealthService\CheckEndpoint',
-                    'endpoint_implementation' => 'App\Platform\Http\Endpoint\Api\V1\HealthService\CheckEndpoint',
-                    'http_bindings' => [
-                        [
-                            'method' => 'GET',
-                            'path' => '/api/v1/health',
-                        ],
-                    ],
-                ],
-            ],
+            $this->createManifestContent(
+                service: 'HealthService',
+                method: 'Check',
+                operationId: 'HealthService.Check',
+                requestClass: 'App\Api\V1\HealthCheckRequest',
+                responseClass: 'App\Api\V1\HealthCheckResponse',
+                handler: 'App\Generated\Endpoint\Api\V1\HealthService\CheckHttpHandler',
+                endpointInterface: 'App\Generated\Endpoint\Api\V1\HealthService\CheckEndpoint',
+                endpointImplementation: 'App\Platform\Http\Endpoint\Api\V1\HealthService\CheckEndpoint',
+                httpMethod: 'GET',
+                httpPath: '/api/v1/health',
+            ),
         );
 
         $provider = new GeneratedOperationRouteProvider(new GeneratedOperationManifestProvider($this->tempDir));
@@ -70,45 +64,33 @@ final class GeneratedOperationRouteProviderTest extends TestCase
     {
         $this->writeManifest(
             $this->tempDir . '/app/v1/health.php',
-            [
-                [
-                    'service' => 'HealthService',
-                    'method' => 'Check',
-                    'operation_id' => 'HealthService.Check',
-                    'request_class' => 'App\Api\V1\HealthCheckRequest',
-                    'response_class' => 'App\Api\V1\HealthCheckResponse',
-                    'handler' => 'App\Generated\Endpoint\Api\V1\HealthService\CheckHttpHandler',
-                    'endpoint_interface' => 'App\Generated\Endpoint\Api\V1\HealthService\CheckEndpoint',
-                    'endpoint_implementation' => 'App\Platform\Http\Endpoint\Api\V1\HealthService\CheckEndpoint',
-                    'http_bindings' => [
-                        [
-                            'method' => 'GET',
-                            'path' => '/api/v1/health',
-                        ],
-                    ],
-                ],
-            ],
+            $this->createManifestContent(
+                service: 'HealthService',
+                method: 'Check',
+                operationId: 'HealthService.Check',
+                requestClass: 'App\Api\V1\HealthCheckRequest',
+                responseClass: 'App\Api\V1\HealthCheckResponse',
+                handler: 'App\Generated\Endpoint\Api\V1\HealthService\CheckHttpHandler',
+                endpointInterface: 'App\Generated\Endpoint\Api\V1\HealthService\CheckEndpoint',
+                endpointImplementation: 'App\Platform\Http\Endpoint\Api\V1\HealthService\CheckEndpoint',
+                httpMethod: 'GET',
+                httpPath: '/api/v1/health',
+            ),
         );
         $this->writeManifest(
             $this->tempDir . '/app/v1/runtime/info.php',
-            [
-                [
-                    'service' => 'RuntimeService',
-                    'method' => 'Describe',
-                    'operation_id' => 'RuntimeService.Describe',
-                    'request_class' => 'App\Api\V1\RuntimeDescribeRequest',
-                    'response_class' => 'App\Api\V1\RuntimeDescribeResponse',
-                    'handler' => 'App\Generated\Endpoint\Api\V1\RuntimeService\DescribeHttpHandler',
-                    'endpoint_interface' => 'App\Generated\Endpoint\Api\V1\RuntimeService\DescribeEndpoint',
-                    'endpoint_implementation' => 'App\Platform\Http\Endpoint\Api\V1\RuntimeService\DescribeEndpoint',
-                    'http_bindings' => [
-                        [
-                            'method' => 'POST',
-                            'path' => '/api/v1/runtime/info',
-                        ],
-                    ],
-                ],
-            ],
+            $this->createManifestContent(
+                service: 'RuntimeService',
+                method: 'Describe',
+                operationId: 'RuntimeService.Describe',
+                requestClass: 'App\Api\V1\RuntimeDescribeRequest',
+                responseClass: 'App\Api\V1\RuntimeDescribeResponse',
+                handler: 'App\Generated\Endpoint\Api\V1\RuntimeService\DescribeHttpHandler',
+                endpointInterface: 'App\Generated\Endpoint\Api\V1\RuntimeService\DescribeEndpoint',
+                endpointImplementation: 'App\Platform\Http\Endpoint\Api\V1\RuntimeService\DescribeEndpoint',
+                httpMethod: 'POST',
+                httpPath: '/api/v1/runtime/info',
+            ),
         );
 
         $provider = new GeneratedOperationRouteProvider(new GeneratedOperationManifestProvider($this->tempDir));
@@ -121,28 +103,68 @@ final class GeneratedOperationRouteProviderTest extends TestCase
         );
     }
 
-    /**
-     * @param list<array{
-     *     service: string,
-     *     method: string,
-     *     operation_id: string,
-     *     request_class: string,
-     *     response_class: string,
-     *     handler: string,
-     *     endpoint_interface: string,
-     *     endpoint_implementation: string,
-     *     http_bindings: list<array{method: string, path: string}>
-     * }> $operations
-     */
-    private function writeManifest(string $path, array $operations): void
+    private function writeManifest(string $path, string $content): void
     {
         $directory = \dirname($path);
         if (!is_dir($directory)) {
             mkdir($directory, 0o777, true);
         }
 
-        $content = "<?php\n\ndeclare(strict_types=1);\n\nreturn " . var_export($operations, true) . ";\n";
         file_put_contents($path, $content);
+    }
+
+    private function createManifestContent(
+        string $service,
+        string $method,
+        string $operationId,
+        string $requestClass,
+        string $responseClass,
+        string $handler,
+        string $endpointInterface,
+        string $endpointImplementation,
+        string $httpMethod,
+        string $httpPath,
+    ): string {
+        $template = <<<'PHP'
+            <?php
+
+            declare(strict_types=1);
+
+            use App\Platform\Http\Operation\HttpOperationBinding;
+            use App\Platform\Http\Operation\OperationDefinition;
+
+            return [
+                new OperationDefinition(
+                    service: '__SERVICE__',
+                    method: '__METHOD__',
+                    operationId: '__OPERATION_ID__',
+                    requestClass: '__REQUEST_CLASS__',
+                    responseClass: '__RESPONSE_CLASS__',
+                    handler: '__HANDLER__',
+                    endpointInterface: '__ENDPOINT_INTERFACE__',
+                    endpointImplementation: '__ENDPOINT_IMPLEMENTATION__',
+                    httpBindings: [
+                        new HttpOperationBinding(
+                            method: '__HTTP_METHOD__',
+                            path: '__HTTP_PATH__',
+                        ),
+                    ],
+                ),
+            ];
+            PHP;
+
+        return strtr($template, [
+            '__SERVICE__' => $service,
+            '__METHOD__' => $method,
+            '__OPERATION_ID__' => $operationId,
+            '__REQUEST_CLASS__' => $requestClass,
+            '__RESPONSE_CLASS__' => $responseClass,
+            '__HANDLER__' => $handler,
+            '__ENDPOINT_INTERFACE__' => $endpointInterface,
+            '__ENDPOINT_IMPLEMENTATION__' => $endpointImplementation,
+            '__HTTP_METHOD__' => $httpMethod,
+            '__HTTP_PATH__' => $httpPath,
+        ]);
     }
 
     private function removeDirectory(string $dir): void

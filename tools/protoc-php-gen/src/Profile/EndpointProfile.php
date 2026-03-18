@@ -23,6 +23,10 @@ interface EndpointProfile
 
     public function getResponseHelperClass(): string;
 
+    public function getOperationDefinitionClass(): string;
+
+    public function getHttpOperationBindingClass(): string;
+
     public function getResponseHelperParameterName(): string;
 
     public function getDecodeRequestMethodName(): string;

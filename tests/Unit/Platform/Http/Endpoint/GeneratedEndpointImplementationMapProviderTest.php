@@ -50,7 +50,7 @@ final class GeneratedEndpointImplementationMapProviderTest extends TestCase
     {
         $this->writeManifest(
             'app/v1/health.php',
-            $this->createOperation(
+            $this->createManifestContent(
                 'HealthService',
                 'Check',
                 'HealthService.Check',
@@ -66,7 +66,7 @@ final class GeneratedEndpointImplementationMapProviderTest extends TestCase
 
         $this->writeManifest(
             'app/v1/system.php',
-            $this->createOperation(
+            $this->createManifestContent(
                 'SystemService',
                 'Describe',
                 'SystemService.Describe',
@@ -100,20 +100,7 @@ final class GeneratedEndpointImplementationMapProviderTest extends TestCase
         self::assertSame([], $provider->getImplementations());
     }
 
-    /**
-     * @param list<array{
-     *     service: string,
-     *     method: string,
-     *     operation_id: string,
-     *     request_class: string,
-     *     response_class: string,
-     *     handler: string,
-     *     endpoint_interface: string,
-     *     endpoint_implementation: string,
-     *     http_bindings: list<array{method: string, path: string}>
-     * }> $operations
-     */
-    private function writeManifest(string $relativePath, array $operations): void
+    private function writeManifest(string $relativePath, string $content): void
     {
         $fullPath = $this->tempDir . '/' . $relativePath;
         $directory = \dirname($fullPath);
@@ -121,26 +108,10 @@ final class GeneratedEndpointImplementationMapProviderTest extends TestCase
             mkdir($directory, recursive: true);
         }
 
-        file_put_contents(
-            $fullPath,
-            "<?php\n\ndeclare(strict_types=1);\n\nreturn " . var_export($operations, true) . ";\n",
-        );
+        file_put_contents($fullPath, $content);
     }
 
-    /**
-     * @return list<array{
-     *     service: string,
-     *     method: string,
-     *     operation_id: string,
-     *     request_class: string,
-     *     response_class: string,
-     *     handler: string,
-     *     endpoint_interface: string,
-     *     endpoint_implementation: string,
-     *     http_bindings: list<array{method: string, path: string}>
-     * }>
-     */
-    private function createOperation(
+    private function createManifestContent(
         string $service,
         string $method,
         string $operationId,
@@ -151,24 +122,46 @@ final class GeneratedEndpointImplementationMapProviderTest extends TestCase
         string $endpointImplementation,
         string $httpMethod,
         string $httpPath,
-    ): array {
-        return [
-            [
-                'service' => $service,
-                'method' => $method,
-                'operation_id' => $operationId,
-                'request_class' => $requestClass,
-                'response_class' => $responseClass,
-                'handler' => $handler,
-                'endpoint_interface' => $endpointInterface,
-                'endpoint_implementation' => $endpointImplementation,
-                'http_bindings' => [
-                    [
-                        'method' => $httpMethod,
-                        'path' => $httpPath,
+    ): string {
+        $template = <<<'PHP'
+            <?php
+
+            declare(strict_types=1);
+
+            use App\Platform\Http\Operation\HttpOperationBinding;
+            use App\Platform\Http\Operation\OperationDefinition;
+
+            return [
+                new OperationDefinition(
+                    service: '__SERVICE__',
+                    method: '__METHOD__',
+                    operationId: '__OPERATION_ID__',
+                    requestClass: '__REQUEST_CLASS__',
+                    responseClass: '__RESPONSE_CLASS__',
+                    handler: '__HANDLER__',
+                    endpointInterface: '__ENDPOINT_INTERFACE__',
+                    endpointImplementation: '__ENDPOINT_IMPLEMENTATION__',
+                    httpBindings: [
+                        new HttpOperationBinding(
+                            method: '__HTTP_METHOD__',
+                            path: '__HTTP_PATH__',
+                        ),
                     ],
-                ],
-            ],
-        ];
+                ),
+            ];
+            PHP;
+
+        return strtr($template, [
+            '__SERVICE__' => $service,
+            '__METHOD__' => $method,
+            '__OPERATION_ID__' => $operationId,
+            '__REQUEST_CLASS__' => $requestClass,
+            '__RESPONSE_CLASS__' => $responseClass,
+            '__HANDLER__' => $handler,
+            '__ENDPOINT_INTERFACE__' => $endpointInterface,
+            '__ENDPOINT_IMPLEMENTATION__' => $endpointImplementation,
+            '__HTTP_METHOD__' => $httpMethod,
+            '__HTTP_PATH__' => $httpPath,
+        ]);
     }
 }

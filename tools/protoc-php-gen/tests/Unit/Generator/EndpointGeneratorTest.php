@@ -194,6 +194,16 @@ final readonly class StubEndpointProfile implements EndpointProfile
         return 'Vendor\\Runtime\\Http\\CustomResponseFactory';
     }
 
+    public function getOperationDefinitionClass(): string
+    {
+        return 'Vendor\\Runtime\\Operation\\OperationDefinition';
+    }
+
+    public function getHttpOperationBindingClass(): string
+    {
+        return 'Vendor\\Runtime\\Operation\\HttpOperationBinding';
+    }
+
     public function getResponseHelperParameterName(): string
     {
         return 'responseFactory';

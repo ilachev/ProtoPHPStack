@@ -61,6 +61,16 @@ final readonly class BaseApiTemplateEndpointProfile implements EndpointProfile
         return 'App\Platform\Http\JsonResponse';
     }
 
+    public function getOperationDefinitionClass(): string
+    {
+        return 'App\Platform\Http\Operation\OperationDefinition';
+    }
+
+    public function getHttpOperationBindingClass(): string
+    {
+        return 'App\Platform\Http\Operation\HttpOperationBinding';
+    }
+
     public function getResponseHelperParameterName(): string
     {
         return 'jsonResponse';

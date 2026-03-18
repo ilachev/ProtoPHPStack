@@ -17,7 +17,7 @@ final class OperationManifestGeneratorTest extends TestCase
     {
         $generator = new OperationManifestGenerator(
             new PluginOptions(
-                namespace: 'App\\Generated\\Transport',
+                namespace: 'App\\Generated\\Endpoint',
                 outputDir: 'gen',
                 enabledModules: [OperationManifestGenerator::MODULE_NAME => true],
             ),
@@ -79,13 +79,15 @@ final class OperationManifestGeneratorTest extends TestCase
 
         self::assertCount(1, $files);
         self::assertSame('gen/Generated/OperationManifest/app/v1/health.php', $files[0]->getName());
-        self::assertStringContainsString("'service' => 'HealthService'", $files[0]->getContent());
-        self::assertStringContainsString("'method' => 'Check'", $files[0]->getContent());
-        self::assertStringContainsString("'operation_id' => 'HealthService.Check'", $files[0]->getContent());
-        self::assertStringContainsString("'request_class' => 'App\\\\Api\\\\V1\\\\HealthCheckRequest'", $files[0]->getContent());
-        self::assertStringContainsString("'response_class' => 'App\\\\Api\\\\V1\\\\HealthCheckResponse'", $files[0]->getContent());
-        self::assertStringContainsString("'handler' => 'App\\\\Generated\\\\Transport\\\\Api\\\\V1\\\\HealthService\\\\CheckHttpHandler'", $files[0]->getContent());
-        self::assertStringContainsString("'endpoint_interface' => 'App\\\\Generated\\\\Transport\\\\Api\\\\V1\\\\HealthService\\\\CheckEndpoint'", $files[0]->getContent());
-        self::assertStringContainsString("'endpoint_implementation' => 'App\\\\Platform\\\\Http\\\\Endpoint\\\\Api\\\\V1\\\\HealthService\\\\CheckEndpoint'", $files[0]->getContent());
+        self::assertStringContainsString('use App\Platform\Http\Operation\HttpOperationBinding;', $files[0]->getContent());
+        self::assertStringContainsString('use App\Platform\Http\Operation\OperationDefinition;', $files[0]->getContent());
+        self::assertStringContainsString("service: 'HealthService'", $files[0]->getContent());
+        self::assertStringContainsString("method: 'Check'", $files[0]->getContent());
+        self::assertStringContainsString("operationId: 'HealthService.Check'", $files[0]->getContent());
+        self::assertStringContainsString("requestClass: 'App\\\\Api\\\\V1\\\\HealthCheckRequest'", $files[0]->getContent());
+        self::assertStringContainsString("responseClass: 'App\\\\Api\\\\V1\\\\HealthCheckResponse'", $files[0]->getContent());
+        self::assertStringContainsString("handler: 'App\\\\Generated\\\\Endpoint\\\\Api\\\\V1\\\\HealthService\\\\CheckHttpHandler'", $files[0]->getContent());
+        self::assertStringContainsString("endpointInterface: 'App\\\\Generated\\\\Endpoint\\\\Api\\\\V1\\\\HealthService\\\\CheckEndpoint'", $files[0]->getContent());
+        self::assertStringContainsString("endpointImplementation: 'App\\\\Platform\\\\Http\\\\Endpoint\\\\Api\\\\V1\\\\HealthService\\\\CheckEndpoint'", $files[0]->getContent());
     }
 }

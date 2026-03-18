@@ -73,7 +73,7 @@ final class BinaryPluginProtocolTest extends TestCase
             $decodedResponse['files'][1]['content'],
         );
         self::assertStringContainsString(
-            "'operation_id' => 'HealthService.Check'",
+            "operationId: 'HealthService.Check'",
             $decodedResponse['files'][2]['content'],
         );
     }

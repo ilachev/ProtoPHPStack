@@ -35,17 +35,10 @@ final class GeneratedOperationManifestProvider
             }
 
             foreach ($manifest as $operation) {
-                if (!\is_array($operation)) {
+                if (!$operation instanceof OperationDefinition) {
                     continue;
                 }
-
-                /** @var array<string, mixed> $operation */
-                $operationDefinition = OperationDefinition::fromArray($operation);
-                if ($operationDefinition === null) {
-                    continue;
-                }
-
-                $operations[] = $operationDefinition;
+                $operations[] = $operation;
             }
         }
 
