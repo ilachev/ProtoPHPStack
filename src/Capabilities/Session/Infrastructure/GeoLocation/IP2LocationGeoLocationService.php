@@ -59,30 +59,17 @@ final readonly class IP2LocationGeoLocationService implements GeoLocationService
             // Read the full record from the IP2Location database.
             /** @var array<string, string|float|null> $record */
             $record = $this->db->lookup($ip, Database::ALL);
+            $normalizedRecord = IP2LocationRecord::fromLookupResult($record);
 
             // Abort when the upstream database does not have meaningful country data.
-            if (!isset($record['countryCode'], $record['countryName'])
-                || $record['countryCode'] === '-'
-                || $record['countryName'] === '-'
-                || empty($record['countryName'])
-            ) {
+            if (!$normalizedRecord->hasValidCountryData()) {
                 $this->logger->debug('No valid geolocation data found for IP', ['ip' => $ip]);
 
                 return null;
             }
 
             try {
-                // Normalize nullable scalar fields into stable DTO values.
-                $geoData = new GeoLocationData(
-                    country: (string) $record['countryName'],
-                    countryCode: (string) $record['countryCode'],
-                    region: isset($record['regionName']) ? (string) $record['regionName'] : '',
-                    city: isset($record['cityName']) ? (string) $record['cityName'] : '',
-                    zip: isset($record['zipCode']) ? (string) $record['zipCode'] : '',
-                    lat: isset($record['latitude']) ? (float) $record['latitude'] : 0.0,
-                    lon: isset($record['longitude']) ? (float) $record['longitude'] : 0.0,
-                    timezone: isset($record['timeZone']) ? (string) $record['timeZone'] : '',
-                );
+                $geoData = $normalizedRecord->toGeoLocationData();
 
                 // Cache successful lookups for subsequent requests.
                 if ($this->cache->isAvailable()) {
