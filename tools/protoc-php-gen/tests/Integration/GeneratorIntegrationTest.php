@@ -11,10 +11,10 @@ use ProtoPhpGen\Protoc\PluginRequest;
 
 final class GeneratorIntegrationTest extends TestCase
 {
-    public function testPluginGeneratesTransportContractsFromRequest(): void
+    public function testPluginGeneratesEndpointsFromRequest(): void
     {
         $request = new PluginRequest();
-        $request->setParameter('namespace=App\\Generated\\Transport,output_dir=gen,generate_endpoints=true,generate_operation_manifest=true');
+        $request->setParameter('namespace=App\\Generated\\Endpoint,output_dir=gen,generate_endpoints=true,generate_operation_manifest=true');
         $request->addFileToGenerate('app/v1/health.proto');
         $request->addProtoFile(
             'app/v1/health.proto',
@@ -53,11 +53,11 @@ final class GeneratorIntegrationTest extends TestCase
         self::assertNull($response->getError());
         self::assertCount(3, $response->getFiles());
         self::assertSame(
-            'gen/Generated/Transport/Api/V1/HealthService/CheckEndpoint.php',
+            'gen/Generated/Endpoint/Api/V1/HealthService/CheckEndpoint.php',
             $response->getFiles()[0]->getName(),
         );
         self::assertSame(
-            'gen/Generated/Transport/Api/V1/HealthService/CheckHttpHandler.php',
+            'gen/Generated/Endpoint/Api/V1/HealthService/CheckHttpHandler.php',
             $response->getFiles()[1]->getName(),
         );
         self::assertSame(

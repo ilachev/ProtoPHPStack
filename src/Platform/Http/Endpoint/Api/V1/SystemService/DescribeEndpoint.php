@@ -8,7 +8,7 @@ use App\Api\V1\SystemDescribeRequest;
 use App\Api\V1\SystemDescribeResponse;
 use Psr\Http\Message\ServerRequestInterface;
 
-final readonly class DescribeEndpoint implements \App\Generated\Transport\Api\V1\SystemService\DescribeEndpoint
+final readonly class DescribeEndpoint implements \App\Generated\Endpoint\Api\V1\SystemService\DescribeEndpoint
 {
     public function handle(SystemDescribeRequest $request, ServerRequestInterface $httpRequest): SystemDescribeResponse
     {

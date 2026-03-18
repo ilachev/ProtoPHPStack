@@ -8,7 +8,7 @@ use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PsrPrinter;
 use ProtoPhpGen\Descriptor\ProtoFileDescriptor;
 use ProtoPhpGen\Plugin\PluginOptions;
-use ProtoPhpGen\Profile\TransportProfile;
+use ProtoPhpGen\Profile\EndpointProfile;
 use ProtoPhpGen\Type\TypeResolver;
 
 final readonly class EndpointGenerator implements CodeGeneratorModule
@@ -19,7 +19,7 @@ final readonly class EndpointGenerator implements CodeGeneratorModule
 
     public function __construct(
         private PluginOptions $options,
-        private TransportProfile $transportProfile,
+        private EndpointProfile $endpointProfile,
     ) {
         $this->printer = new PsrPrinter();
     }
@@ -98,7 +98,7 @@ final readonly class EndpointGenerator implements CodeGeneratorModule
 
     private function buildServiceNamespace(string $fileNamespace, string $serviceName): string
     {
-        return $this->transportProfile->buildServiceNamespace(
+        return $this->endpointProfile->buildServiceNamespace(
             $this->options->getNamespace(),
             $fileNamespace,
             $serviceName,
@@ -140,9 +140,9 @@ final readonly class EndpointGenerator implements CodeGeneratorModule
         $file = new PhpFile();
         $file->setStrictTypes();
 
-        $handlerBaseClass = $this->transportProfile->getHandlerBaseClass();
-        $responseHelperClass = $this->transportProfile->getResponseHelperClass();
-        $responseHelperParameterName = $this->transportProfile->getResponseHelperParameterName();
+        $handlerBaseClass = $this->endpointProfile->getHandlerBaseClass();
+        $responseHelperClass = $this->endpointProfile->getResponseHelperClass();
+        $responseHelperParameterName = $this->endpointProfile->getResponseHelperParameterName();
         $namespace = $file->addNamespace($serviceNamespace);
         $namespace->addUse($inputClass);
         $namespace->addUse($outputClass);
@@ -170,13 +170,13 @@ final readonly class EndpointGenerator implements CodeGeneratorModule
         $inputShortName = $this->shortName($inputClass);
         $outputShortName = $this->shortName($outputClass);
         $handle->setBody(
-            '$message = $this->' . $this->transportProfile->getDecodeRequestMethodName() . '($request, ' . $inputShortName . "::class);\n"
+            '$message = $this->' . $this->endpointProfile->getDecodeRequestMethodName() . '($request, ' . $inputShortName . "::class);\n"
             . 'if (!$message instanceof ' . $inputShortName . ") {\n"
-            . '    return $this->' . $this->transportProfile->getInvalidRequestResponseMethodName() . "();\n"
+            . '    return $this->' . $this->endpointProfile->getInvalidRequestResponseMethodName() . "();\n"
             . "}\n\n"
             . '/** @var ' . $outputShortName . " \$response */\n"
             . '$response = $this->endpoint->handle($message, $request);' . "\n\n"
-            . 'return $this->' . $this->transportProfile->getSuccessResponseMethodName() . '($response);',
+            . 'return $this->' . $this->endpointProfile->getSuccessResponseMethodName() . '($response);',
         );
 
         return new GeneratedFile(

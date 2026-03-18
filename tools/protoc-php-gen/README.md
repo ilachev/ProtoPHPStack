@@ -54,8 +54,8 @@ The detailed product-level rationale is documented in:
 
 ```bash
 protoc -I=./protos/proto \
-  --plugin=protoc-gen-php-transport=./tools/protoc-php-gen/bin/protoc-php-gen.php \
-  --php-transport_out=namespace=App\\Generated\\Transport,output_dir=gen,source_root=src,transport_profile=base_api_template,generate_endpoints=true,generate_endpoint_validation=true,generate_operation_manifest=true:. \
+  --plugin=protoc-gen-php-endpoint=./tools/protoc-php-gen/bin/protoc-php-gen.php \
+  --php-endpoint_out=namespace=App\\Generated\\Endpoint,output_dir=gen,source_root=src,endpoint_profile=base_api_template,generate_endpoints=true,generate_endpoint_validation=true,generate_operation_manifest=true:. \
   ./protos/proto/app/v1/*.proto
 ```
 
@@ -72,7 +72,7 @@ protoc -I=./protos/proto \
 
 The main project expects generated files in:
 
-- `gen/Generated/Transport/...`
+- `gen/Generated/Endpoint/...`
 - `gen/Generated/OperationManifest/...`
 
 These files are used together with handwritten endpoint implementations in:

@@ -56,8 +56,8 @@ final class GeneratedOperationManifestProviderTest extends TestCase
                     'operation_id' => 'HealthService.Check',
                     'request_class' => 'App\Api\V1\HealthCheckRequest',
                     'response_class' => 'App\Api\V1\HealthCheckResponse',
-                    'handler' => 'App\Generated\Transport\Api\V1\HealthService\CheckHttpHandler',
-                    'endpoint_interface' => 'App\Generated\Transport\Api\V1\HealthService\CheckEndpoint',
+                    'handler' => 'App\Generated\Endpoint\Api\V1\HealthService\CheckHttpHandler',
+                    'endpoint_interface' => 'App\Generated\Endpoint\Api\V1\HealthService\CheckEndpoint',
                     'endpoint_implementation' => 'App\Platform\Http\Endpoint\Api\V1\HealthService\CheckEndpoint',
                     'http_bindings' => [
                         [
@@ -79,8 +79,8 @@ final class GeneratedOperationManifestProviderTest extends TestCase
                     'operation_id' => 'HealthService.Check',
                     'request_class' => 'App\Api\V1\HealthCheckRequest',
                     'response_class' => 'App\Api\V1\HealthCheckResponse',
-                    'handler' => 'App\Generated\Transport\Api\V1\HealthService\CheckHttpHandler',
-                    'endpoint_interface' => 'App\Generated\Transport\Api\V1\HealthService\CheckEndpoint',
+                    'handler' => 'App\Generated\Endpoint\Api\V1\HealthService\CheckHttpHandler',
+                    'endpoint_interface' => 'App\Generated\Endpoint\Api\V1\HealthService\CheckEndpoint',
                     'endpoint_implementation' => 'App\Platform\Http\Endpoint\Api\V1\HealthService\CheckEndpoint',
                     'http_bindings' => [
                         [

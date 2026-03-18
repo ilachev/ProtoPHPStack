@@ -6,7 +6,7 @@ namespace ProtoPhpGen\Generator;
 
 use ProtoPhpGen\Descriptor\ProtoFileDescriptor;
 use ProtoPhpGen\Plugin\PluginOptions;
-use ProtoPhpGen\Profile\TransportProfile;
+use ProtoPhpGen\Profile\EndpointProfile;
 use ProtoPhpGen\Type\TypeResolver;
 
 final readonly class OperationManifestGenerator implements CodeGeneratorModule
@@ -15,7 +15,7 @@ final readonly class OperationManifestGenerator implements CodeGeneratorModule
 
     public function __construct(
         private PluginOptions $options,
-        private TransportProfile $transportProfile,
+        private EndpointProfile $endpointProfile,
     ) {}
 
     public function getName(): string
@@ -45,7 +45,7 @@ final readonly class OperationManifestGenerator implements CodeGeneratorModule
                 continue;
             }
 
-            $serviceNamespace = $this->transportProfile->buildServiceNamespace(
+            $serviceNamespace = $this->endpointProfile->buildServiceNamespace(
                 $this->options->getNamespace(),
                 $fileNamespace,
                 $serviceName,
@@ -70,7 +70,7 @@ final readonly class OperationManifestGenerator implements CodeGeneratorModule
                 /** @var class-string $handlerClass */
                 $handlerClass = $serviceNamespace . '\\' . $methodName . 'HttpHandler';
                 /** @var class-string $endpointImplementation */
-                $endpointImplementation = $this->transportProfile->buildEndpointImplementationClass(
+                $endpointImplementation = $this->endpointProfile->buildEndpointImplementationClass(
                     $fileNamespace,
                     $serviceName,
                     $methodName,

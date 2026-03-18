@@ -5,17 +5,17 @@ declare(strict_types=1);
 namespace Tests\Unit\Profile;
 
 use PHPUnit\Framework\TestCase;
-use ProtoPhpGen\Profile\BaseApiTemplateTransportProfile;
-use ProtoPhpGen\Profile\TransportProfileRegistry;
+use ProtoPhpGen\Profile\BaseApiTemplateEndpointProfile;
+use ProtoPhpGen\Profile\EndpointProfileRegistry;
 
-final class TransportProfileRegistryTest extends TestCase
+final class EndpointProfileRegistryTest extends TestCase
 {
     public function testReturnsBaseApiTemplateProfile(): void
     {
-        $registry = new TransportProfileRegistry();
-        $profile = $registry->get(BaseApiTemplateTransportProfile::NAME);
+        $registry = new EndpointProfileRegistry();
+        $profile = $registry->get(BaseApiTemplateEndpointProfile::NAME);
 
-        self::assertInstanceOf(BaseApiTemplateTransportProfile::class, $profile);
+        self::assertInstanceOf(BaseApiTemplateEndpointProfile::class, $profile);
         self::assertSame(
             'App\\Generated\\Transport\\Api\\V1\\HealthService',
             $profile->buildServiceNamespace(

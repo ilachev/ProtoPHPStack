@@ -71,7 +71,7 @@ task proto:gen:endpoints
 
 Результат:
 
-- `gen/Generated/Transport`
+- `gen/Generated/Endpoint`
 - `gen/Generated/OperationManifest`
 
 Генератор создаёт:
@@ -88,7 +88,7 @@ task proto:gen:endpoints
 
 - `protos/gen/App/...` — protobuf message classes и metadata для core API;
 - `protos/gen/Google/...` и `protos/gen/GPBMetadata/Google/...` — runtime support для `google.api.http`;
-- `gen/Generated/Transport/...` — generated server-side endpoint contracts и HTTP handlers.
+- `gen/Generated/Endpoint/...` — generated server-side endpoint contracts и HTTP handlers.
 - `gen/Generated/OperationManifest/...` — generated operation metadata for each protobuf RPC.
 
 ## Текущий flow генерации

@@ -2,19 +2,19 @@
 
 declare(strict_types=1);
 
-namespace App\Generated\Transport\Api\V1\SystemService;
+namespace App\Generated\Endpoint\Api\V1\HealthService;
 
-use App\Api\V1\SystemDescribeRequest;
-use App\Api\V1\SystemDescribeResponse;
+use App\Api\V1\HealthCheckRequest;
+use App\Api\V1\HealthCheckResponse;
 use App\Platform\Http\Handler\AbstractProtobufRpcHandler;
 use App\Platform\Http\JsonResponse;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-final readonly class DescribeHttpHandler extends AbstractProtobufRpcHandler
+final readonly class CheckHttpHandler extends AbstractProtobufRpcHandler
 {
     public function __construct(
-        private DescribeEndpoint $endpoint,
+        private CheckEndpoint $endpoint,
         JsonResponse $jsonResponse,
     ) {
         parent::__construct($jsonResponse);
@@ -25,12 +25,12 @@ final readonly class DescribeHttpHandler extends AbstractProtobufRpcHandler
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        $message = $this->decodeRequest($request, SystemDescribeRequest::class);
-        if (!$message instanceof SystemDescribeRequest) {
+        $message = $this->decodeRequest($request, HealthCheckRequest::class);
+        if (!$message instanceof HealthCheckRequest) {
             return $this->invalidRequestResponse();
         }
 
-        /** @var SystemDescribeResponse $response */
+        /** @var HealthCheckResponse $response */
         $response = $this->endpoint->handle($message, $request);
 
         return $this->protobufResponse($response);

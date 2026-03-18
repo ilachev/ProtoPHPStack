@@ -8,7 +8,7 @@ use PHPUnit\Framework\TestCase;
 use ProtoPhpGen\Descriptor\ProtoFileDescriptor;
 use ProtoPhpGen\Generator\EndpointGenerator;
 use ProtoPhpGen\Plugin\PluginOptions;
-use ProtoPhpGen\Profile\BaseApiTemplateTransportProfile;
+use ProtoPhpGen\Profile\BaseApiTemplateEndpointProfile;
 use ProtoPhpGen\Type\TypeResolver;
 
 final class EndpointGeneratorTest extends TestCase
@@ -17,10 +17,10 @@ final class EndpointGeneratorTest extends TestCase
     {
         $generator = new EndpointGenerator(
             new PluginOptions(
-                namespace: 'App\Generated\Transport',
+                namespace: 'App\Generated\Endpoint',
                 outputDir: 'gen',
             ),
-            new BaseApiTemplateTransportProfile(),
+            new BaseApiTemplateEndpointProfile(),
         );
 
         $files = $generator->generateForProtoFile(
@@ -63,13 +63,13 @@ final class EndpointGeneratorTest extends TestCase
         );
 
         self::assertCount(2, $files);
-        self::assertSame('gen/Generated/Transport/Api/V1/HealthService/CheckEndpoint.php', $files[0]->getName());
-        self::assertStringContainsString('namespace App\Generated\Transport\Api\V1\HealthService;', $files[0]->getContent());
+        self::assertSame('gen/Generated/Endpoint/Api/V1/HealthService/CheckEndpoint.php', $files[0]->getName());
+        self::assertStringContainsString('namespace App\Generated\Endpoint\Api\V1\HealthService;', $files[0]->getContent());
         self::assertStringContainsString('interface CheckEndpoint', $files[0]->getContent());
         self::assertStringContainsString('HealthCheckRequest', $files[0]->getContent());
         self::assertStringContainsString('HealthCheckResponse', $files[0]->getContent());
 
-        self::assertSame('gen/Generated/Transport/Api/V1/HealthService/CheckHttpHandler.php', $files[1]->getName());
+        self::assertSame('gen/Generated/Endpoint/Api/V1/HealthService/CheckHttpHandler.php', $files[1]->getName());
         self::assertStringContainsString('final readonly class CheckHttpHandler', $files[1]->getContent());
         self::assertStringContainsString('extends AbstractProtobufRpcHandler', $files[1]->getContent());
         self::assertStringContainsString('return $this->protobufResponse($response);', $files[1]->getContent());

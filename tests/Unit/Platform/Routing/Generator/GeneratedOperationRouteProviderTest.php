@@ -34,8 +34,8 @@ final class GeneratedOperationRouteProviderTest extends TestCase
                     'operation_id' => 'HealthService.Check',
                     'request_class' => 'App\Api\V1\HealthCheckRequest',
                     'response_class' => 'App\Api\V1\HealthCheckResponse',
-                    'handler' => 'App\Generated\Transport\Api\V1\HealthService\CheckHttpHandler',
-                    'endpoint_interface' => 'App\Generated\Transport\Api\V1\HealthService\CheckEndpoint',
+                    'handler' => 'App\Generated\Endpoint\Api\V1\HealthService\CheckHttpHandler',
+                    'endpoint_interface' => 'App\Generated\Endpoint\Api\V1\HealthService\CheckEndpoint',
                     'endpoint_implementation' => 'App\Platform\Http\Endpoint\Api\V1\HealthService\CheckEndpoint',
                     'http_bindings' => [
                         [
@@ -53,7 +53,7 @@ final class GeneratedOperationRouteProviderTest extends TestCase
         self::assertCount(1, $routes);
         self::assertSame('GET', $routes[0]['method']);
         self::assertSame('/api/v1/health', $routes[0]['path']);
-        self::assertSame('App\Generated\Transport\Api\V1\HealthService\CheckHttpHandler', $routes[0]['handler']);
+        self::assertSame('App\Generated\Endpoint\Api\V1\HealthService\CheckHttpHandler', $routes[0]['handler']);
         self::assertSame('HealthService.Check', $routes[0]['operation_id'] ?? null);
     }
 
@@ -77,8 +77,8 @@ final class GeneratedOperationRouteProviderTest extends TestCase
                     'operation_id' => 'HealthService.Check',
                     'request_class' => 'App\Api\V1\HealthCheckRequest',
                     'response_class' => 'App\Api\V1\HealthCheckResponse',
-                    'handler' => 'App\Generated\Transport\Api\V1\HealthService\CheckHttpHandler',
-                    'endpoint_interface' => 'App\Generated\Transport\Api\V1\HealthService\CheckEndpoint',
+                    'handler' => 'App\Generated\Endpoint\Api\V1\HealthService\CheckHttpHandler',
+                    'endpoint_interface' => 'App\Generated\Endpoint\Api\V1\HealthService\CheckEndpoint',
                     'endpoint_implementation' => 'App\Platform\Http\Endpoint\Api\V1\HealthService\CheckEndpoint',
                     'http_bindings' => [
                         [
@@ -98,8 +98,8 @@ final class GeneratedOperationRouteProviderTest extends TestCase
                     'operation_id' => 'RuntimeService.Describe',
                     'request_class' => 'App\Api\V1\RuntimeDescribeRequest',
                     'response_class' => 'App\Api\V1\RuntimeDescribeResponse',
-                    'handler' => 'App\Generated\Transport\Api\V1\RuntimeService\DescribeHttpHandler',
-                    'endpoint_interface' => 'App\Generated\Transport\Api\V1\RuntimeService\DescribeEndpoint',
+                    'handler' => 'App\Generated\Endpoint\Api\V1\RuntimeService\DescribeHttpHandler',
+                    'endpoint_interface' => 'App\Generated\Endpoint\Api\V1\RuntimeService\DescribeEndpoint',
                     'endpoint_implementation' => 'App\Platform\Http\Endpoint\Api\V1\RuntimeService\DescribeEndpoint',
                     'http_bindings' => [
                         [

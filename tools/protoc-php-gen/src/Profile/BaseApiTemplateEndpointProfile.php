@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ProtoPhpGen\Profile;
 
-final readonly class BaseApiTemplateTransportProfile implements TransportProfile
+final readonly class BaseApiTemplateEndpointProfile implements EndpointProfile
 {
     public const NAME = 'base_api_template';
 

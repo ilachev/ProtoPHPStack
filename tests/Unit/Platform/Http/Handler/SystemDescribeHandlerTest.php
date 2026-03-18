@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Platform\Http\Handler;
 
-use App\Generated\Transport\Api\V1\SystemService\DescribeHttpHandler;
+use App\Generated\Endpoint\Api\V1\SystemService\DescribeHttpHandler;
 use App\Platform\Http\Endpoint\Api\V1\SystemService\DescribeEndpoint;
 use App\Platform\Http\JsonResponse;
 use Nyholm\Psr7\ServerRequest;

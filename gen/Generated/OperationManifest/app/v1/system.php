@@ -26,8 +26,8 @@ return array (
     'operation_id' => 'SystemService.Describe',
     'request_class' => 'App\\Api\\V1\\SystemDescribeRequest',
     'response_class' => 'App\\Api\\V1\\SystemDescribeResponse',
-    'handler' => 'App\\Generated\\Transport\\Api\\V1\\SystemService\\DescribeHttpHandler',
-    'endpoint_interface' => 'App\\Generated\\Transport\\Api\\V1\\SystemService\\DescribeEndpoint',
+    'handler' => 'App\\Generated\\Endpoint\\Api\\V1\\SystemService\\DescribeHttpHandler',
+    'endpoint_interface' => 'App\\Generated\\Endpoint\\Api\\V1\\SystemService\\DescribeEndpoint',
     'endpoint_implementation' => 'App\\Platform\\Http\\Endpoint\\Api\\V1\\SystemService\\DescribeEndpoint',
     'http_bindings' => 
     array (

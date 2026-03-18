@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Generated\Transport\Api\V1\SystemService;
+namespace App\Generated\Endpoint\Api\V1\SystemService;
 
 use App\Api\V1\SystemDescribeRequest;
 use App\Api\V1\SystemDescribeResponse;

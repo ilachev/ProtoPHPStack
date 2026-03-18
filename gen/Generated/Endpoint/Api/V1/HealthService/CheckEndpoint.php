@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Generated\Transport\Api\V1\HealthService;
+namespace App\Generated\Endpoint\Api\V1\HealthService;
 
 use App\Api\V1\HealthCheckRequest;
 use App\Api\V1\HealthCheckResponse;

@@ -8,7 +8,7 @@ use PHPUnit\Framework\TestCase;
 use ProtoPhpGen\Descriptor\ProtoFileDescriptor;
 use ProtoPhpGen\Generator\EndpointImplementationValidator;
 use ProtoPhpGen\Plugin\PluginOptions;
-use ProtoPhpGen\Profile\BaseApiTemplateTransportProfile;
+use ProtoPhpGen\Profile\BaseApiTemplateEndpointProfile;
 use ProtoPhpGen\Type\TypeResolver;
 
 final class EndpointImplementationValidatorTest extends TestCase
@@ -122,7 +122,7 @@ final class EndpointImplementationValidatorTest extends TestCase
                 sourceRoot: $this->tempDir,
                 enabledModules: [EndpointImplementationValidator::MODULE_NAME => true],
             ),
-            new BaseApiTemplateTransportProfile(),
+            new BaseApiTemplateEndpointProfile(),
         );
     }
 

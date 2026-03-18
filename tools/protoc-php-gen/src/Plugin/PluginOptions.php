@@ -7,7 +7,7 @@ namespace ProtoPhpGen\Plugin;
 use ProtoPhpGen\Generator\EndpointGenerator;
 use ProtoPhpGen\Generator\EndpointImplementationValidator;
 use ProtoPhpGen\Generator\OperationManifestGenerator;
-use ProtoPhpGen\Profile\BaseApiTemplateTransportProfile;
+use ProtoPhpGen\Profile\BaseApiTemplateEndpointProfile;
 use ProtoPhpGen\Protoc\PluginRequest;
 
 final readonly class PluginOptions
@@ -19,7 +19,7 @@ final readonly class PluginOptions
         private string $namespace = 'App\Gen',
         private string $outputDir = 'gen',
         private string $sourceRoot = 'src',
-        private string $transportProfile = BaseApiTemplateTransportProfile::NAME,
+        private string $endpointProfile = BaseApiTemplateEndpointProfile::NAME,
         private array $enabledModules = [],
     ) {}
 
@@ -48,7 +48,7 @@ final readonly class PluginOptions
             namespace: $request->getParameter('namespace', 'App\Gen'),
             outputDir: $request->getParameter('output_dir', 'gen'),
             sourceRoot: $request->getParameter('source_root', 'src'),
-            transportProfile: $request->getParameter('transport_profile', BaseApiTemplateTransportProfile::NAME),
+            endpointProfile: $request->getParameter('endpoint_profile', BaseApiTemplateEndpointProfile::NAME),
             enabledModules: $enabledModules,
         );
     }
@@ -68,9 +68,9 @@ final readonly class PluginOptions
         return $this->sourceRoot;
     }
 
-    public function getTransportProfile(): string
+    public function getEndpointProfile(): string
     {
-        return $this->transportProfile;
+        return $this->endpointProfile;
     }
 
     public function isModuleEnabled(string $moduleName): bool

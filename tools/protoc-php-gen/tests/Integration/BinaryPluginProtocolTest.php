@@ -16,7 +16,7 @@ final class BinaryPluginProtocolTest extends TestCase
     {
         $request = PluginRequest::fromStdin(
             $this->buildCodeGeneratorRequest(
-                parameter: 'namespace=App\\Generated\\Transport,output_dir=gen,generate_endpoints=true,generate_operation_manifest=true',
+                parameter: 'namespace=App\\Generated\\Endpoint,output_dir=gen,generate_endpoints=true,generate_operation_manifest=true',
                 filesToGenerate: ['app/v1/health.proto'],
                 protoFiles: [
                     $this->buildFileDescriptorProto(
@@ -53,11 +53,11 @@ final class BinaryPluginProtocolTest extends TestCase
         self::assertNull($decodedResponse['error']);
         self::assertCount(3, $decodedResponse['files']);
         self::assertSame(
-            'gen/Generated/Transport/Api/V1/HealthService/CheckEndpoint.php',
+            'gen/Generated/Endpoint/Api/V1/HealthService/CheckEndpoint.php',
             $decodedResponse['files'][0]['name'],
         );
         self::assertSame(
-            'gen/Generated/Transport/Api/V1/HealthService/CheckHttpHandler.php',
+            'gen/Generated/Endpoint/Api/V1/HealthService/CheckHttpHandler.php',
             $decodedResponse['files'][1]['name'],
         );
         self::assertSame(

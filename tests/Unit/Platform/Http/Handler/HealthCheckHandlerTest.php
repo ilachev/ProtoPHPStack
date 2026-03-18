@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Platform\Http\Handler;
 
-use App\Generated\Transport\Api\V1\HealthService\CheckHttpHandler;
+use App\Generated\Endpoint\Api\V1\HealthService\CheckHttpHandler;
 use App\Platform\Http\Endpoint\Api\V1\HealthService\CheckEndpoint;
 use App\Platform\Http\JsonResponse;
 use Nyholm\Psr7\ServerRequest;

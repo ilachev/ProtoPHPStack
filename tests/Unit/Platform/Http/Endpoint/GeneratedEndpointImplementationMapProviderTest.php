@@ -56,8 +56,8 @@ final class GeneratedEndpointImplementationMapProviderTest extends TestCase
                 'HealthService.Check',
                 'App\Api\V1\HealthCheckRequest',
                 'App\Api\V1\HealthCheckResponse',
-                'App\Generated\Transport\Api\V1\HealthService\CheckHttpHandler',
-                'App\Generated\Transport\Api\V1\HealthService\CheckEndpoint',
+                'App\Generated\Endpoint\Api\V1\HealthService\CheckHttpHandler',
+                'App\Generated\Endpoint\Api\V1\HealthService\CheckEndpoint',
                 'App\Platform\Http\Endpoint\Api\V1\HealthService\CheckEndpoint',
                 'GET',
                 '/api/v1/health',
@@ -72,8 +72,8 @@ final class GeneratedEndpointImplementationMapProviderTest extends TestCase
                 'SystemService.Describe',
                 'App\Api\V1\SystemDescribeRequest',
                 'App\Api\V1\SystemDescribeResponse',
-                'App\Generated\Transport\Api\V1\SystemService\DescribeHttpHandler',
-                'App\Generated\Transport\Api\V1\SystemService\DescribeEndpoint',
+                'App\Generated\Endpoint\Api\V1\SystemService\DescribeHttpHandler',
+                'App\Generated\Endpoint\Api\V1\SystemService\DescribeEndpoint',
                 'App\Platform\Http\Endpoint\Api\V1\SystemService\DescribeEndpoint',
                 'POST',
                 '/api/v1/system/describe',
@@ -84,8 +84,8 @@ final class GeneratedEndpointImplementationMapProviderTest extends TestCase
 
         self::assertSame(
             [
-                'App\Generated\Transport\Api\V1\HealthService\CheckEndpoint' => 'App\Platform\Http\Endpoint\Api\V1\HealthService\CheckEndpoint',
-                'App\Generated\Transport\Api\V1\SystemService\DescribeEndpoint' => 'App\Platform\Http\Endpoint\Api\V1\SystemService\DescribeEndpoint',
+                'App\Generated\Endpoint\Api\V1\HealthService\CheckEndpoint' => 'App\Platform\Http\Endpoint\Api\V1\HealthService\CheckEndpoint',
+                'App\Generated\Endpoint\Api\V1\SystemService\DescribeEndpoint' => 'App\Platform\Http\Endpoint\Api\V1\SystemService\DescribeEndpoint',
             ],
             $provider->getImplementations(),
         );

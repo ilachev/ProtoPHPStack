@@ -51,7 +51,7 @@
 
 Generated endpoint code:
 
-- `gen/Generated/Transport/...`
+- `gen/Generated/Endpoint/...`
 - `gen/Generated/OperationManifest/...`
 
 Handwritten runtime implementation:

@@ -9,7 +9,7 @@ use ProtoPhpGen\Generator\EndpointImplementationValidator;
 use ProtoPhpGen\Generator\GeneratorRegistry;
 use ProtoPhpGen\Generator\OperationManifestGenerator;
 use ProtoPhpGen\Plugin\PluginOptions;
-use ProtoPhpGen\Profile\TransportProfileRegistry;
+use ProtoPhpGen\Profile\EndpointProfileRegistry;
 use ProtoPhpGen\Protoc\PluginRequest;
 use ProtoPhpGen\Protoc\PluginResponse;
 use ProtoPhpGen\Protoc\ProtocPlugin;
@@ -27,12 +27,12 @@ final readonly class PhpGeneratorPlugin extends ProtocPlugin
             $this->logDebug('Parameters: ' . json_encode($request->getParameters()));
 
             $options = PluginOptions::fromRequest($request);
-            $transportProfile = (new TransportProfileRegistry())->get($options->getTransportProfile());
+            $endpointProfile = (new EndpointProfileRegistry())->get($options->getEndpointProfile());
             $registry = new GeneratorRegistry(
                 [
-                    new EndpointGenerator($options, $transportProfile),
-                    new EndpointImplementationValidator($options, $transportProfile),
-                    new OperationManifestGenerator($options, $transportProfile),
+                    new EndpointGenerator($options, $endpointProfile),
+                    new EndpointImplementationValidator($options, $endpointProfile),
+                    new OperationManifestGenerator($options, $endpointProfile),
                 ],
                 $options,
             );

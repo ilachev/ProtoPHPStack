@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Platform\Http\Endpoint;
 
-use App\Generated\Transport\Api\V1\HealthService\CheckEndpoint;
+use App\Generated\Endpoint\Api\V1\HealthService\CheckEndpoint;
 use App\Platform\Http\Endpoint\EndpointImplementationResolver;
 use App\Platform\Http\Endpoint\GeneratedEndpointImplementationMapProvider;
 use App\Platform\Http\GeneratedOperationManifestProvider;

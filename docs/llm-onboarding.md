@@ -62,7 +62,7 @@ Reusable blocks:
 ## Какие generated артефакты считать основными
 
 - `protos/gen/*` — основной protobuf SDK и metadata
-- `gen/Generated/Transport/*` — generated endpoint contracts и handlers
+- `gen/Generated/Endpoint/*` — generated endpoint contracts и handlers
 - `gen/Generated/OperationManifest/*` — generated operation metadata for each RPC
 - legacy `gen/Infrastructure/Hydrator/*` больше не является валидным generated output
 

@@ -6,7 +6,7 @@ namespace ProtoPhpGen\Generator;
 
 use ProtoPhpGen\Descriptor\ProtoFileDescriptor;
 use ProtoPhpGen\Plugin\PluginOptions;
-use ProtoPhpGen\Profile\TransportProfile;
+use ProtoPhpGen\Profile\EndpointProfile;
 use ProtoPhpGen\Type\TypeResolver;
 
 final readonly class EndpointImplementationValidator implements CodeGeneratorModule
@@ -15,7 +15,7 @@ final readonly class EndpointImplementationValidator implements CodeGeneratorMod
 
     public function __construct(
         private PluginOptions $options,
-        private TransportProfile $transportProfile,
+        private EndpointProfile $endpointProfile,
     ) {}
 
     public function getName(): string
@@ -50,12 +50,12 @@ final readonly class EndpointImplementationValidator implements CodeGeneratorMod
                     continue;
                 }
 
-                $expectedClass = $this->transportProfile->buildEndpointImplementationClass(
+                $expectedClass = $this->endpointProfile->buildEndpointImplementationClass(
                     $fileNamespace,
                     $serviceName,
                     $methodName,
                 );
-                $expectedPath = $this->transportProfile->buildEndpointImplementationPath(
+                $expectedPath = $this->endpointProfile->buildEndpointImplementationPath(
                     $this->options->getSourceRoot(),
                     $fileNamespace,
                     $serviceName,
@@ -75,7 +75,7 @@ final readonly class EndpointImplementationValidator implements CodeGeneratorMod
                     );
                 }
 
-                $expectedInterface = $this->transportProfile->buildServiceNamespace(
+                $expectedInterface = $this->endpointProfile->buildServiceNamespace(
                     $this->options->getNamespace(),
                     $fileNamespace,
                     $serviceName,

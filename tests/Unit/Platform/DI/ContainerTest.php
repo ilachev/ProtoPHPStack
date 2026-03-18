@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Platform\DI;
 
-use App\Generated\Transport\Api\V1\HealthService\CheckEndpoint;
+use App\Generated\Endpoint\Api\V1\HealthService\CheckEndpoint;
 use App\Platform\DI\Container;
 use App\Platform\DI\ContainerException;
 use App\Platform\DI\DIContainer;

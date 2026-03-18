@@ -33,7 +33,7 @@ final class GeneratedEndpointImplementationConventionTest extends TestCase
      */
     private function findGeneratedEndpointInterfaces(): array
     {
-        $directory = \dirname(__DIR__, 5) . '/gen/Generated/Transport';
+        $directory = \dirname(__DIR__, 5) . '/gen/Generated/Endpoint';
         $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($directory));
         $interfaces = [];
 
@@ -53,7 +53,7 @@ final class GeneratedEndpointImplementationConventionTest extends TestCase
 
             $relativePath = substr($path, \strlen($directory) + 1);
             /** @var class-string $className */
-            $className = 'App\Generated\Transport\\' . str_replace('/', '\\', substr($relativePath, 0, -4));
+            $className = 'App\Generated\Endpoint\\' . str_replace('/', '\\', substr($relativePath, 0, -4));
             $interfaces[] = $className;
         }
 

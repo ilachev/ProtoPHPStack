@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace ProtoPhpGen\Profile;
 
-final readonly class TransportProfileRegistry
+final readonly class EndpointProfileRegistry
 {
     /**
-     * @param list<TransportProfile> $profiles
+     * @param list<EndpointProfile> $profiles
      */
     public function __construct(
         private array $profiles = [
-            new BaseApiTemplateTransportProfile(),
+            new BaseApiTemplateEndpointProfile(),
         ],
     ) {}
 
-    public function get(string $name): TransportProfile
+    public function get(string $name): EndpointProfile
     {
         foreach ($this->profiles as $profile) {
             if ($profile->getName() === $name) {
@@ -23,6 +23,6 @@ final readonly class TransportProfileRegistry
             }
         }
 
-        throw new \InvalidArgumentException("Unknown transport profile: {$name}");
+        throw new \InvalidArgumentException("Unknown endpoint profile: {$name}");
     }
 }
