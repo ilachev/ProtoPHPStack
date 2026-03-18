@@ -28,6 +28,20 @@ Future generators are allowed only if they:
 - have dedicated tests;
 - do not leak business or persistence policy into the codegen layer.
 
+## Technical roadmap
+
+Before adding new generator modules, the tool should be stabilized internally in this order:
+
+1. modular plugin core (`PluginOptions`, `CodeGeneratorModule`, `GeneratorRegistry`);
+2. typed descriptor model instead of raw array-driven flow;
+3. dedicated type resolver for fully-qualified protobuf types;
+4. runtime profile abstraction for transport generation;
+5. stronger end-to-end and fixture-based tests.
+
+The detailed product-level rationale is documented in:
+
+- `docs/design/protoc-php-gen-product.md`
+
 ## Usage
 
 ```bash
