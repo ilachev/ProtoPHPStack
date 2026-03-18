@@ -20,7 +20,6 @@ final class CacheLimitTest extends TestCase
         $cache = new LimitedReflectionCache();
         $reflection = new \ReflectionClass(LimitedReflectionCache::class);
         $property = $reflection->getProperty('maxCacheSize');
-        $property->setAccessible(true);
         $maxCacheSize = $property->getValue($cache);
 
         self::assertIsInt($maxCacheSize);
@@ -98,10 +97,8 @@ final class CacheLimitTest extends TestCase
         // Access private fields and methods for targeted assertions.
         $reflection = new \ReflectionClass(LimitedReflectionCache::class);
         $protobufCacheProperty = $reflection->getProperty('protobufCache');
-        $protobufCacheProperty->setAccessible(true);
 
         $manageCacheMethod = $reflection->getMethod('manageCache');
-        $manageCacheMethod->setAccessible(true);
 
         // Read the initial cache state.
         /** @var array<string, bool> $cacheData */
@@ -144,7 +141,6 @@ final class CacheLimitTest extends TestCase
         // Access the internal reflection cache.
         $reflection = new \ReflectionClass(LimitedReflectionCache::class);
         $reflectionCacheProperty = $reflection->getProperty('reflectionCache');
-        $reflectionCacheProperty->setAccessible(true);
 
         // Use real classes to populate the cache.
         $classesToTest = [
@@ -191,7 +187,6 @@ final class CacheLimitTest extends TestCase
 
         $reflection = new \ReflectionClass(LimitedReflectionCache::class);
         $protobufCacheProperty = $reflection->getProperty('protobufCache');
-        $protobufCacheProperty->setAccessible(true);
 
         /** @var array<string, bool> $cacheData */
         $cacheData = $protobufCacheProperty->getValue($cache);

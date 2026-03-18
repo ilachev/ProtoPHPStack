@@ -13,8 +13,16 @@ final readonly class DescribeEndpoint implements \App\Generated\Endpoint\Api\V1\
     public function handle(SystemDescribeRequest $request, ServerRequestInterface $httpRequest): SystemDescribeResponse
     {
         $capabilities = [];
+        $requestedCapabilities = $request->getRequestedCapabilities();
+        if ($requestedCapabilities instanceof \Traversable) {
+            $requestedCapabilities = iterator_to_array($requestedCapabilities, false);
+        }
 
-        foreach ($request->getRequestedCapabilities() as $capability) {
+        if (!\is_array($requestedCapabilities)) {
+            $requestedCapabilities = [];
+        }
+
+        foreach ($requestedCapabilities as $capability) {
             if (\is_string($capability) && $capability !== '') {
                 $capabilities[] = $capability;
             }

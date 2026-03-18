@@ -51,12 +51,10 @@ final class CachedSessionRepositoryTest extends TestCase
 
         // Replace the backend storage with the test double.
         $reflection = new \ReflectionProperty($this->cacheService, 'storage');
-        $reflection->setAccessible(true);
         $reflection->setValue($this->cacheService, $this->storage);
 
         // Force the cache service into available mode.
         $reflection = new \ReflectionProperty($this->cacheService, 'available');
-        $reflection->setAccessible(true);
         $reflection->setValue($this->cacheService, true);
 
         // Create repository under test.
