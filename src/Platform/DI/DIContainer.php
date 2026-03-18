@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace App\Platform\DI;
 
+use App\Platform\Http\Endpoint\EndpointImplementationResolver;
+
 /**
  * @template-covariant T of object
  * @implements Container<T>
  */
 final class DIContainer implements Container
 {
-    private const GENERATED_ENDPOINT_NAMESPACE_PREFIX = 'App\Generated\Transport\\';
-    private const HANDWRITTEN_ENDPOINT_NAMESPACE_PREFIX = 'App\Platform\Http\Endpoint\\';
-
     /**
      * @var array<class-string, object>
      */
@@ -32,6 +31,13 @@ final class DIContainer implements Container
      * @var array<class-string, bool>
      */
     private array $resolving = [];
+
+    private EndpointImplementationResolver $endpointImplementationResolver;
+
+    public function __construct()
+    {
+        $this->endpointImplementationResolver = new EndpointImplementationResolver();
+    }
 
     /**
      * @template U of object
@@ -120,7 +126,7 @@ final class DIContainer implements Container
             return true;
         }
 
-        if (interface_exists($id) && $this->resolveGeneratedEndpointImplementation($id) !== null) {
+        if (interface_exists($id) && $this->endpointImplementationResolver->resolve($id) !== null) {
             return true;
         }
 
@@ -144,7 +150,7 @@ final class DIContainer implements Container
 
         // Handle interface resolution
         if (interface_exists($concrete)) {
-            $resolvedInterface = $this->aliases[$concrete] ?? $this->resolveGeneratedEndpointImplementation($concrete);
+            $resolvedInterface = $this->aliases[$concrete] ?? $this->endpointImplementationResolver->resolve($concrete);
             if ($resolvedInterface === null) {
                 throw new ContainerException("No binding found for interface {$concrete}");
             }
@@ -234,30 +240,5 @@ final class DIContainer implements Container
         }
 
         return $dependencies;
-    }
-
-    /**
-     * @template U of object
-     * @param class-string<U> $interface
-     * @return class-string<U>|null
-     */
-    private function resolveGeneratedEndpointImplementation(string $interface): ?string
-    {
-        if (!str_starts_with($interface, self::GENERATED_ENDPOINT_NAMESPACE_PREFIX)) {
-            return null;
-        }
-
-        $relativeClass = substr($interface, \strlen(self::GENERATED_ENDPOINT_NAMESPACE_PREFIX));
-        if ($relativeClass === '') {
-            return null;
-        }
-
-        $implementation = self::HANDWRITTEN_ENDPOINT_NAMESPACE_PREFIX . $relativeClass;
-        if (!class_exists($implementation)) {
-            return null;
-        }
-
-        /** @var class-string<U> $implementation */
-        return $implementation;
     }
 }
