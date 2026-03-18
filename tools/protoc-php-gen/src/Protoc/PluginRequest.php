@@ -103,8 +103,7 @@ final class PluginRequest
      */
     public function hasParameter(string $key): bool
     {
-        $options = [];
-        parse_str($this->parameter, $options);
+        $options = $this->parseParameters();
 
         return isset($options[$key]);
     }
@@ -118,8 +117,7 @@ final class PluginRequest
      */
     public function getParameter(string $key, string $defaultValue = ''): string
     {
-        $options = [];
-        parse_str($this->parameter, $options);
+        $options = $this->parseParameters();
 
         if (!isset($options[$key])) {
             return $defaultValue;
@@ -141,12 +139,8 @@ final class PluginRequest
      */
     public function getParameters(): array
     {
-        $options = [];
-        parse_str($this->parameter, $options);
-
-        // Convert all values to strings
         $result = [];
-        foreach ($options as $key => $value) {
+        foreach ($this->parseParameters() as $key => $value) {
             // Make sure the key is a string
             $stringKey = (string) $key;
 
@@ -158,6 +152,43 @@ final class PluginRequest
         }
 
         return $result;
+    }
+
+    /**
+     * @return array<string, string|array<int, string>>
+     */
+    private function parseParameters(): array
+    {
+        if ($this->parameter === '') {
+            return [];
+        }
+
+        $options = [];
+
+        if (str_contains($this->parameter, '&')) {
+            parse_str($this->parameter, $options);
+
+            return $options;
+        }
+
+        foreach (explode(',', $this->parameter) as $chunk) {
+            if ($chunk === '') {
+                continue;
+            }
+
+            $separatorPosition = strpos($chunk, '=');
+            if ($separatorPosition === false) {
+                $options[$chunk] = 'true';
+
+                continue;
+            }
+
+            $key = substr($chunk, 0, $separatorPosition);
+            $value = substr($chunk, $separatorPosition + 1);
+            $options[$key] = $value;
+        }
+
+        return $options;
     }
 
     /**

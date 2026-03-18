@@ -102,18 +102,33 @@ tasks:
     deps: [ var, install, proto:gen:sdk ]
     cmds:
       - "{{.PHP}} bin/generate-routes.php"
-      
+
+  proto:gen:transport:
+    desc: Generate server-side transport contracts from protobuf services
+    deps: [ tools:proto:setup, install ]
+    cmds:
+      - rm -rf gen/Generated/Transport
+      - >
+        protoc -I={{.PROTO_DIR}}
+        --plugin=protoc-gen-php-transport=tools/protoc-php-gen/bin/protoc-php-gen.php
+        --php-transport_out=namespace=App\\Generated\\Transport,output_dir=gen,generate_hydrators=false,generate_proto_hydrators=false,generate_transport_contracts=true:.
+        {{.PROTO_DIR}}/app/v1/*.proto
+        {{.PROTO_DIR}}/examples/v1/*.proto
 
   proto:gen:mappers:
     desc: Generate mappers from PHP attributes in domain classes
-    deps: [ tools:proto:setup ]
+    deps: [ tools:proto:setup, install, proto:gen:transport ]
     cmds:
       - mkdir -p gen/ProtoMapper
       - "{{.PHP}} tools/protoc-php-gen/bin/generate-mappers.php"
 
   proto:gen:all:
     desc: Generate all artifacts from proto files and attributes
-    deps: [ proto:gen:sdk, proto:gen:docs, proto:gen:routes, proto:gen:mappers ]
+    cmds:
+      - task: proto:gen:sdk
+      - task: proto:gen:mappers
+      - task: proto:gen:docs
+      - task: proto:gen:routes
 
   tools:proto:setup:
     desc: Setup protoc-php-gen plugin

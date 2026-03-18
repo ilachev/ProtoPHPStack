@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Platform\DI\ServiceProviders;
 
+use App\Generated\Transport\Api\V1\HealthService\CheckEndpoint;
 use App\Platform\DataMapping\DataTransferObjectMapper;
 use App\Platform\DI\Container;
 use App\Platform\DI\ServiceProvider;
+use App\Platform\Http\Endpoint\PlatformHealthCheckEndpoint;
 use App\Platform\Http\JsonResponse;
 use App\Platform\Hydration\DefaultJsonFieldAdapter;
 use App\Platform\Hydration\Hydrator;
@@ -19,6 +21,8 @@ final readonly class PlatformSupportServiceProvider implements ServiceProvider
 {
     public function register(Container $container): void
     {
+        $container->bind(CheckEndpoint::class, PlatformHealthCheckEndpoint::class);
+
         // JsonResponse
         $container->bind(JsonResponse::class, JsonResponse::class);
 

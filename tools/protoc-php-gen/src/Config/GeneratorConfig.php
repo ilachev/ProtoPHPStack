@@ -18,6 +18,7 @@ final class GeneratorConfig
      * @param string|null $protoNamespace Namespace for proto messages
      * @param bool $generateHydrators Whether to generate standard hydrators
      * @param bool $generateProtoHydrators Whether to generate proto hydrators
+     * @param bool $generateTransportContracts Whether to generate transport contracts
      * @param bool $standaloneMode Whether to generate code without external dependencies
      * @param array<string, string> $typeMapping Mapping between proto types and PHP types
      * @param string|null $outputPattern Pattern for output file paths
@@ -31,6 +32,7 @@ final class GeneratorConfig
         private ?string $protoNamespace = null,
         private bool $generateHydrators = true,
         private bool $generateProtoHydrators = false,
+        private bool $generateTransportContracts = false,
         private bool $standaloneMode = false,
         private array $typeMapping = [],
         private ?string $outputPattern = null,
@@ -128,6 +130,18 @@ final class GeneratorConfig
     public function setGenerateProtoHydrators(bool $generateProtoHydrators): self
     {
         $this->generateProtoHydrators = $generateProtoHydrators;
+
+        return $this;
+    }
+
+    public function shouldGenerateTransportContracts(): bool
+    {
+        return $this->generateTransportContracts;
+    }
+
+    public function setGenerateTransportContracts(bool $generateTransportContracts): self
+    {
+        $this->generateTransportContracts = $generateTransportContracts;
 
         return $this;
     }

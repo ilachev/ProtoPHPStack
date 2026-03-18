@@ -86,8 +86,7 @@ final class PluginResponse
      */
     public function serialize(): string
     {
-        // In debug/development mode, return JSON instead of binary data
-        if (getenv('PROTOC_PHP_GEN_DEBUG') === 'true') {
+        if (getenv('PROTOC_PHP_GEN_DEBUG_JSON') === 'true') {
             $jsonResult = json_encode([
                 'error' => $this->error,
                 'files' => array_map(static fn(PluginResponseFile $file) => [

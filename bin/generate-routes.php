@@ -5,7 +5,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use App\Platform\Http\Handler\HealthCheckHandler;
+use App\Generated\Transport\Api\V1\HealthService\CheckHttpHandler;
 use App\Platform\Routing\Generator\ProtoRouteProvider;
 use App\Platform\Routing\Generator\RoutesWriter;
 
@@ -15,7 +15,7 @@ $outputFile = __DIR__ . '/../config/routes.php';
 
 // Core template surface keeps explicit mappings only for runtime-native handlers.
 $handlerMapping = [
-    'HealthService.Check' => HealthCheckHandler::class,
+    'HealthService.Check' => CheckHttpHandler::class,
 ];
 
 // Only app/v1 participates in the default core route surface.

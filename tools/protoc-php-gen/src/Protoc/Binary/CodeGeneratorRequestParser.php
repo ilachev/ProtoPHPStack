@@ -132,7 +132,18 @@ final class CodeGeneratorRequestParser
                     }
                     break;
 
-                case 7: // options
+                case 6: // service
+                    if ($wireType === self::WIRE_TYPE_LENGTH_DELIMITED) {
+                        if (!isset($protoFile['service'])) {
+                            $protoFile['service'] = [];
+                        }
+                        $protoFile['service'][] = $this->parseService($reader->readMessage());
+                    } else {
+                        $reader->skipField($wireType);
+                    }
+                    break;
+
+                case 8: // options
                     if ($wireType === self::WIRE_TYPE_LENGTH_DELIMITED) {
                         $protoFile['options'] = $this->parseFileOptions($reader->readMessage());
                     } else {
@@ -340,6 +351,91 @@ final class CodeGeneratorRequestParser
     }
 
     /**
+     * @return array<string, mixed>
+     */
+    private function parseService(string $data): array
+    {
+        $reader = new ProtobufReader($data);
+        $service = [];
+
+        while ($reader->hasMore()) {
+            [$fieldNumber, $wireType] = $reader->readTag();
+
+            switch ($fieldNumber) {
+                case 1: // name
+                    if ($wireType === self::WIRE_TYPE_LENGTH_DELIMITED) {
+                        $service['name'] = $reader->readString();
+                    } else {
+                        $reader->skipField($wireType);
+                    }
+                    break;
+
+                case 2: // method
+                    if ($wireType === self::WIRE_TYPE_LENGTH_DELIMITED) {
+                        if (!isset($service['method'])) {
+                            $service['method'] = [];
+                        }
+                        $service['method'][] = $this->parseMethod($reader->readMessage());
+                    } else {
+                        $reader->skipField($wireType);
+                    }
+                    break;
+
+                default:
+                    $reader->skipField($wireType);
+                    break;
+            }
+        }
+
+        return $service;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function parseMethod(string $data): array
+    {
+        $reader = new ProtobufReader($data);
+        $method = [];
+
+        while ($reader->hasMore()) {
+            [$fieldNumber, $wireType] = $reader->readTag();
+
+            switch ($fieldNumber) {
+                case 1: // name
+                    if ($wireType === self::WIRE_TYPE_LENGTH_DELIMITED) {
+                        $method['name'] = $reader->readString();
+                    } else {
+                        $reader->skipField($wireType);
+                    }
+                    break;
+
+                case 2: // input_type
+                    if ($wireType === self::WIRE_TYPE_LENGTH_DELIMITED) {
+                        $method['input_type'] = $reader->readString();
+                    } else {
+                        $reader->skipField($wireType);
+                    }
+                    break;
+
+                case 3: // output_type
+                    if ($wireType === self::WIRE_TYPE_LENGTH_DELIMITED) {
+                        $method['output_type'] = $reader->readString();
+                    } else {
+                        $reader->skipField($wireType);
+                    }
+                    break;
+
+                default:
+                    $reader->skipField($wireType);
+                    break;
+            }
+        }
+
+        return $method;
+    }
+
+    /**
      * Парсит бинарные данные EnumValueDescriptorProto (значения перечисления).
      *
      * @param string $data Бинарные данные
@@ -394,15 +490,7 @@ final class CodeGeneratorRequestParser
             [$fieldNumber, $wireType] = $reader->readTag();
 
             switch ($fieldNumber) {
-                case 1: // php_namespace
-                    if ($wireType === self::WIRE_TYPE_LENGTH_DELIMITED) {
-                        $options['php_namespace'] = $reader->readString();
-                    } else {
-                        $reader->skipField($wireType);
-                    }
-                    break;
-
-                case 8: // php_class_prefix
+                case 40: // php_class_prefix
                     if ($wireType === self::WIRE_TYPE_LENGTH_DELIMITED) {
                         $options['php_class_prefix'] = $reader->readString();
                     } else {
@@ -410,7 +498,15 @@ final class CodeGeneratorRequestParser
                     }
                     break;
 
-                case 40: // php_metadata_namespace
+                case 41: // php_namespace
+                    if ($wireType === self::WIRE_TYPE_LENGTH_DELIMITED) {
+                        $options['php_namespace'] = $reader->readString();
+                    } else {
+                        $reader->skipField($wireType);
+                    }
+                    break;
+
+                case 44: // php_metadata_namespace
                     if ($wireType === self::WIRE_TYPE_LENGTH_DELIMITED) {
                         $options['php_metadata_namespace'] = $reader->readString();
                     } else {

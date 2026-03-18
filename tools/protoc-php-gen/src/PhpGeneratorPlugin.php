@@ -6,6 +6,7 @@ namespace ProtoPhpGen;
 
 use ProtoPhpGen\Config\GeneratorConfig;
 use ProtoPhpGen\Generator\CodeGeneratorFactory;
+use ProtoPhpGen\Generator\TransportContractGenerator;
 use ProtoPhpGen\Model\EntityDescriptor;
 use ProtoPhpGen\Model\PropertyDescriptor;
 use ProtoPhpGen\Protoc\PluginRequest;
@@ -67,6 +68,7 @@ final readonly class PhpGeneratorPlugin extends ProtocPlugin
 
             // Get proto files
             $protoFiles = $request->getProtoFiles();
+            $typeMap = $this->buildTypeMap($protoFiles);
 
             // Process each proto file for generation
             foreach ($protoFiles as $fileName => $protoFile) {
@@ -93,6 +95,16 @@ final readonly class PhpGeneratorPlugin extends ProtocPlugin
 
                 // Get all message types from the file
                 $messageTypes = $protoFile['message_type'] ?? [];
+
+                if ($config->shouldGenerateTransportContracts()) {
+                    $transportGenerator = new TransportContractGenerator($config);
+                    $files = $transportGenerator->generateForProtoFile($protoFile, $typeMap);
+
+                    foreach ($files as $file) {
+                        $response->addFile($file->getName(), $file->getContent());
+                        $this->logDebug("Generated file: {$file->getName()}");
+                    }
+                }
 
                 // Create entity descriptors from message types
                 foreach ($messageTypes as $messageType) {
@@ -170,6 +182,11 @@ final readonly class PhpGeneratorPlugin extends ProtocPlugin
         if ($request->hasParameter('generate_proto_hydrators')) {
             $value = $request->getParameter('generate_proto_hydrators');
             $config->setGenerateProtoHydrators($value === 'true' || $value === '1');
+        }
+
+        if ($request->hasParameter('generate_transport_contracts')) {
+            $value = $request->getParameter('generate_transport_contracts');
+            $config->setGenerateTransportContracts($value === 'true' || $value === '1');
         }
 
         if ($request->hasParameter('standalone_mode')) {
@@ -304,6 +321,72 @@ final readonly class PhpGeneratorPlugin extends ProtocPlugin
             isJson: $isJson,
             ignore: $ignore,
         );
+    }
+
+    /**
+     * @param array<string, mixed> $protoFiles
+     * @return array<string, class-string>
+     */
+    private function buildTypeMap(array $protoFiles): array
+    {
+        $typeMap = [];
+
+        foreach ($protoFiles as $protoFile) {
+            if (!\is_array($protoFile)) {
+                continue;
+            }
+
+            $namespace = $this->resolveFileNamespace($protoFile);
+            if ($namespace === '') {
+                continue;
+            }
+
+            $package = $protoFile['package'] ?? null;
+            if (!\is_string($package) || $package === '') {
+                continue;
+            }
+
+            $messageTypes = $protoFile['message_type'] ?? [];
+            if (!\is_array($messageTypes)) {
+                continue;
+            }
+
+            foreach ($messageTypes as $messageType) {
+                if (!\is_array($messageType)) {
+                    continue;
+                }
+
+                $messageName = $messageType['name'] ?? null;
+                if (!\is_string($messageName) || $messageName === '') {
+                    continue;
+                }
+
+                $typeMap[".{$package}.{$messageName}"] = "{$namespace}\\{$messageName}";
+            }
+        }
+
+        return $typeMap;
+    }
+
+    /**
+     * @param array<string, mixed> $protoFile
+     */
+    private function resolveFileNamespace(array $protoFile): string
+    {
+        $options = $protoFile['options'] ?? [];
+        if (\is_array($options)) {
+            $phpNamespace = $options['php_namespace'] ?? null;
+            if (\is_string($phpNamespace) && $phpNamespace !== '') {
+                return $phpNamespace;
+            }
+        }
+
+        $package = $protoFile['package'] ?? null;
+        if (!\is_string($package) || $package === '') {
+            return '';
+        }
+
+        return $this->packageToNamespace($package);
     }
 
     /**
