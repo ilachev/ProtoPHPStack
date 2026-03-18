@@ -77,7 +77,7 @@
 
 - Роль: преобразование между storage/runtime structures и PHP objects.
 - Обязательность: reusable support block.
-- Что здесь считается core: reflection/codegen hydration support, DTO mapping.
+- Что здесь считается core: reflection-based hydration support, DTO mapping.
 - Зона внимания: не раздувать этот слой абстракциями без явной пользы.
 
 ## Capability blocks

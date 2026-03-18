@@ -150,8 +150,7 @@ task proto:gen:all
 ## Текущие проблемы codegen-потока
 
 - endpoint implementation резолвится по namespace convention, а не проверяется генератором заранее;
-- verify уже проверяет наличие handwritten endpoint implementation для каждого generated `*Endpoint`, но сам generator пока не выдаёт такую ошибку на этапе generation;
-- внутри `tools/protoc-php-gen` ещё остаются legacy mapper/hydrator части, хотя main project path уже transport-only.
+- verify уже проверяет наличие handwritten endpoint implementation для каждого generated `*Endpoint`, но сам generator пока не выдаёт такую ошибку на этапе generation.
 
 ## Что важно сохранить при реструктуризации
 

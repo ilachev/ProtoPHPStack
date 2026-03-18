@@ -94,6 +94,9 @@ final readonly class TransportContractGenerator
         return $files;
     }
 
+    /**
+     * @param array<string, mixed> $protoFile
+     */
     private function resolveFileNamespace(array $protoFile): string
     {
         $options = $protoFile['options'] ?? [];
@@ -135,7 +138,10 @@ final readonly class TransportContractGenerator
             return null;
         }
 
-        return "{$fileNamespace}\\{$shortName}";
+        $resolvedClass = "{$fileNamespace}\\{$shortName}";
+
+        /** @var class-string $resolvedClass */
+        return $resolvedClass;
     }
 
     private function buildServiceNamespace(string $fileNamespace, string $serviceName): string

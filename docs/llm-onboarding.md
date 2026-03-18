@@ -111,7 +111,7 @@ task run
 ## Текущие зоны риска
 
 - storage/integration adapters всё ещё требуют аккуратного упрощения
-- hydration/codegen layer всё ещё сложнее, чем остальная структура проекта
+- hydration/data mapping layer всё ещё чувствителен к усложнению
 - transport generation пока опирается на namespace convention для endpoint implementations
 
 ## Как оценивать изменения

@@ -163,10 +163,27 @@ final class PluginRequest
             return [];
         }
 
+        /** @var array<string, string|array<int, string>> $options */
         $options = [];
 
         if (str_contains($this->parameter, '&')) {
-            parse_str($this->parameter, $options);
+            $parsed = [];
+            parse_str($this->parameter, $parsed);
+
+            foreach ($parsed as $key => $value) {
+                $stringKey = (string) $key;
+
+                if (\is_array($value)) {
+                    $options[$stringKey] = array_map(
+                        static fn(mixed $item): string => (string) $item,
+                        $value,
+                    );
+
+                    continue;
+                }
+
+                $options[$stringKey] = (string) $value;
+            }
 
             return $options;
         }
