@@ -28,6 +28,7 @@
 - `protos/proto/app/v1/*.proto` — core API contracts
 - `taskfile.yaml` — команды разработки
 - `docs/reusable-blocks.md` — каноническая карта reusable-блоков проекта
+- `docs/design/protoc-php-gen-product.md` — целевая модель protobuf codegen-tooling
 
 ## Текущая структура
 
@@ -113,6 +114,7 @@ task run
 - storage/integration adapters всё ещё требуют аккуратного упрощения
 - hydration/data mapping layer всё ещё чувствителен к усложнению
 - transport generation пока опирается на namespace convention для endpoint implementations
+- `protoc-php-gen` сейчас стабилен только в transport-контуре; дальнейшее расширение допустимо только как modular codegen, а не как возврат к старой смешанной генерации
 
 ## Как оценивать изменения
 

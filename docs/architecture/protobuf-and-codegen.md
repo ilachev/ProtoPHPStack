@@ -127,10 +127,12 @@ task proto:gen:all
 
 Это локальный генератор проекта. Он не является временным скриптом; это часть архитектуры toolchain.
 
-Его роль:
+Его текущая production-grade роль:
 
 - генерировать server-side transport contracts из protobuf `service/rpc`;
 - поддерживать protobuf-first HTTP surface без ручного boilerplate в runtime.
+
+При этом инструмент надо понимать шире, чем один текущий generator module: `protoc-php-gen` рассматривается как отдельная modular codegen platform, но основной шаблон сейчас использует только стабильный `transport_contracts` path. Отдельно это зафиксировано в `docs/design/protoc-php-gen-product.md`.
 
 При реструктуризации нельзя просто "спрятать" этот каталог. Нужно решить:
 

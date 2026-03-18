@@ -2,6 +2,8 @@
 
 `protoc-php-gen` is the internal protoc plugin used by this repository to generate server-side transport contracts from protobuf `service/rpc` definitions.
 
+The current production-grade scope is intentionally narrow: transport contracts are the only supported generator module used by the main project path.
+
 ## Current role
 
 The supported project path is transport-oriented:
@@ -11,6 +13,20 @@ The supported project path is transport-oriented:
 - generate HTTP handlers for the runtime adapter.
 
 It is not the canonical path for domain-to-proto mapper generation.
+
+## Product direction
+
+This tool should be treated as a modular PHP code generation platform around protobuf descriptors, not as a one-off script and not as a grab bag of unrelated generators.
+
+Today, only `transport_contracts` is stable and supported.
+
+Future generators are allowed only if they:
+
+- solve a reusable backend problem;
+- have an explicit generation flag;
+- keep a separate output contract;
+- have dedicated tests;
+- do not leak business or persistence policy into the codegen layer.
 
 ## Usage
 

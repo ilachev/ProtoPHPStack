@@ -2,15 +2,17 @@
 
 Этот документ фиксирует правила работы с внутренним генератором `tools/protoc-php-gen`.
 
+Продуктовая модель и целевой scope инструмента отдельно описаны в [protoc-php-gen-product.md](./protoc-php-gen-product.md).
+
 ## Зачем существует генератор
 
-В проекте `protoc-php-gen` нужен не для общего mapper framework, а для одной конкретной задачи:
+В основном project path `protoc-php-gen` сейчас нужен не для общего mapper framework, а для одной конкретной задачи:
 
 - взять protobuf `service/rpc`;
 - сгенерировать transport contracts;
 - сократить ручной HTTP boilerplate в runtime.
 
-Это transport-oriented tool, а не универсальный генератор для внутренних моделей проекта.
+Это transport-oriented generator module, а не универсальный генератор для внутренних моделей проекта.
 
 ## Что считается правильной областью ответственности
 
@@ -76,7 +78,7 @@ Handwritten runtime implementation:
 - generated hydrator runtime;
 - protobuf-driven mapping между внутренними PHP-моделями и domain-структурами.
 
-Если такой код ещё остаётся внутри `tools/protoc-php-gen`, его нужно считать legacy-внутренностями инструмента, а не частью main project path.
+Если такой код ещё когда-нибудь снова появится в тулзе, он не должен попадать в main project path без отдельного generator module, отдельного contract и отдельной поддержки.
 
 ## Критерий хорошего изменения
 
