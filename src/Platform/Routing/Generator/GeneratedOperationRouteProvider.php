@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Platform\Routing\Generator;
 
 use App\Platform\Http\GeneratedOperationManifestProvider;
+use App\Platform\Routing\RouteEntry;
 
 final readonly class GeneratedOperationRouteProvider implements RouteProvider
 {
@@ -18,12 +19,12 @@ final readonly class GeneratedOperationRouteProvider implements RouteProvider
 
         foreach ($this->operationProvider->getOperations() as $operation) {
             foreach ($operation->httpBindings as $binding) {
-                $routes[] = [
-                    'method' => $binding->method,
-                    'path' => $binding->path,
-                    'handler' => $operation->handler,
-                    'operation_id' => $operation->operationId,
-                ];
+                $routes[] = new RouteEntry(
+                    method: $binding->method,
+                    path: $binding->path,
+                    handler: $operation->handler,
+                    operationId: $operation->operationId,
+                );
             }
         }
 

@@ -8,6 +8,7 @@ use App\Platform\Http\Endpoint\GeneratedEndpointImplementationMapProvider;
 use App\Platform\Http\GeneratedOperationManifestProvider;
 use App\Platform\Http\Handler\HandlerInterface;
 use App\Platform\Routing\Generator\GeneratedOperationRouteProvider;
+use App\Platform\Routing\RouteEntry;
 use PHPUnit\Framework\TestCase;
 
 final class GeneratedTransportSurfaceConsistencyTest extends TestCase
@@ -50,13 +51,14 @@ final class GeneratedTransportSurfaceConsistencyTest extends TestCase
             );
 
             foreach ($httpBindings as $binding) {
-                self::assertContains(
-                    [
-                        'method' => $binding->method,
-                        'path' => $binding->path,
-                        'handler' => $handlerClass,
-                    ],
-                    $routesByOperation[$operationId],
+                self::assertTrue(
+                    $this->hasRouteEntry(
+                        $routesByOperation[$operationId],
+                        $binding->method,
+                        $binding->path,
+                        $handlerClass,
+                        $operationId,
+                    ),
                     "Route surface for {$operationId} must contain {$binding->method} {$binding->path}",
                 );
             }
@@ -91,26 +93,46 @@ final class GeneratedTransportSurfaceConsistencyTest extends TestCase
     }
 
     /**
-     * @param array<int|string, array{method: string, path: string, handler: string, operation_id?: string}> $routes
-     * @return array<string, list<array{method: string, path: string, handler: string}>>
+     * @param list<RouteEntry> $routes
+     * @return array<string, list<RouteEntry>>
      */
     private function indexRoutesByOperationId(array $routes): array
     {
         $indexedRoutes = [];
 
         foreach ($routes as $route) {
-            $operationId = $route['operation_id'] ?? null;
-            if (!\is_string($operationId) || $operationId === '') {
+            $operationId = $route->operationId;
+            if ($operationId === null || $operationId === '') {
                 continue;
             }
 
-            $indexedRoutes[$operationId][] = [
-                'method' => $route['method'],
-                'path' => $route['path'],
-                'handler' => $route['handler'],
-            ];
+            $indexedRoutes[$operationId][] = $route;
         }
 
         return $indexedRoutes;
+    }
+
+    /**
+     * @param list<RouteEntry> $routes
+     */
+    private function hasRouteEntry(
+        array $routes,
+        string $method,
+        string $path,
+        string $handler,
+        string $operationId,
+    ): bool {
+        foreach ($routes as $route) {
+            if (
+                $route->method === $method
+                && $route->path === $path
+                && $route->handler === $handler
+                && $route->operationId === $operationId
+            ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -72,14 +72,14 @@ final class Router implements RouterInterface
     }
 
     /**
-     * @param array<array{method: string, path: string, handler: string}> $routes
+     * @param list<RouteEntry> $routes
      */
     private function buildRouteMap(array $routes): void
     {
         foreach ($routes as $route) {
-            $method = $route['method'];
-            $path = $route['path'];
-            $handler = $route['handler'];
+            $method = $route->method;
+            $path = $route->path;
+            $handler = $route->handler;
 
             // Check for parameters in path
             $params = [];

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Platform\Routing;
 
 use App\Platform\Routing\DefaultRouteCollector;
+use App\Platform\Routing\RouteEntry;
 use PHPUnit\Framework\TestCase;
 
 final class DefaultRouteCollectorTest extends TestCase
@@ -17,9 +18,10 @@ final class DefaultRouteCollectorTest extends TestCase
         $routes = $collector->getRoutes();
 
         self::assertCount(1, $routes);
-        self::assertEquals('GET', $routes[0]['method']);
-        self::assertEquals('/test', $routes[0]['path']);
-        self::assertEquals('TestHandler', $routes[0]['handler']);
+        self::assertInstanceOf(RouteEntry::class, $routes[0]);
+        self::assertEquals('GET', $routes[0]->method);
+        self::assertEquals('/test', $routes[0]->path);
+        self::assertEquals('TestHandler', $routes[0]->handler);
     }
 
     public function testAddMultipleRoutes(): void
@@ -33,19 +35,16 @@ final class DefaultRouteCollectorTest extends TestCase
 
         self::assertCount(3, $routes);
 
-        // First route
-        self::assertEquals('GET', $routes[0]['method']);
-        self::assertEquals('/test1', $routes[0]['path']);
-        self::assertEquals('Handler1', $routes[0]['handler']);
+        self::assertEquals('GET', $routes[0]->method);
+        self::assertEquals('/test1', $routes[0]->path);
+        self::assertEquals('Handler1', $routes[0]->handler);
 
-        // Second route
-        self::assertEquals('POST', $routes[1]['method']);
-        self::assertEquals('/test2', $routes[1]['path']);
-        self::assertEquals('Handler2', $routes[1]['handler']);
+        self::assertEquals('POST', $routes[1]->method);
+        self::assertEquals('/test2', $routes[1]->path);
+        self::assertEquals('Handler2', $routes[1]->handler);
 
-        // Third route
-        self::assertEquals('PUT', $routes[2]['method']);
-        self::assertEquals('/test3', $routes[2]['path']);
-        self::assertEquals('Handler3', $routes[2]['handler']);
+        self::assertEquals('PUT', $routes[2]->method);
+        self::assertEquals('/test3', $routes[2]->path);
+        self::assertEquals('Handler3', $routes[2]->handler);
     }
 }

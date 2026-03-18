@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Platform\Routing\Generator;
 
+use App\Platform\Routing\RouteEntry;
+
 final readonly class RoutesWriter
 {
     /**
@@ -24,12 +26,7 @@ final readonly class RoutesWriter
     }
 
     /**
-     * @param array<array{
-     *     method: string,
-     *     path: string,
-     *     handler: string,
-     *     operation_id?: string
-     * }> $routes
+     * @param list<RouteEntry> $routes
      */
     private function generateFileContent(array $routes): string
     {
@@ -39,15 +36,15 @@ final readonly class RoutesWriter
         ];
 
         foreach ($routes as $route) {
-            $handlerClass = $route['handler'];
+            $handlerClass = $route->handler;
             $imports[] = $handlerClass;
-            $route['handler'] = substr($handlerClass, strrpos($handlerClass, '\\') + 1);
+            $handlerShortName = substr($handlerClass, strrpos($handlerClass, '\\') + 1);
 
-            $comment = isset($route['operation_id']) ? "    // {$route['operation_id']}\n" : '';
+            $comment = $route->operationId !== null ? "    // {$route->operationId}\n" : '';
             $routesCode[] = "{$comment}    [
-        'method' => '{$route['method']}',
-        'path' => '{$route['path']}',
-        'handler' => {$route['handler']}::class,
+        'method' => '{$route->method}',
+        'path' => '{$route->path}',
+        'handler' => {$handlerShortName}::class,
     ],";
         }
 

@@ -15,7 +15,7 @@ final readonly class RouteDefinition implements RouteDefinitionInterface
     public function defineRoutes(RouteCollectorInterface $collector): void
     {
         foreach ($this->routeProvider->getRoutes() as $route) {
-            $collector->addRoute($route['method'], $route['path'], $route['handler']);
+            $collector->addRoute($route->method, $route->path, $route->handler, $route->operationId);
         }
     }
 }

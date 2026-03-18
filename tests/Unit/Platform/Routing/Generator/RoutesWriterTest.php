@@ -6,6 +6,7 @@ namespace Tests\Unit\Platform\Routing\Generator;
 
 use App\Platform\Routing\Generator\RouteProvider;
 use App\Platform\Routing\Generator\RoutesWriter;
+use App\Platform\Routing\RouteEntry;
 use PHPUnit\Framework\TestCase;
 
 final class RoutesWriterTest extends TestCase
@@ -27,18 +28,18 @@ final class RoutesWriterTest extends TestCase
     public function testGenerateRoutesFile(): void
     {
         $routes = [
-            [
-                'method' => 'GET',
-                'path' => '/api/v1/test',
-                'handler' => 'App\Examples\Test\Transport\Http\TestHandler',
-                'operation_id' => 'TestService.TestMethod',
-            ],
-            [
-                'method' => 'POST',
-                'path' => '/api/v1/users',
-                'handler' => 'App\Examples\User\Transport\Http\UserHandler',
-                'operation_id' => 'UserService.CreateUser',
-            ],
+            new RouteEntry(
+                method: 'GET',
+                path: '/api/v1/test',
+                handler: 'App\Examples\Test\Transport\Http\TestHandler',
+                operationId: 'TestService.TestMethod',
+            ),
+            new RouteEntry(
+                method: 'POST',
+                path: '/api/v1/users',
+                handler: 'App\Examples\User\Transport\Http\UserHandler',
+                operationId: 'UserService.CreateUser',
+            ),
         ];
 
         $provider = $this->createMock(RouteProvider::class);
@@ -110,12 +111,11 @@ final class RoutesWriterTest extends TestCase
     public function testGenerateRoutesFileWithoutOperationId(): void
     {
         $routes = [
-            [
-                'method' => 'GET',
-                'path' => '/api/v1/test',
-                'handler' => 'App\Examples\Test\Transport\Http\TestHandler',
-                // No operation_id
-            ],
+            new RouteEntry(
+                method: 'GET',
+                path: '/api/v1/test',
+                handler: 'App\Examples\Test\Transport\Http\TestHandler',
+            ),
         ];
 
         $provider = $this->createMock(RouteProvider::class);

@@ -6,6 +6,7 @@ namespace Tests\Unit\Platform\Routing\Generator;
 
 use App\Platform\Http\GeneratedOperationManifestProvider;
 use App\Platform\Routing\Generator\GeneratedOperationRouteProvider;
+use App\Platform\Routing\RouteEntry;
 use PHPUnit\Framework\TestCase;
 
 final class GeneratedOperationRouteProviderTest extends TestCase
@@ -52,10 +53,11 @@ final class GeneratedOperationRouteProviderTest extends TestCase
         $routes = $provider->getRoutes();
 
         self::assertCount(1, $routes);
-        self::assertSame('GET', $routes[0]['method']);
-        self::assertSame('/api/v1/health', $routes[0]['path']);
-        self::assertSame('App\Generated\Endpoint\Api\V1\HealthService\CheckHttpHandler', $routes[0]['handler']);
-        self::assertSame('HealthService.Check', $routes[0]['operation_id'] ?? null);
+        self::assertInstanceOf(RouteEntry::class, $routes[0]);
+        self::assertSame('GET', $routes[0]->method);
+        self::assertSame('/api/v1/health', $routes[0]->path);
+        self::assertSame('App\Generated\Endpoint\Api\V1\HealthService\CheckHttpHandler', $routes[0]->handler);
+        self::assertSame('HealthService.Check', $routes[0]->operationId);
     }
 
     public function testIgnoresMissingManifestDirectory(): void
@@ -112,7 +114,7 @@ final class GeneratedOperationRouteProviderTest extends TestCase
         self::assertCount(2, $routes);
         self::assertSame(
             ['/api/v1/health', '/api/v1/runtime/info'],
-            array_column($routes, 'path'),
+            array_map(static fn(RouteEntry $route): string => $route->path, $routes),
         );
     }
 
