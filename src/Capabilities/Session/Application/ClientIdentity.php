@@ -20,45 +20,13 @@ final readonly class ClientIdentity
 
     public static function fromSession(Session $session): self
     {
-        $payload = json_decode($session->payload, true);
-
-        if (!\is_array($payload)) {
-            return new self(
-                id: $session->id,
-                ipAddress: 'unknown',
-            );
-        }
-
-        $ipAddress = 'unknown';
-        if (isset($payload['ip']) && \is_string($payload['ip'])) {
-            $ipAddress = $payload['ip'];
-        }
-
-        $userAgent = null;
-        if (isset($payload['userAgent']) && \is_string($payload['userAgent'])) {
-            $userAgent = $payload['userAgent'];
-        }
-
-        /** @var array<string, string> $attributes */
-        $attributes = [];
-
-        $attributeFields = [
-            'acceptLanguage', 'acceptEncoding', 'xForwardedFor', 'referer',
-            'origin', 'secChUa', 'secChUaPlatform', 'secChUaMobile',
-            'dnt', 'secFetchDest', 'secFetchMode', 'secFetchSite',
-        ];
-
-        foreach ($attributeFields as $field) {
-            if (isset($payload[$field]) && \is_string($payload[$field])) {
-                $attributes[$field] = $payload[$field];
-            }
-        }
+        $payload = SessionClientPayload::fromSession($session);
 
         return new self(
             id: $session->id,
-            ipAddress: $ipAddress,
-            userAgent: $userAgent,
-            attributes: $attributes,
+            ipAddress: $payload->ipAddress,
+            userAgent: $payload->userAgent,
+            attributes: $payload->attributes,
         );
     }
 

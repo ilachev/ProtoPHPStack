@@ -7,6 +7,8 @@ namespace App\Capabilities\Session\Infrastructure;
 use App\Capabilities\Session\Application\ClientConfig;
 use App\Capabilities\Session\Application\ClientDetector;
 use App\Capabilities\Session\Application\ClientIdentity;
+use App\Capabilities\Session\Application\ClientSimilarity;
+use App\Capabilities\Session\Application\SessionClientPayload;
 use App\Capabilities\Session\Domain\Session;
 use App\Capabilities\Session\Domain\SessionRepository;
 use Psr\Http\Message\ServerRequestInterface;
@@ -47,17 +49,14 @@ final readonly class FingerprintClientDetector implements ClientDetector
             $score = $this->calculateSimilarityScore($currentIdentity, $otherIdentity);
 
             if ($score >= $this->config->similarityThreshold) {
-                $similarities[] = [
-                    'identity' => $otherIdentity,
-                    'score' => $score,
-                ];
+                $similarities[] = new ClientSimilarity($otherIdentity, $score);
             }
         }
 
-        usort($similarities, static fn(array $a, array $b) => $b['score'] <=> $a['score']);
+        usort($similarities, static fn(ClientSimilarity $a, ClientSimilarity $b) => $b->score <=> $a->score);
 
         return array_map(
-            static fn(array $item) => $item['identity'],
+            static fn(ClientSimilarity $item): ClientIdentity => $item->identity,
             $similarities,
         );
     }
@@ -86,12 +85,7 @@ final readonly class FingerprintClientDetector implements ClientDetector
                     return false;
                 }
 
-                $payload = json_decode($session->payload, true);
-                if (!\is_array($payload)) {
-                    return false;
-                }
-
-                return ($payload['ip'] ?? 'unknown') === $currentIp;
+                return SessionClientPayload::fromSession($session)->ipAddress === $currentIp;
             },
         );
 
