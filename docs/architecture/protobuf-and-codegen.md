@@ -138,6 +138,8 @@ task proto:gen:all
 - строит массив route definitions;
 - пишет `config/routes.php` для core runtime.
 
+У route generation больше нет ручного handler mapping layer. Источник истины здесь только protobuf descriptors плюс namespace conventions generated transport-кода.
+
 Сейчас core surface уже содержит `HealthService.Check`, поэтому default route generation создаёт непустой `config/routes.php` и `docs/api.swagger.json`.
 
 ## Custom mapping через атрибуты
@@ -191,7 +193,7 @@ task proto:gen:all
 
 - endpoint implementation резолвится по namespace convention, а не проверяется генератором заранее;
 - есть два направления генерации: protobuf transport и внутренний hydrator generator;
-- transport generation пока не проверяет наличие endpoint implementation автоматически;
+- verify уже проверяет наличие handwritten endpoint implementation для каждого generated `*Endpoint`, но сам generator пока не выдаёт такую ошибку на этапе generation;
 - в проекте уже есть новый `CodeGeneratingHydrator`, но DI всё ещё регистрирует `ReflectionHydrator` как основной.
 
 ## Что важно сохранить при реструктуризации

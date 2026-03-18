@@ -17,12 +17,10 @@ final readonly class ProtoRouteProvider implements RouteProvider
 
     /**
      * @param string $metadataDir Directory containing generated metadata PHP files
-     * @param array<string, string> $handlerMapping Mapping of service.method => handler
      * @param list<string> $sourceFilePrefixes Restrict route extraction to descriptor source file prefixes
      */
     public function __construct(
         private string $metadataDir,
-        private array $handlerMapping = [],
         private array $sourceFilePrefixes = [],
     ) {}
 
@@ -128,7 +126,7 @@ final readonly class ProtoRouteProvider implements RouteProvider
             }
 
             $operationId = "{$serviceName}.{$methodName}";
-            $handler = $this->resolveHandler($serviceName, $methodName, $fileNamespace);
+            $handler = $this->resolveGeneratedHandlerClass($serviceName, $methodName, $fileNamespace);
 
             foreach ($this->expandHttpRuleBindings($httpRule) as $binding) {
                 $routes[] = [
@@ -139,16 +137,6 @@ final readonly class ProtoRouteProvider implements RouteProvider
                 ];
             }
         }
-    }
-
-    private function resolveHandler(string $serviceName, string $methodName, string $fileNamespace): string
-    {
-        $key = "{$serviceName}.{$methodName}";
-        if (isset($this->handlerMapping[$key])) {
-            return $this->handlerMapping[$key];
-        }
-
-        return $this->resolveGeneratedHandlerClass($serviceName, $methodName, $fileNamespace);
     }
 
     private function resolveGeneratedHandlerClass(string $serviceName, string $methodName, string $fileNamespace): string
