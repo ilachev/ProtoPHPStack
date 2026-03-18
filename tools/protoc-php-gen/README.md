@@ -12,7 +12,7 @@ The supported project path is endpoint-oriented:
 - generate endpoint interfaces;
 - generate HTTP handlers for the runtime adapter;
 - validate handwritten endpoint implementations against generated expectations;
-- generate operation manifests for each protobuf RPC.
+- generate operation registry classes for each protobuf RPC.
 
 It is not the canonical path for domain-to-proto mapper generation.
 
@@ -42,7 +42,7 @@ The internal stabilization baseline is already in place:
 
 The next stage is not “more generators at any cost”, but a cleaner protobuf-first flow in the main template:
 
-1. generated operation manifests as the canonical endpoint metadata surface;
+1. generated operation registry classes as the canonical endpoint metadata surface;
 2. less manual runtime glue between generated endpoints and handwritten endpoints;
 3. stricter consistency checks for generated artifacts.
 
@@ -66,14 +66,14 @@ protoc -I=./protos/proto \
 - `source_root` - Root directory for handwritten endpoint implementations
 - `generate_endpoints` - Enable endpoint generation
 - `generate_endpoint_validation` - Fail generation when handwritten endpoint implementations are missing or declared incorrectly
-- `generate_operation_manifest` - Enable operation manifest generation
+- `generate_operation_manifest` - Enable operation registry generation
 
 ## Output
 
 The main project expects generated files in:
 
 - `gen/Generated/Endpoint/...`
-- `gen/Generated/OperationManifest/...`
+- `gen/Generated/OperationManifest/...` - generated operation registry classes
 
 These files are used together with handwritten endpoint implementations in:
 

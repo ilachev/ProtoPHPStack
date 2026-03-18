@@ -31,6 +31,30 @@ final readonly class BaseApiTemplateEndpointProfile implements EndpointProfile
         return 'App\Platform\Http\Endpoint\\' . $suffix . '\\' . $serviceName . '\\' . $methodName . 'Endpoint';
     }
 
+    public function buildOperationRegistryNamespace(string $generatedNamespace, string $fileNamespace): string
+    {
+        $suffix = str_starts_with($fileNamespace, 'App\\')
+            ? substr($fileNamespace, 4)
+            : $fileNamespace;
+
+        $baseNamespace = str_ends_with($generatedNamespace, '\Endpoint')
+            ? substr($generatedNamespace, 0, -\strlen('\Endpoint')) . '\OperationManifest'
+            : rtrim($generatedNamespace, '\\') . '\OperationManifest';
+
+        return rtrim($baseNamespace, '\\') . '\\' . $suffix;
+    }
+
+    public function buildOperationRegistryClassName(string $sourceName): string
+    {
+        $basename = pathinfo($sourceName, PATHINFO_FILENAME);
+        $normalized = preg_replace('/[^A-Za-z0-9]+/', ' ', $basename);
+        if (!\is_string($normalized) || $normalized === '') {
+            throw new \RuntimeException("Unable to build operation registry class name for source: {$sourceName}");
+        }
+
+        return str_replace(' ', '', ucwords($normalized)) . 'OperationRegistry';
+    }
+
     public function buildEndpointImplementationPath(
         string $sourceRoot,
         string $fileNamespace,
@@ -69,6 +93,11 @@ final readonly class BaseApiTemplateEndpointProfile implements EndpointProfile
     public function getHttpOperationBindingClass(): string
     {
         return 'App\Platform\Http\Operation\HttpOperationBinding';
+    }
+
+    public function getOperationRegistryInterface(): string
+    {
+        return 'App\Platform\Http\Operation\OperationRegistry';
     }
 
     public function getResponseHelperParameterName(): string

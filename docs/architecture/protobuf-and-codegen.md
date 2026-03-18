@@ -59,7 +59,7 @@ task proto:gen:docs
 
 - `gen/Generated/OperationManifest/...`
 
-Маршруты больше не строятся отдельным descriptor-parser в runtime и больше не компилируются в отдельный `config/routes.php`. Runtime читает `operation manifests` напрямую.
+Маршруты больше не строятся отдельным descriptor-parser в runtime и больше не компилируются в отдельный `config/routes.php`. Runtime читает generated operation registry classes напрямую.
 
 ### 4. Server-side endpoint generation
 
@@ -78,9 +78,9 @@ task proto:gen:endpoints
 
 - endpoint interfaces для каждого `service/rpc`;
 - generic HTTP handlers поверх `AbstractProtobufRpcHandler`;
-- operation manifests с полной metadata по каждому `service/rpc`, включая `google.api.http` bindings.
+- operation registry classes с полной metadata по каждому `service/rpc`, включая `google.api.http` bindings.
 
-Это handwritten business logic не заменяет. Разработчик по-прежнему пишет endpoint implementation, а runtime резолвит её через operation manifests как каноническую metadata surface.
+Это handwritten business logic не заменяет. Разработчик по-прежнему пишет endpoint implementation, а runtime резолвит её через generated operation registries как каноническую metadata surface.
 
 ## Какие generated артефакты считаются каноническими
 
@@ -89,7 +89,7 @@ task proto:gen:endpoints
 - `protos/gen/App/...` — protobuf message classes и metadata для core API;
 - `protos/gen/Google/...` и `protos/gen/GPBMetadata/Google/...` — runtime support для `google.api.http`;
 - `gen/Generated/Endpoint/...` — generated server-side endpoint contracts и HTTP handlers.
-- `gen/Generated/OperationManifest/...` — generated operation metadata for each protobuf RPC.
+- `gen/Generated/OperationManifest/...` — generated operation registry classes with RPC metadata.
 
 ## Текущий flow генерации
 
@@ -109,8 +109,8 @@ task proto:gen:all
 
 Теперь generation path линейный:
 
-1. `task proto:gen:endpoints` через `protoc-php-gen` генерирует endpoint contracts и operation manifests в `gen/Generated/...`
-2. runtime использует operation manifests как канонический endpoint metadata source и по ним строит routes и endpoint resolution
+1. `task proto:gen:endpoints` через `protoc-php-gen` генерирует endpoint contracts и operation registry classes в `gen/Generated/...`
+2. runtime использует operation registry classes как канонический endpoint metadata source и по ним строит routes и endpoint resolution
 
 Это важно: `service/rpc + google.api.http` теперь проходят через тот же основной toolchain, что и generated endpoints, а не через отдельную runtime-ветку parsing logic.
 
@@ -124,7 +124,7 @@ task proto:gen:all
 
 - генерировать server-side endpoint contracts из protobuf `service/rpc`;
 - валидировать наличие и объявление handwritten endpoint implementations;
-- генерировать operation manifests как каноническую metadata surface для RPC;
+- генерировать operation registry classes как каноническую metadata surface для RPC;
 - поддерживать protobuf-first HTTP surface без ручного endpoint boilerplate в runtime.
 
 При этом инструмент надо понимать шире, чем один текущий generator module: `protoc-php-gen` рассматривается как отдельная modular codegen platform, а основной шаблон сейчас использует три стабильных модуля: `endpoints`, `endpoint_validation` и `operation_manifest`. Отдельно это зафиксировано в `docs/design/protoc-php-gen-product.md`.
@@ -147,7 +147,7 @@ task proto:gen:all
 ## Текущие проблемы codegen-потока
 
 - endpoint implementation теперь валидируется на этапе generation, но generator пока не проверяет полноту реализации интерфейса глубже, чем наличие файла и корректное объявление класса;
-- verify по-прежнему остаётся второй линией контроля для generated `*Endpoint` и дополнительно проверяет согласованность operation manifests, generated handlers и endpoint implementations как единого endpoint surface.
+- verify по-прежнему остаётся второй линией контроля для generated `*Endpoint` и дополнительно проверяет согласованность operation registries, generated handlers и endpoint implementations как единого endpoint surface.
 
 ## Что важно сохранить при реструктуризации
 

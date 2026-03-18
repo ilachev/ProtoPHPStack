@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace ProtoPhpGen\Generator;
 
+use Nette\PhpGenerator\PhpFile;
+use Nette\PhpGenerator\PsrPrinter;
 use ProtoPhpGen\Descriptor\ProtoFileDescriptor;
 use ProtoPhpGen\Plugin\PluginOptions;
 use ProtoPhpGen\Profile\EndpointProfile;
@@ -13,10 +15,14 @@ final readonly class OperationManifestGenerator implements CodeGeneratorModule
 {
     public const MODULE_NAME = 'operation_manifest';
 
+    private PsrPrinter $printer;
+
     public function __construct(
         private PluginOptions $options,
         private EndpointProfile $endpointProfile,
-    ) {}
+    ) {
+        $this->printer = new PsrPrinter();
+    }
 
     public function getName(): string
     {
@@ -106,24 +112,32 @@ final readonly class OperationManifestGenerator implements CodeGeneratorModule
             return [];
         }
 
-        return [new GeneratedFile($this->buildManifestPath($protoFile), $this->renderManifest($operations))];
+        $registryNamespace = $this->endpointProfile->buildOperationRegistryNamespace(
+            $this->options->getNamespace(),
+            $fileNamespace,
+        );
+        $registryClassName = $this->endpointProfile->buildOperationRegistryClassName($protoFile->getName());
+
+        return [
+            new GeneratedFile(
+                $this->buildRegistryPath($registryNamespace, $registryClassName),
+                $this->renderRegistry($registryNamespace, $registryClassName, $operations),
+            ),
+        ];
     }
 
-    private function buildManifestPath(ProtoFileDescriptor $protoFile): string
+    private function buildRegistryPath(string $registryNamespace, string $registryClassName): string
     {
-        $sourceName = $protoFile->getName();
-        if ($sourceName === '') {
-            throw new \RuntimeException('Operation manifest generation requires the source proto file name');
-        }
-
-        $normalizedSourceName = preg_replace('/\.proto$/', '.php', $sourceName);
-        if (!\is_string($normalizedSourceName)) {
-            throw new \RuntimeException("Unable to normalize proto file name: {$sourceName}");
-        }
+        $relativeNamespace = str_starts_with($registryNamespace, 'App\\')
+            ? substr($registryNamespace, 4)
+            : $registryNamespace;
 
         return rtrim($this->options->getOutputDir(), '/')
-            . '/Generated/OperationManifest/'
-            . $normalizedSourceName;
+            . '/'
+            . str_replace('\\', '/', $relativeNamespace)
+            . '/'
+            . $registryClassName
+            . '.php';
     }
 
     /**
@@ -139,37 +153,58 @@ final readonly class OperationManifestGenerator implements CodeGeneratorModule
      *     http_bindings: list<array{method: string, path: string}>
      * }> $operations
      */
-    private function renderManifest(array $operations): string
-    {
+    private function renderRegistry(
+        string $registryNamespace,
+        string $registryClassName,
+        array $operations,
+    ): string {
         $operationDefinitionClass = $this->endpointProfile->getOperationDefinitionClass();
         $httpOperationBindingClass = $this->endpointProfile->getHttpOperationBindingClass();
-        $operationsCode = implode(
+        $operationRegistryInterface = $this->endpointProfile->getOperationRegistryInterface();
+
+        $file = new PhpFile();
+        $file->setStrictTypes();
+
+        $namespace = $file->addNamespace($registryNamespace);
+        $namespace->addUse($httpOperationBindingClass);
+        $namespace->addUse($operationDefinitionClass);
+        $namespace->addUse($operationRegistryInterface);
+
+        $class = $namespace->addClass($registryClassName);
+        $class->setFinal(true);
+        $class->setReadOnly(true);
+        $class->addImplement($operationRegistryInterface);
+
+        $method = $class->addMethod('getOperations');
+        $method->setReturnType('array');
+        $method->addComment('@return list<OperationDefinition>');
+        $method->setBody("return [\n" . $this->renderOperationList($operations) . "\n];");
+
+        return $this->printer->printFile($file);
+    }
+
+    /**
+     * @param list<array{
+     *     service: string,
+     *     method: string,
+     *     operation_id: string,
+     *     request_class: class-string,
+     *     response_class: class-string,
+     *     handler: class-string,
+     *     endpoint_interface: class-string,
+     *     endpoint_implementation: class-string,
+     *     http_bindings: list<array{method: string, path: string}>
+     * }> $operations
+     */
+    private function renderOperationList(array $operations): string
+    {
+        return implode(
             ",\n",
             array_map(
-                fn(array $operation): string => $this->renderOperationDefinition($operation),
+                fn(array $operation): string => $this->indent($this->renderOperationDefinition($operation), 2),
                 $operations,
             ),
         );
-
-        return <<<PHP
-            <?php
-
-            declare(strict_types=1);
-
-            use {$httpOperationBindingClass};
-            use {$operationDefinitionClass};
-
-            /**
-             * WARNING: This file is automatically generated
-             * from protobuf definitions. Do not edit manually.
-             *
-             * @return list<OperationDefinition>
-             */
-            return [
-            {$operationsCode}
-            ];
-
-            PHP;
     }
 
     /**
@@ -191,25 +226,25 @@ final readonly class OperationManifestGenerator implements CodeGeneratorModule
         $bindings = implode(
             ",\n",
             array_map(
-                fn(array $binding): string => $this->renderHttpBinding($binding),
+                fn(array $binding): string => $this->indent($this->renderHttpBinding($binding), 3),
                 $operation['http_bindings'],
             ),
         );
 
         return <<<PHP
-                new OperationDefinition(
-                    service: {$this->exportString($operation['service'])},
-                    method: {$this->exportString($operation['method'])},
-                    operationId: {$this->exportString($operation['operation_id'])},
-                    requestClass: {$this->exportString($operation['request_class'])},
-                    responseClass: {$this->exportString($operation['response_class'])},
-                    handler: {$this->exportString($operation['handler'])},
-                    endpointInterface: {$this->exportString($operation['endpoint_interface'])},
-                    endpointImplementation: {$this->exportString($operation['endpoint_implementation'])},
-                    httpBindings: [
+            new OperationDefinition(
+                service: {$this->exportString($operation['service'])},
+                method: {$this->exportString($operation['method'])},
+                operationId: {$this->exportString($operation['operation_id'])},
+                requestClass: {$this->exportString($operation['request_class'])},
+                responseClass: {$this->exportString($operation['response_class'])},
+                handler: {$this->exportString($operation['handler'])},
+                endpointInterface: {$this->exportString($operation['endpoint_interface'])},
+                endpointImplementation: {$this->exportString($operation['endpoint_implementation'])},
+                httpBindings: [
             {$bindings}
-                    ],
-                )
+                ],
+            )
             PHP;
     }
 
@@ -219,15 +254,22 @@ final readonly class OperationManifestGenerator implements CodeGeneratorModule
     private function renderHttpBinding(array $binding): string
     {
         return <<<PHP
-                        new HttpOperationBinding(
-                            method: {$this->exportString($binding['method'])},
-                            path: {$this->exportString($binding['path'])},
-                        )
+            new HttpOperationBinding(
+                method: {$this->exportString($binding['method'])},
+                path: {$this->exportString($binding['path'])},
+            )
             PHP;
     }
 
     private function exportString(string $value): string
     {
         return var_export($value, true);
+    }
+
+    private function indent(string $content, int $level): string
+    {
+        $indent = str_repeat('    ', $level);
+
+        return preg_replace('/^/m', $indent, $content) ?? $content;
     }
 }

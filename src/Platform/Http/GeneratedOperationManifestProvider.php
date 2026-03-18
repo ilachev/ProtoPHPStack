@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace App\Platform\Http;
 
 use App\Platform\Http\Operation\OperationDefinition;
+use App\Platform\Http\Operation\OperationRegistry;
 
 final class GeneratedOperationManifestProvider
 {
+    private const DEFAULT_REGISTRY_NAMESPACE = 'App\Generated\OperationManifest';
+
     /**
      * @var list<OperationDefinition>|null
      */
@@ -15,6 +18,7 @@ final class GeneratedOperationManifestProvider
 
     public function __construct(
         private readonly string $manifestDir,
+        private readonly string $registryNamespace = self::DEFAULT_REGISTRY_NAMESPACE,
     ) {}
 
     /**
@@ -28,16 +32,17 @@ final class GeneratedOperationManifestProvider
 
         $operations = [];
 
-        foreach ($this->findManifestFiles() as $manifestFile) {
-            $manifest = require $manifestFile;
-            if (!\is_array($manifest)) {
+        foreach ($this->findRegistryClasses() as $registryClass => $registryFile) {
+            require_once $registryFile;
+
+            if (!class_exists($registryClass) || !is_a($registryClass, OperationRegistry::class, true)) {
                 continue;
             }
 
-            foreach ($manifest as $operation) {
-                if (!$operation instanceof OperationDefinition) {
-                    continue;
-                }
+            /** @var OperationRegistry $registry */
+            $registry = new $registryClass();
+
+            foreach ($registry->getOperations() as $operation) {
                 $operations[] = $operation;
             }
         }
@@ -46,16 +51,16 @@ final class GeneratedOperationManifestProvider
     }
 
     /**
-     * @return list<string>
+     * @return array<string, string>
      */
-    private function findManifestFiles(): array
+    private function findRegistryClasses(): array
     {
         if (!is_dir($this->manifestDir)) {
             return [];
         }
 
         $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($this->manifestDir));
-        $files = [];
+        $registries = [];
 
         foreach ($iterator as $file) {
             if (!$file instanceof \SplFileInfo) {
@@ -66,11 +71,18 @@ final class GeneratedOperationManifestProvider
                 continue;
             }
 
-            $files[] = $file->getPathname();
+            $path = $file->getPathname();
+            $relativePath = substr($path, \strlen(rtrim($this->manifestDir, '/')) + 1);
+            $relativeClass = substr($relativePath, 0, -4);
+            if ($relativeClass === '') {
+                continue;
+            }
+            $className = rtrim($this->registryNamespace, '\\') . '\\' . str_replace('/', '\\', $relativeClass);
+            $registries[$className] = $path;
         }
 
-        sort($files);
+        ksort($registries);
 
-        return $files;
+        return $registries;
     }
 }

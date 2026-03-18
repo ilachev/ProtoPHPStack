@@ -10,7 +10,7 @@
 
 - взять protobuf `service/rpc`;
 - сгенерировать endpoint contracts;
-- сгенерировать operation manifests для каждого RPC;
+- сгенерировать operation registry classes для каждого RPC;
 - сократить ручной HTTP boilerplate в runtime.
 
 Это endpoint-oriented codegen path, а не универсальный генератор для внутренних моделей проекта.
@@ -23,7 +23,7 @@
 - генерировать endpoint interfaces;
 - генерировать HTTP handlers поверх общего runtime adapter;
 - валидировать handwritten endpoint implementations на этапе generation;
-- генерировать operation manifests как явную metadata surface;
+- генерировать operation registry classes как явную metadata surface;
 - держать явный generated contract между endpoint-кодом и handwritten endpoint implementations.
 
 В генераторе недопустимо:

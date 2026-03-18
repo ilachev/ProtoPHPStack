@@ -63,7 +63,7 @@ Reusable blocks:
 
 - `protos/gen/*` — основной protobuf SDK и metadata
 - `gen/Generated/Endpoint/*` — generated endpoint contracts и handlers
-- `gen/Generated/OperationManifest/*` — generated operation metadata for each RPC
+- `gen/Generated/OperationManifest/*` — generated operation registry classes for each RPC group
 - legacy `gen/Infrastructure/Hydrator/*` больше не является валидным generated output
 
 ## Что важно считать инвариантами
@@ -113,7 +113,7 @@ task run
 - storage/integration adapters всё ещё требуют аккуратного упрощения
 - hydration/data mapping layer всё ещё чувствителен к усложнению
 - endpoint implementations всё ещё пишутся вручную, а generator пока валидирует только наличие файла и корректное объявление класса
-- consistency между operation manifests, generated handlers и endpoint implementations теперь проверяется в default `verify`, но это всё ещё verify-time guard, а не отдельный generator module
+- consistency между generated operation registries, generated handlers и endpoint implementations теперь проверяется в default `verify`, но это всё ещё verify-time guard, а не отдельный generator module
 - `protoc-php-gen` сейчас стабилен только в endpoint-контуре; дальнейшее расширение допустимо только как modular codegen, а не как возврат к старой смешанной генерации
 
 ## Как оценивать изменения

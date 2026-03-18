@@ -12,7 +12,7 @@ The default runtime stays focused on reusable blocks. The only built-in endpoint
 
 - Protocol Buffer based endpoint contracts
 - Generated server-side endpoint handlers from protobuf services
-- Protobuf-driven runtime routing from generated operation metadata
+- Protobuf-driven runtime routing from generated operation registry classes
 - OpenAPI documentation generation
 - Small framework-free runtime core
 - RoadRunner-powered execution model

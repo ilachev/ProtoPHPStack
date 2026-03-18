@@ -21,7 +21,7 @@
 - генерацию endpoint interfaces из `service/rpc`;
 - генерацию HTTP handlers поверх runtime adapter;
 - compile-time проверку наличия handwritten endpoint implementations;
-- генерацию operation manifests как канонической metadata surface по каждому RPC;
+- генерацию operation registry classes как канонической metadata surface по каждому RPC;
 - поддержку protobuf-first endpoint flow в основном шаблоне.
 
 Это текущий канонический и поддерживаемый путь.
@@ -33,7 +33,7 @@
 Для основного проекта это означает:
 
 - `.proto` управляет endpoint surface;
-- `protoc-php-gen` генерирует endpoints и operation manifests;
+- `protoc-php-gen` генерирует endpoints и operation registry classes;
 - handwritten endpoint implementation остаётся в runtime-коде;
 - generator не подменяет собой business logic.
 
@@ -126,13 +126,13 @@
 - endpoint runtime profiles
 - binary plugin protocol test contour
 
-Эта часть была нужна, чтобы `endpoints`, `endpoint_validation` и `operation_manifest` стали честными production-grade модулями.
+Эта часть была нужна, чтобы `endpoints`, `endpoint_validation` и `operation_manifest` стали честными production-grade модулями, а `operation_manifest` начал генерировать полноценные operation registry classes вместо array-based metadata files.
 
 ### Следующий этап развития
 
 Следующая волна работы должна идти не в “ещё больше генераторов”, а в доведение protobuf-first flow верхнего уровня:
 
-1. использовать generated operation manifests как единственный endpoint metadata source of truth;
+1. использовать generated operation registry classes как единственный endpoint metadata source of truth;
 2. уменьшать ручную runtime-склейку между generated endpoints и handwritten endpoint implementations;
 3. усиливать compile-time и verify-time проверки согласованности generated artifacts;
 4. добавлять новые generator modules только под реальные reusable backend needs.

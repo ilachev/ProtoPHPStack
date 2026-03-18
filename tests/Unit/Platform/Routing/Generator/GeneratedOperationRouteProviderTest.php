@@ -12,9 +12,12 @@ final class GeneratedOperationRouteProviderTest extends TestCase
 {
     private string $tempDir;
 
+    private string $registryNamespace;
+
     protected function setUp(): void
     {
         $this->tempDir = sys_get_temp_dir() . '/route_manifest_test_' . uniqid();
+        $this->registryNamespace = 'Tests\Generated\OperationManifest\Registry' . bin2hex(random_bytes(6));
         mkdir($this->tempDir, 0o777, true);
     }
 
@@ -26,8 +29,10 @@ final class GeneratedOperationRouteProviderTest extends TestCase
     public function testBuildsRoutesFromGeneratedOperationManifests(): void
     {
         $this->writeManifest(
-            $this->tempDir . '/app/v1/health.php',
-            $this->createManifestContent(
+            $this->tempDir . '/Api/V1/HealthOperationRegistry.php',
+            $this->createRegistryContent(
+                namespace: $this->registryNamespace . '\Api\V1',
+                className: 'HealthOperationRegistry',
                 service: 'HealthService',
                 method: 'Check',
                 operationId: 'HealthService.Check',
@@ -41,7 +46,9 @@ final class GeneratedOperationRouteProviderTest extends TestCase
             ),
         );
 
-        $provider = new GeneratedOperationRouteProvider(new GeneratedOperationManifestProvider($this->tempDir));
+        $provider = new GeneratedOperationRouteProvider(
+            new GeneratedOperationManifestProvider($this->tempDir, $this->registryNamespace),
+        );
         $routes = $provider->getRoutes();
 
         self::assertCount(1, $routes);
@@ -63,8 +70,10 @@ final class GeneratedOperationRouteProviderTest extends TestCase
     public function testLoadsManifestFilesRecursively(): void
     {
         $this->writeManifest(
-            $this->tempDir . '/app/v1/health.php',
-            $this->createManifestContent(
+            $this->tempDir . '/Api/V1/HealthOperationRegistry.php',
+            $this->createRegistryContent(
+                namespace: $this->registryNamespace . '\Api\V1',
+                className: 'HealthOperationRegistry',
                 service: 'HealthService',
                 method: 'Check',
                 operationId: 'HealthService.Check',
@@ -78,8 +87,10 @@ final class GeneratedOperationRouteProviderTest extends TestCase
             ),
         );
         $this->writeManifest(
-            $this->tempDir . '/app/v1/runtime/info.php',
-            $this->createManifestContent(
+            $this->tempDir . '/Api/V1/RuntimeInfoOperationRegistry.php',
+            $this->createRegistryContent(
+                namespace: $this->registryNamespace . '\Api\V1',
+                className: 'RuntimeInfoOperationRegistry',
                 service: 'RuntimeService',
                 method: 'Describe',
                 operationId: 'RuntimeService.Describe',
@@ -93,7 +104,9 @@ final class GeneratedOperationRouteProviderTest extends TestCase
             ),
         );
 
-        $provider = new GeneratedOperationRouteProvider(new GeneratedOperationManifestProvider($this->tempDir));
+        $provider = new GeneratedOperationRouteProvider(
+            new GeneratedOperationManifestProvider($this->tempDir, $this->registryNamespace),
+        );
         $routes = $provider->getRoutes();
 
         self::assertCount(2, $routes);
@@ -113,7 +126,9 @@ final class GeneratedOperationRouteProviderTest extends TestCase
         file_put_contents($path, $content);
     }
 
-    private function createManifestContent(
+    private function createRegistryContent(
+        string $namespace,
+        string $className,
         string $service,
         string $method,
         string $operationId,
@@ -130,30 +145,41 @@ final class GeneratedOperationRouteProviderTest extends TestCase
 
             declare(strict_types=1);
 
+            namespace __NAMESPACE__;
+
             use App\Platform\Http\Operation\HttpOperationBinding;
             use App\Platform\Http\Operation\OperationDefinition;
+            use App\Platform\Http\Operation\OperationRegistry;
 
-            return [
-                new OperationDefinition(
-                    service: '__SERVICE__',
-                    method: '__METHOD__',
-                    operationId: '__OPERATION_ID__',
-                    requestClass: '__REQUEST_CLASS__',
-                    responseClass: '__RESPONSE_CLASS__',
-                    handler: '__HANDLER__',
-                    endpointInterface: '__ENDPOINT_INTERFACE__',
-                    endpointImplementation: '__ENDPOINT_IMPLEMENTATION__',
-                    httpBindings: [
-                        new HttpOperationBinding(
-                            method: '__HTTP_METHOD__',
-                            path: '__HTTP_PATH__',
+            final readonly class __CLASS_NAME__ implements OperationRegistry
+            {
+                public function getOperations(): array
+                {
+                    return [
+                        new OperationDefinition(
+                            service: '__SERVICE__',
+                            method: '__METHOD__',
+                            operationId: '__OPERATION_ID__',
+                            requestClass: '__REQUEST_CLASS__',
+                            responseClass: '__RESPONSE_CLASS__',
+                            handler: '__HANDLER__',
+                            endpointInterface: '__ENDPOINT_INTERFACE__',
+                            endpointImplementation: '__ENDPOINT_IMPLEMENTATION__',
+                            httpBindings: [
+                                new HttpOperationBinding(
+                                    method: '__HTTP_METHOD__',
+                                    path: '__HTTP_PATH__',
+                                ),
+                            ],
                         ),
-                    ],
-                ),
-            ];
+                    ];
+                }
+            }
             PHP;
 
         return strtr($template, [
+            '__NAMESPACE__' => $namespace,
+            '__CLASS_NAME__' => $className,
             '__SERVICE__' => $service,
             '__METHOD__' => $method,
             '__OPERATION_ID__' => $operationId,

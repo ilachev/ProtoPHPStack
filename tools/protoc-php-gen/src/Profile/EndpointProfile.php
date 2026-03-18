@@ -12,6 +12,10 @@ interface EndpointProfile
 
     public function buildEndpointImplementationClass(string $fileNamespace, string $serviceName, string $methodName): string;
 
+    public function buildOperationRegistryNamespace(string $generatedNamespace, string $fileNamespace): string;
+
+    public function buildOperationRegistryClassName(string $sourceName): string;
+
     public function buildEndpointImplementationPath(
         string $sourceRoot,
         string $fileNamespace,
@@ -26,6 +30,8 @@ interface EndpointProfile
     public function getOperationDefinitionClass(): string;
 
     public function getHttpOperationBindingClass(): string;
+
+    public function getOperationRegistryInterface(): string;
 
     public function getResponseHelperParameterName(): string;
 

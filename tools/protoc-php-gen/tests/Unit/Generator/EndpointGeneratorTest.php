@@ -169,6 +169,20 @@ final readonly class StubEndpointProfile implements EndpointProfile
         return 'Vendor\\Runtime\\Endpoint\\' . $suffix . '\\' . $serviceName . '\\' . $methodName . 'Endpoint';
     }
 
+    public function buildOperationRegistryNamespace(string $generatedNamespace, string $fileNamespace): string
+    {
+        $suffix = str_starts_with($fileNamespace, 'Vendor\\')
+            ? substr($fileNamespace, 7)
+            : $fileNamespace;
+
+        return rtrim($generatedNamespace, '\\') . '\\Registry\\' . $suffix;
+    }
+
+    public function buildOperationRegistryClassName(string $sourceName): string
+    {
+        return 'StubOperationRegistry';
+    }
+
     public function buildEndpointImplementationPath(
         string $sourceRoot,
         string $fileNamespace,
@@ -202,6 +216,11 @@ final readonly class StubEndpointProfile implements EndpointProfile
     public function getHttpOperationBindingClass(): string
     {
         return 'Vendor\\Runtime\\Operation\\HttpOperationBinding';
+    }
+
+    public function getOperationRegistryInterface(): string
+    {
+        return 'Vendor\\Runtime\\Operation\\OperationRegistry';
     }
 
     public function getResponseHelperParameterName(): string

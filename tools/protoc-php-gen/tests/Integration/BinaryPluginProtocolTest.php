@@ -61,7 +61,7 @@ final class BinaryPluginProtocolTest extends TestCase
             $decodedResponse['files'][1]['name'],
         );
         self::assertSame(
-            'gen/Generated/OperationManifest/app/v1/health.php',
+            'gen/Generated/OperationManifest/Api/V1/HealthOperationRegistry.php',
             $decodedResponse['files'][2]['name'],
         );
         self::assertStringContainsString(
@@ -73,7 +73,7 @@ final class BinaryPluginProtocolTest extends TestCase
             $decodedResponse['files'][1]['content'],
         );
         self::assertStringContainsString(
-            "operationId: 'HealthService.Check'",
+            'final readonly class HealthOperationRegistry implements OperationRegistry',
             $decodedResponse['files'][2]['content'],
         );
     }

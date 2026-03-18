@@ -61,7 +61,7 @@ final class GeneratorIntegrationTest extends TestCase
             $response->getFiles()[1]->getName(),
         );
         self::assertSame(
-            'gen/Generated/OperationManifest/app/v1/health.php',
+            'gen/Generated/OperationManifest/Api/V1/HealthOperationRegistry.php',
             $response->getFiles()[2]->getName(),
         );
     }

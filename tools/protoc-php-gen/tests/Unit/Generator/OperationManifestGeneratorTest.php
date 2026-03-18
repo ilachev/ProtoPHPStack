@@ -78,9 +78,13 @@ final class OperationManifestGeneratorTest extends TestCase
         );
 
         self::assertCount(1, $files);
-        self::assertSame('gen/Generated/OperationManifest/app/v1/health.php', $files[0]->getName());
+        self::assertSame('gen/Generated/OperationManifest/Api/V1/HealthOperationRegistry.php', $files[0]->getName());
+        self::assertStringContainsString('namespace App\Generated\OperationManifest\Api\V1;', $files[0]->getContent());
         self::assertStringContainsString('use App\Platform\Http\Operation\HttpOperationBinding;', $files[0]->getContent());
         self::assertStringContainsString('use App\Platform\Http\Operation\OperationDefinition;', $files[0]->getContent());
+        self::assertStringContainsString('use App\Platform\Http\Operation\OperationRegistry;', $files[0]->getContent());
+        self::assertStringContainsString('final readonly class HealthOperationRegistry implements OperationRegistry', $files[0]->getContent());
+        self::assertStringContainsString('public function getOperations(): array', $files[0]->getContent());
         self::assertStringContainsString("service: 'HealthService'", $files[0]->getContent());
         self::assertStringContainsString("method: 'Check'", $files[0]->getContent());
         self::assertStringContainsString("operationId: 'HealthService.Check'", $files[0]->getContent());
