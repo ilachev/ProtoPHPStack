@@ -13,6 +13,7 @@ use Google\Protobuf\Internal\ServiceDescriptorProto;
 final readonly class ProtoRouteProvider implements RouteProvider
 {
     private const GOOGLE_API_HTTP_EXTENSION_FIELD = 72295728;
+    private const GENERATED_TRANSPORT_NAMESPACE = 'App\Generated\Transport';
 
     /**
      * @param string $metadataDir Directory containing generated metadata PHP files
@@ -51,10 +52,12 @@ final readonly class ProtoRouteProvider implements RouteProvider
                     continue;
                 }
 
+                $fileNamespace = $this->resolveFileNamespace($fileDescriptor);
+
                 /** @var iterable<ServiceDescriptorProto> $serviceDescriptors */
                 $serviceDescriptors = $fileDescriptor->getService();
                 foreach ($serviceDescriptors as $serviceDescriptor) {
-                    $this->extractRoutesFromServiceDescriptor($serviceDescriptor, $routes);
+                    $this->extractRoutesFromServiceDescriptor($serviceDescriptor, $fileNamespace, $routes);
                 }
             }
         }
@@ -101,8 +104,11 @@ final readonly class ProtoRouteProvider implements RouteProvider
     /**
      * @param array<array{method: string, path: string, handler: string, operation_id?: string}> &$routes
      */
-    private function extractRoutesFromServiceDescriptor(ServiceDescriptorProto $serviceDescriptor, array &$routes): void
-    {
+    private function extractRoutesFromServiceDescriptor(
+        ServiceDescriptorProto $serviceDescriptor,
+        string $fileNamespace,
+        array &$routes,
+    ): void {
         $serviceName = $serviceDescriptor->getName();
         if ($serviceName === '') {
             return;
@@ -122,7 +128,7 @@ final readonly class ProtoRouteProvider implements RouteProvider
             }
 
             $operationId = "{$serviceName}.{$methodName}";
-            $handler = $this->resolveHandler($serviceName, $methodName);
+            $handler = $this->resolveHandler($serviceName, $methodName, $fileNamespace);
 
             foreach ($this->expandHttpRuleBindings($httpRule) as $binding) {
                 $routes[] = [
@@ -135,19 +141,23 @@ final readonly class ProtoRouteProvider implements RouteProvider
         }
     }
 
-    private function resolveHandler(string $serviceName, string $methodName): string
+    private function resolveHandler(string $serviceName, string $methodName, string $fileNamespace): string
     {
-        // Check explicit mapping
         $key = "{$serviceName}.{$methodName}";
         if (isset($this->handlerMapping[$key])) {
             return $this->handlerMapping[$key];
         }
 
-        // Apply the example-module naming convention: HomeService::Home -> Examples\Home\Transport\Http\HomeHandler
-        $handlerName = str_replace('Service', 'Handler', $serviceName);
-        $moduleName = str_replace('Service', '', $serviceName);
+        return $this->resolveGeneratedHandlerClass($serviceName, $methodName, $fileNamespace);
+    }
 
-        return "App\\Examples\\{$moduleName}\\Transport\\Http\\{$handlerName}";
+    private function resolveGeneratedHandlerClass(string $serviceName, string $methodName, string $fileNamespace): string
+    {
+        $suffix = str_starts_with($fileNamespace, 'App\\')
+            ? substr($fileNamespace, 4)
+            : $fileNamespace;
+
+        return self::GENERATED_TRANSPORT_NAMESPACE . '\\' . $suffix . '\\' . $serviceName . '\\' . $methodName . 'HttpHandler';
     }
 
     private function shouldIncludeDescriptor(FileDescriptorProto $fileDescriptor): bool
@@ -239,6 +249,26 @@ final readonly class ProtoRouteProvider implements RouteProvider
         $httpRule->mergeFromString($payloads[0]);
 
         return $httpRule;
+    }
+
+    private function resolveFileNamespace(FileDescriptorProto $fileDescriptor): string
+    {
+        $options = $fileDescriptor->getOptions();
+        if ($options !== null) {
+            $phpNamespace = $options->getPhpNamespace();
+            if ($phpNamespace !== '') {
+                return $phpNamespace;
+            }
+        }
+
+        $package = $fileDescriptor->getPackage();
+        if ($package === '') {
+            return 'App';
+        }
+
+        $parts = array_map(static fn(string $part): string => ucfirst($part), explode('.', $package));
+
+        return 'App\\' . implode('\\', $parts);
     }
 
     /**

@@ -76,7 +76,7 @@ tasks:
     deps: [ test, test:integration ]
 
   proto:gen:sdk:
-    desc: Generate PHP SDK classes from core and example proto files
+    desc: Generate PHP SDK classes from core proto files
     cmds:
       - rm -rf {{.SDK_GEN_DIR}}/*
       - >
@@ -84,7 +84,6 @@ tasks:
         --php_out={{.SDK_GEN_DIR}}
         --php_opt=aggregate_metadata
         {{.PROTO_DIR}}/app/v1/*.proto
-        {{.PROTO_DIR}}/examples/v1/*.proto
         {{.PROTO_DIR}}/google/api/*.proto
 
   proto:gen:docs:
@@ -104,7 +103,7 @@ tasks:
       - "{{.PHP}} bin/generate-routes.php"
 
   proto:gen:transport:
-    desc: Generate server-side transport contracts from protobuf services
+    desc: Generate server-side transport contracts from core protobuf services
     deps: [ tools:proto:setup, install ]
     cmds:
       - rm -rf gen/Generated/Transport
@@ -113,7 +112,6 @@ tasks:
         --plugin=protoc-gen-php-transport=tools/protoc-php-gen/bin/protoc-php-gen.php
         --php-transport_out=namespace=App\\Generated\\Transport,output_dir=gen,generate_hydrators=false,generate_proto_hydrators=false,generate_transport_contracts=true:.
         {{.PROTO_DIR}}/app/v1/*.proto
-        {{.PROTO_DIR}}/examples/v1/*.proto
 
   proto:gen:mappers:
     desc: Generate mappers from PHP attributes in domain classes

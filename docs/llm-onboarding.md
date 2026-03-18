@@ -10,7 +10,7 @@
 
 - `Platform` — runtime core;
 - `Capabilities` — reusable blocks;
-- `Examples` — демонстрационные сценарии поверх core.
+- `HealthCheck` — минимальный нейтральный пример protobuf-first transport flow внутри core.
 
 ## Цель проекта
 
@@ -26,7 +26,6 @@
 - `config/container.php` — DI wiring
 - `config/routes.php` — core runtime routes
 - `protos/proto/app/v1/*.proto` — core API contracts
-- `protos/proto/examples/v1/*.proto` — example API contracts
 - `taskfile.yaml` — команды разработки
 - `docs/reusable-blocks.md` — каноническая карта reusable-блоков проекта
 
@@ -49,15 +48,6 @@ Reusable blocks:
 - `Session` — сессии, fingerprinting, client detection, session middleware, geolocation integration
 - `ApiStats` — маленький add-on для записи request log
 
-### `src/Examples`
-
-Demo code:
-
-- `Home` — минимальный smoke-test endpoint
-- `Auth` — example `email/password` flow поверх session capability
-
-Examples не должны участвовать в default runtime bootstrap.
-
 ## Что реально работает
 
 - runtime без product endpoints по умолчанию
@@ -66,6 +56,7 @@ Examples не должны участвовать в default runtime bootstrap.
 - геолокация по IP
 - request log для API-вызовов
 - protobuf/codegen pipeline
+- generated server-side transport handlers from protobuf `service/rpc`
 - unit и integration profiles
 
 ## Что важно считать инвариантами
@@ -108,15 +99,14 @@ task run
 3. `src/Platform/Runtime/App.php`
 4. `config/container.php`
 5. `src/Capabilities/*`
-6. `src/Examples/*`
-7. `src/Platform/Storage/*`
-8. `protos/proto/app/v1/*`
+6. `src/Platform/Storage/*`
+7. `protos/proto/app/v1/*`
 
 ## Текущие зоны риска
 
-- `Auth` всё ещё не разделён на reusable primitives и example policy
 - storage/integration adapters всё ещё требуют аккуратного упрощения
 - hydration/codegen layer всё ещё сложнее, чем остальная структура проекта
+- transport generation всё ещё требует ручного binding endpoint implementation в DI
 
 ## Как оценивать изменения
 
@@ -124,5 +114,5 @@ task run
 
 - делает проект проще для чтения
 - уменьшает library/framework gravity
-- не превращает examples в обязательную часть core runtime
+- не вводит продуктовые demo-flow в основной runtime
 - усиливает reusable blocks, а не раздувает архитектурный словарь

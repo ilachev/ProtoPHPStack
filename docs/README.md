@@ -22,8 +22,7 @@
 ## Базовые правила
 
 - Источник истины для core API template — `protos/proto/app/v1`.
-- Example contracts живут отдельно в `protos/proto/examples/v1`.
 - Сгенерированные артефакты нельзя редактировать вручную.
 - `Platform` должен оставаться маленьким runtime core.
 - `Capabilities` должны оставаться простыми reusable-блоками.
-- `Examples` должны быть явно вторичны по отношению к core runtime.
+- Нейтральный `HealthCheck` остаётся минимальным живым примером protobuf-first transport flow.

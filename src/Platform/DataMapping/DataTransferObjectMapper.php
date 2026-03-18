@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Platform\DataMapping;
 
 use App\Platform\Hydration\Hydrator;
-use Google\Protobuf\Internal\Message;
 
 /**
  * Generic mapper for Protocol Buffer messages.
@@ -32,12 +31,12 @@ final readonly class DataTransferObjectMapper
 
     /**
      * Maps an array to a response object with setData method.
-     * Specifically designed for Protobuf responses with a setData method.
+     * Specifically designed for response wrappers with a setData method.
      *
-     * @template T of Message
-     * @template D of Message
-     * @param class-string<D> $dataClass Data object class (e.g., HomeData)
-     * @param class-string<T> $responseClass Response class (e.g., HomeResponse)
+     * @template T of object
+     * @template D of object
+     * @param class-string<D> $dataClass Data object class
+     * @param class-string<T> $responseClass Response wrapper class
      * @param array<string, mixed> $data Source data
      * @return T The populated response object
      */

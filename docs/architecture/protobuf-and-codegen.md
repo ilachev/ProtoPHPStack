@@ -7,6 +7,7 @@
 - PHP protobuf classes;
 - OpenAPI/Swagger;
 - runtime route configuration;
+- generated server-side transport handlers and endpoint contracts;
 - часть mapper/hydrator инфраструктуры.
 
 Любая реструктуризация должна сохранять этот поток или осознанно заменить его чем-то другим.
@@ -23,15 +24,6 @@
 - `health.proto` — neutral health-check endpoint for the core runtime;
 - `session.proto` — session-related transport models;
 - `users.proto` — user transport model.
-
-### Example API
-
-`protos/proto/examples/v1`
-
-Содержит:
-
-- `home.proto` — smoke-test endpoint и его модели;
-- `auth.proto` — example auth flow и его модели.
 
 ### Доменные proto-описания
 
@@ -86,7 +78,26 @@ task proto:gen:routes
 
 Генерация routes основана на `google.api.http` annotations в core `.proto`.
 
-### 4. Mapper/hydrator generation
+### 4. Server-side transport generation
+
+Команда:
+
+```bash
+task proto:gen:transport
+```
+
+Результат:
+
+- `gen/Generated/Transport`
+
+Генератор создаёт:
+
+- endpoint interfaces для каждого `service/rpc`;
+- generic HTTP handlers поверх `AbstractProtobufRpcHandler`.
+
+Это handwritten business logic не заменяет. Разработчик по-прежнему пишет endpoint implementation и регистрирует его в DI.
+
+### 5. Mapper/hydrator generation
 
 Команда:
 
@@ -111,9 +122,10 @@ task proto:gen:all
 Состав:
 
 1. `proto:gen:sdk`
-2. `proto:gen:docs`
-3. `proto:gen:routes`
-4. `proto:gen:mappers`
+2. `proto:gen:transport`
+3. `proto:gen:mappers`
+4. `proto:gen:docs`
+5. `proto:gen:routes`
 
 ## Как устроена генерация маршрутов
 
@@ -122,6 +134,7 @@ task proto:gen:all
 - читает generated metadata из `protos/gen/App/Api/V1/Metadata`;
 - извлекает `service`, `rpc`, `option (google.api.http)` из protobuf descriptors;
 - фильтрует descriptors по source prefix `app/v1/`, чтобы default route surface оставался core-only;
+- по `php_namespace` вычисляет generated handler class в `App\Generated\Transport\...`;
 - строит массив route definitions;
 - пишет `config/routes.php` для core runtime.
 
@@ -130,6 +143,7 @@ task proto:gen:all
 ## Custom mapping через атрибуты
 
 Некоторые capability/example классы размечены атрибутами:
+Некоторые capability/platform классы размечены атрибутами:
 
 - `ProtoMapping`
 - `ProtoField`
@@ -138,7 +152,6 @@ task proto:gen:all
 
 - `src/Capabilities/Session/Domain/Session.php`
 - `src/Capabilities/Session/Application/GeoLocationData.php`
-- `src/Examples/Auth/Domain/AuthUser.php`
 
 Эти атрибуты нужны для генераторов и маппинга между внутренними моделями и protobuf message classes.
 
@@ -162,9 +175,9 @@ task proto:gen:all
 
 ### Если меняется публичный API
 
-1. Править `.proto` в нужной зоне: `protos/proto/app/v1` для core или `protos/proto/examples/v1` для examples.
+1. Править `.proto` в `protos/proto/app/v1`.
 2. Перегенерировать артефакты.
-3. Обновить handler/mapper/runtime implementation.
+3. Обновить endpoint implementation и DI wiring, если добавился новый RPC.
 4. Проверить, что core артефакты согласованы с кодом.
 
 ### Если меняется внутренняя доменная модель, связанная с protobuf mapping
@@ -176,10 +189,10 @@ task proto:gen:all
 
 ## Текущие проблемы codegen-потока
 
-- Публичные proto-контракты и runtime не всегда согласованы.
-- Есть два направления генерации: protobuf SDK и внутренний hydrator generator.
-- Генерация маршрутов использует naming convention, а не проверку существования handler implementation.
-- В проекте уже есть новый `CodeGeneratingHydrator`, но DI всё ещё регистрирует `ReflectionHydrator` как основной.
+- endpoint implementation всё ещё регистрируется вручную в DI;
+- есть два направления генерации: protobuf transport и внутренний hydrator generator;
+- transport generation пока не проверяет наличие endpoint implementation автоматически;
+- в проекте уже есть новый `CodeGeneratingHydrator`, но DI всё ещё регистрирует `ReflectionHydrator` как основной.
 
 ## Что важно сохранить при реструктуризации
 

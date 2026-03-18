@@ -125,17 +125,17 @@ Pipeline в проекте рекурсивный. Каждый middleware по�
 
 Таким образом, middleware не знает, как именно создаётся handler, а runtime resolution централизован.
 
-## 9. Handler и mapper
+## 9. Handler и endpoint implementation
 
-На примере `HomeHandler` flow выглядит так:
+На примере `HealthService.Check` flow выглядит так:
 
-1. handler вызывает `HomeService`;
-2. получает domain result;
-3. передаёт данные в `HomeResponseMapper`;
-4. mapper строит protobuf response model;
-5. `JsonResponse` отдаёт JSON.
+1. router выбирает сгенерированный `CheckHttpHandler`;
+2. handler декодирует protobuf request через `AbstractProtobufRpcHandler`;
+3. handler вызывает `PlatformHealthCheckEndpoint`;
+4. endpoint implementation создаёт protobuf response model;
+5. handler отдаёт JSON через `JsonResponse`.
 
-Именно здесь должен заканчиваться HTTP-адаптер и начинаться domain/application orchestration.
+Именно здесь reusable transport adapter должен заканчиваться, а прикладная логика начинаться в endpoint implementation.
 
 ## 10. Возврат ответа
 
@@ -152,5 +152,5 @@ Response возвращается обратно через цепочку middl
 
 - Сессия создаётся до routing и handler.
 - Route selection происходит не по контроллерам, а по сгенерированному route config.
-- Default runtime не должен зависеть от `src/Examples/*`.
+- Default runtime не должен зависеть от demo-flow кода.
 - Long-running runtime требует осторожности с кешами, статикой и состоянием сервисов.

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Platform\Hydration;
 
-use App\Api\V1\HomeData;
+use App\Api\V1\HealthCheckResponse;
 use App\Platform\Hydration\Hydrator;
 use App\Platform\Hydration\LimitedReflectionCache;
 use App\Platform\Hydration\ReflectionHydrator;
@@ -26,14 +26,16 @@ final class HydratorProtobufTest extends TestCase
     public function testHydrateProtobufObject(): void
     {
         $data = [
-            'message' => 'Hello from test',
+            'status' => 'ok',
+            'timestamp' => 1710000000,
         ];
 
-        /** @var HomeData $result */
-        $result = $this->hydrator->hydrate(HomeData::class, $data);
+        /** @var HealthCheckResponse $result */
+        $result = $this->hydrator->hydrate(HealthCheckResponse::class, $data);
 
-        self::assertInstanceOf(HomeData::class, $result);
-        self::assertEquals('Hello from test', $result->getMessage());
+        self::assertInstanceOf(HealthCheckResponse::class, $result);
+        self::assertEquals('ok', $result->getStatus());
+        self::assertEquals(1710000000, $result->getTimestamp());
     }
 
     public function testHydrateRegularObject(): void

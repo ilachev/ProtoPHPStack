@@ -11,7 +11,7 @@
 - не навязывает продуктовую политику;
 - понятен как самостоятельный строительный элемент.
 
-Если кусок кода этим критериям не соответствует, ему место либо в `Examples`, либо вне шаблона.
+Если кусок кода этим критериям не соответствует, ему место либо вне шаблона, либо в отдельном downstream-проекте.
 
 ## Core runtime blocks
 
@@ -26,7 +26,7 @@
 
 - Роль: request/response abstractions, handler contracts, middleware interfaces.
 - Обязательность: обязательный core.
-- Что здесь считается core: универсальная HTTP-модель шаблона.
+- Что здесь считается core: универсальная HTTP-модель шаблона и protobuf transport adapters.
 - Что не должно попадать сюда: конкретные auth/session/business правила.
 
 ### `Platform/Routing`
@@ -96,26 +96,20 @@
 - Что здесь считается core: middleware, который пишет факт API-вызова в storage.
 - Что не должно происходить: превращение в большую analytics/observability платформу внутри шаблона.
 
-## Example blocks
+## Minimal example
 
-### `Examples/Home`
+### `HealthService.Check`
 
-- Роль: smoke-test endpoint.
-- Обязательность: не core, только reference.
-- Назначение: показать минимальную сборку handler/service/mapper.
-
-### `Examples/Auth`
-
-- Роль: demo `email/password` flow поверх session block.
-- Обязательность: не core, только reference.
-- Назначение: показать, как reusable session block собирается с конкретной login policy.
-- Что не должно трактоваться как core: сам login flow, user model и auth policy.
+- Роль: минимальный нейтральный пример protobuf-first transport flow.
+- Обязательность: часть core surface.
+- Назначение: показать, как `.proto` превращается в generated route, generated handler и endpoint implementation без продуктовой логики.
+- Что не должно происходить: превращение health-check в demo-модуль с отдельной архитектурой вокруг него.
 
 ## Как применять эту карту
 
 Перед любым изменением нужно ответить на четыре вопроса:
 
-1. Это core runtime block, support block, capability block или example?
+1. Это core runtime block, support block, capability block или минимальный transport example?
 2. Это reusable building block или конкретная product policy?
 3. Это должно быть обязательной частью шаблона или optional add-on?
 4. Улучшает ли изменение reuse-value блока, а не просто увеличивает архитектурный словарь?
@@ -126,5 +120,5 @@
 
 - брать `Platform` как runtime base;
 - подключать только нужные `Capabilities`;
-- использовать `Examples` как reference, а не как обязательный слой;
+- использовать `HealthCheck` как минимальный эталон transport flow;
 - не переписывать смысл блоков под конкретный продукт.

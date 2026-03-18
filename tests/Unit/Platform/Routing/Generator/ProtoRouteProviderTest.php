@@ -52,26 +52,26 @@ final class ProtoRouteProviderTest extends TestCase
 
     public function testGetRoutesWithSingleServiceSingleMethod(): void
     {
-        $this->copyMetadataFixture('Home.php', "{$this->tempDir}/Home.php");
+        $this->copyMetadataFixture('Health.php', "{$this->tempDir}/Health.php");
 
         $provider = new ProtoRouteProvider($this->tempDir);
         $routes = $provider->getRoutes();
 
         self::assertCount(1, $routes);
         self::assertEquals('GET', $routes[0]['method']);
-        self::assertEquals('/api/v1/home', $routes[0]['path']);
-        self::assertEquals('App\Examples\Home\Transport\Http\HomeHandler', $routes[0]['handler']);
+        self::assertEquals('/api/v1/health', $routes[0]['path']);
+        self::assertEquals('App\Generated\Transport\Api\V1\HealthService\CheckHttpHandler', $routes[0]['handler']);
         self::assertArrayHasKey('operation_id', $routes[0]);
         $operationId = $routes[0]['operation_id'] ?? null;
-        self::assertEquals('HomeService.Home', $operationId);
+        self::assertEquals('HealthService.Check', $operationId);
     }
 
     public function testGetRoutesWithCustomMapping(): void
     {
-        $this->copyMetadataFixture('Home.php', "{$this->tempDir}/Home.php");
+        $this->copyMetadataFixture('Health.php', "{$this->tempDir}/Health.php");
 
         $handlerMapping = [
-            'HomeService.Home' => 'App\Examples\Custom\Transport\Http\SpecialHandler',
+            'HealthService.Check' => 'App\Platform\Http\Handler\CustomHealthHandler',
         ];
 
         $provider = new ProtoRouteProvider($this->tempDir, $handlerMapping);
@@ -79,8 +79,8 @@ final class ProtoRouteProviderTest extends TestCase
 
         self::assertCount(1, $routes);
         self::assertEquals('GET', $routes[0]['method']);
-        self::assertEquals('/api/v1/home', $routes[0]['path']);
-        self::assertEquals('App\Examples\Custom\Transport\Http\SpecialHandler', $routes[0]['handler']);
+        self::assertEquals('/api/v1/health', $routes[0]['path']);
+        self::assertEquals('App\Platform\Http\Handler\CustomHealthHandler', $routes[0]['handler']);
     }
 
     public function testGetRoutesCanFilterByDescriptorSourcePrefix(): void
@@ -90,9 +90,7 @@ final class ProtoRouteProviderTest extends TestCase
 
         $provider = new ProtoRouteProvider(
             $this->tempDir,
-            [
-                'HealthService.Check' => 'App\Platform\Http\Handler\HealthCheckHandler',
-            ],
+            [],
             ['app/v1/'],
         );
         $routes = $provider->getRoutes();
@@ -100,31 +98,8 @@ final class ProtoRouteProviderTest extends TestCase
         self::assertCount(1, $routes);
         self::assertSame('GET', $routes[0]['method']);
         self::assertSame('/api/v1/health', $routes[0]['path']);
-        self::assertSame('App\Platform\Http\Handler\HealthCheckHandler', $routes[0]['handler']);
+        self::assertSame('App\Generated\Transport\Api\V1\HealthService\CheckHttpHandler', $routes[0]['handler']);
         self::assertSame('HealthService.Check', $routes[0]['operation_id'] ?? null);
-    }
-
-    public function testGetRoutesWithMultipleHttpMethods(): void
-    {
-        $this->copyMetadataFixture('Auth.php', "{$this->tempDir}/Auth.php");
-
-        $provider = new ProtoRouteProvider($this->tempDir);
-        $routes = $provider->getRoutes();
-
-        self::assertCount(3, $routes);
-
-        $httpMethods = array_column($routes, 'method');
-        $paths = array_column($routes, 'path');
-
-        self::assertSame(['POST', 'POST', 'POST'], $httpMethods);
-        self::assertSame(
-            [
-                '/api/v1/auth/login',
-                '/api/v1/auth/logout',
-                '/api/v1/auth/refresh',
-            ],
-            $paths,
-        );
     }
 
     public function testGetRoutesWithEmptyDirectory(): void
@@ -140,19 +115,16 @@ final class ProtoRouteProviderTest extends TestCase
 
     public function testGetRoutesWithNestedDirectories(): void
     {
-        $this->copyMetadataFixture('Home.php', "{$this->tempDir}/v1/Home.php");
-        $this->copyMetadataFixture('Auth.php', "{$this->tempDir}/v2/Auth.php");
+        $this->copyMetadataFixture('Health.php', "{$this->tempDir}/v1/Health.php");
+        $this->copyMetadataFixture('Health.php', "{$this->tempDir}/v2/Health.php");
 
         $provider = new ProtoRouteProvider($this->tempDir);
         $routes = $provider->getRoutes();
 
-        self::assertCount(4, $routes);
+        self::assertCount(2, $routes);
 
         $paths = array_column($routes, 'path');
-        self::assertContains('/api/v1/home', $paths);
-        self::assertContains('/api/v1/auth/login', $paths);
-        self::assertContains('/api/v1/auth/logout', $paths);
-        self::assertContains('/api/v1/auth/refresh', $paths);
+        self::assertSame(['/api/v1/health', '/api/v1/health'], $paths);
     }
 
     public function testGetRoutesWithNoValidProtoServiceDefinition(): void

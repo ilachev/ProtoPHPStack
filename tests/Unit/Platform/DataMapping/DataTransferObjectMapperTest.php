@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Platform\DataMapping;
 
-use App\Api\V1\HomeData;
-use App\Api\V1\HomeResponse;
+use App\Api\V1\HealthCheckResponse;
 use App\Platform\DataMapping\DataTransferObjectMapper;
 use App\Platform\Hydration\LimitedReflectionCache;
 use App\Platform\Hydration\ReflectionHydrator;
 use App\Platform\Hydration\SetterProtobufHydration;
 use PHPUnit\Framework\TestCase;
+use Tests\Unit\Platform\DataMapping\Fixtures\TestResponse;
 
 final class DataTransferObjectMapperTest extends TestCase
 {
@@ -26,26 +26,36 @@ final class DataTransferObjectMapperTest extends TestCase
 
     public function testToDto(): void
     {
-        $data = ['message' => 'Test message'];
+        $data = [
+            'status' => 'ok',
+            'timestamp' => 1710000000,
+        ];
 
-        $result = $this->mapper->toDto(HomeData::class, $data);
+        $result = $this->mapper->toDto(HealthCheckResponse::class, $data);
 
-        self::assertInstanceOf(HomeData::class, $result);
-        self::assertEquals('Test message', $result->getMessage());
+        self::assertInstanceOf(HealthCheckResponse::class, $result);
+        self::assertEquals('ok', $result->getStatus());
+        self::assertEquals(1710000000, $result->getTimestamp());
     }
 
     public function testToResponse(): void
     {
-        $data = ['message' => 'Response data'];
+        $data = [
+            'status' => 'ready',
+            'timestamp' => 1710001234,
+        ];
 
         $result = $this->mapper->toResponse(
-            HomeData::class,
-            HomeResponse::class,
+            HealthCheckResponse::class,
+            TestResponse::class,
             $data,
         );
 
-        self::assertInstanceOf(HomeResponse::class, $result);
-        self::assertNotNull($result->getData());
-        self::assertEquals('Response data', $result->getData()->getMessage());
+        /** @var TestResponse $result */
+        self::assertInstanceOf(TestResponse::class, $result);
+        $responseData = $result->getData();
+        self::assertInstanceOf(HealthCheckResponse::class, $responseData);
+        self::assertEquals('ready', $responseData->getStatus());
+        self::assertEquals(1710001234, $responseData->getTimestamp());
     }
 }
