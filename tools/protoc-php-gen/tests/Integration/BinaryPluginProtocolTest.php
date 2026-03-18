@@ -16,7 +16,7 @@ final class BinaryPluginProtocolTest extends TestCase
     {
         $request = PluginRequest::fromStdin(
             $this->buildCodeGeneratorRequest(
-                parameter: 'namespace=App\\Generated\\Transport,output_dir=gen,generate_transport_contracts=true',
+                parameter: 'namespace=App\\Generated\\Transport,output_dir=gen,generate_transport_contracts=true,generate_route_manifest=true',
                 filesToGenerate: ['app/v1/health.proto'],
                 protoFiles: [
                     $this->buildFileDescriptorProto(
@@ -35,6 +35,8 @@ final class BinaryPluginProtocolTest extends TestCase
                                         'Check',
                                         '.app.v1.HealthCheckRequest',
                                         '.app.v1.HealthCheckResponse',
+                                        'GET',
+                                        '/api/v1/health',
                                     ),
                                 ],
                             ),
@@ -49,7 +51,7 @@ final class BinaryPluginProtocolTest extends TestCase
         $decodedResponse = $this->decodeCodeGeneratorResponse($response->serialize());
 
         self::assertNull($decodedResponse['error']);
-        self::assertCount(2, $decodedResponse['files']);
+        self::assertCount(3, $decodedResponse['files']);
         self::assertSame(
             'gen/Generated/Transport/Api/V1/HealthService/CheckEndpoint.php',
             $decodedResponse['files'][0]['name'],
@@ -58,6 +60,10 @@ final class BinaryPluginProtocolTest extends TestCase
             'gen/Generated/Transport/Api/V1/HealthService/CheckHttpHandler.php',
             $decodedResponse['files'][1]['name'],
         );
+        self::assertSame(
+            'gen/Generated/RouteManifest/app/v1/health.php',
+            $decodedResponse['files'][2]['name'],
+        );
         self::assertStringContainsString(
             'interface CheckEndpoint',
             $decodedResponse['files'][0]['content'],
@@ -65,6 +71,10 @@ final class BinaryPluginProtocolTest extends TestCase
         self::assertStringContainsString(
             'extends AbstractProtobufRpcHandler',
             $decodedResponse['files'][1]['content'],
+        );
+        self::assertStringContainsString(
+            '/api/v1/health',
+            $decodedResponse['files'][2]['content'],
         );
     }
 
@@ -160,7 +170,13 @@ final class BinaryPluginProtocolTest extends TestCase
         return $writer->getData();
     }
 
-    private function buildMethodDescriptorProto(string $name, string $inputType, string $outputType): string
+    private function buildMethodDescriptorProto(
+        string $name,
+        string $inputType,
+        string $outputType,
+        ?string $httpMethod = null,
+        ?string $httpPath = null,
+    ): string
     {
         $writer = new ProtobufWriter();
         $writer->writeTag(1, 2);
@@ -169,6 +185,38 @@ final class BinaryPluginProtocolTest extends TestCase
         $writer->writeString($inputType);
         $writer->writeTag(3, 2);
         $writer->writeString($outputType);
+
+        if ($httpMethod !== null && $httpPath !== null) {
+            $writer->writeTag(4, 2);
+            $writer->writeMessage($this->buildMethodOptionsWithHttpRule($httpMethod, $httpPath));
+        }
+
+        return $writer->getData();
+    }
+
+    private function buildMethodOptionsWithHttpRule(string $httpMethod, string $httpPath): string
+    {
+        $writer = new ProtobufWriter();
+        $writer->writeTag(72295728, 2);
+        $writer->writeMessage($this->buildHttpRule($httpMethod, $httpPath));
+
+        return $writer->getData();
+    }
+
+    private function buildHttpRule(string $httpMethod, string $httpPath): string
+    {
+        $fieldNumber = match (strtoupper($httpMethod)) {
+            'GET' => 2,
+            'PUT' => 3,
+            'POST' => 4,
+            'DELETE' => 5,
+            'PATCH' => 6,
+            default => throw new \InvalidArgumentException("Unsupported HTTP method: {$httpMethod}"),
+        };
+
+        $writer = new ProtobufWriter();
+        $writer->writeTag($fieldNumber, 2);
+        $writer->writeString($httpPath);
 
         return $writer->getData();
     }

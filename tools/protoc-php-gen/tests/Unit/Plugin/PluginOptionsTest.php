@@ -21,12 +21,13 @@ final class PluginOptionsTest extends TestCase
         self::assertSame(BaseApiTemplateTransportProfile::NAME, $options->getTransportProfile());
         self::assertSame([], $options->getEnabledModules());
         self::assertFalse($options->isModuleEnabled(TransportContractGenerator::MODULE_NAME));
+        self::assertFalse($options->isModuleEnabled('route_manifest'));
     }
 
     public function testCreatesOptionsFromPluginRequest(): void
     {
         $request = new PluginRequest();
-        $request->setParameter('namespace=App\Generated\Transport,output_dir=build/gen,transport_profile=base_api_template,generate_transport_contracts=true');
+        $request->setParameter('namespace=App\Generated\Transport,output_dir=build/gen,transport_profile=base_api_template,generate_transport_contracts=true,generate_route_manifest=true');
 
         $options = PluginOptions::fromRequest($request);
 
@@ -34,6 +35,7 @@ final class PluginOptionsTest extends TestCase
         self::assertSame('build/gen', $options->getOutputDir());
         self::assertSame(BaseApiTemplateTransportProfile::NAME, $options->getTransportProfile());
         self::assertTrue($options->isModuleEnabled(TransportContractGenerator::MODULE_NAME));
+        self::assertTrue($options->isModuleEnabled('route_manifest'));
     }
 
     public function testKeepsTransportModuleDisabledWhenFlagIsFalse(): void

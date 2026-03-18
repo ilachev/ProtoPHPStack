@@ -105,27 +105,27 @@ tasks:
         {{.PROTO_DIR}}/app/v1/*.proto
 
   proto:gen:routes:
-    desc: Generate routes for the core template surface
-    deps: [ var, install, proto:gen:sdk ]
+    desc: Build config/routes.php from generated route manifests
+    deps: [ var, install, proto:gen:transport ]
     cmds:
       - "{{.PHP}} bin/generate-routes.php"
 
   proto:gen:transport:
-    desc: Generate server-side transport contracts from core protobuf services
+    desc: Generate server-side transport contracts and route manifests from core protobuf services
     deps: [ tools:proto:setup, install ]
     cmds:
       - rm -rf gen/Generated/Transport
+      - rm -rf gen/Generated/RouteManifest
       - >
         protoc -I={{.PROTO_DIR}}
         --plugin=protoc-gen-php-transport=tools/protoc-php-gen/bin/protoc-php-gen.php
-        --php-transport_out=namespace=App\\Generated\\Transport,output_dir=gen,generate_transport_contracts=true:.
+        --php-transport_out=namespace=App\\Generated\\Transport,output_dir=gen,transport_profile=base_api_template,generate_transport_contracts=true,generate_route_manifest=true:.
         {{.PROTO_DIR}}/app/v1/*.proto
 
   proto:gen:all:
     desc: Generate the default protobuf-first runtime artifacts
     cmds:
       - task: proto:gen:sdk
-      - task: proto:gen:transport
       - task: proto:gen:docs
       - task: proto:gen:routes
 

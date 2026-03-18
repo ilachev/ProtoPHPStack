@@ -13,6 +13,8 @@ use ProtoPhpGen\Protoc\PluginRequest;
  */
 final class CodeGeneratorRequestParser
 {
+    private const GOOGLE_API_HTTP_EXTENSION_FIELD = 72295728;
+
     // Номера полей в CodeGeneratorRequest
     private const FIELD_FILE_TO_GENERATE = 1;
     private const FIELD_PARAMETER = 2;
@@ -428,6 +430,14 @@ final class CodeGeneratorRequestParser
                     }
                     break;
 
+                case 4: // options
+                    if ($wireType === self::WIRE_TYPE_LENGTH_DELIMITED) {
+                        $method['http_bindings'] = $this->parseMethodOptions($reader->readMessage());
+                    } else {
+                        $reader->skipField($wireType);
+                    }
+                    break;
+
                 default:
                     $reader->skipField($wireType);
                     break;
@@ -435,6 +445,134 @@ final class CodeGeneratorRequestParser
         }
 
         return $method;
+    }
+
+    /**
+     * @return list<array{method: string, path: string}>
+     */
+    private function parseMethodOptions(string $data): array
+    {
+        $reader = new ProtobufReader($data);
+        $bindings = [];
+
+        while ($reader->hasMore()) {
+            [$fieldNumber, $wireType] = $reader->readTag();
+
+            if ($fieldNumber === self::GOOGLE_API_HTTP_EXTENSION_FIELD && $wireType === self::WIRE_TYPE_LENGTH_DELIMITED) {
+                $bindings = array_merge($bindings, $this->parseHttpRule($reader->readMessage()));
+
+                continue;
+            }
+
+            $reader->skipField($wireType);
+        }
+
+        return $bindings;
+    }
+
+    /**
+     * @return list<array{method: string, path: string}>
+     */
+    private function parseHttpRule(string $data): array
+    {
+        $reader = new ProtobufReader($data);
+        $bindings = [];
+        $currentBinding = null;
+
+        while ($reader->hasMore()) {
+            [$fieldNumber, $wireType] = $reader->readTag();
+
+            if ($wireType !== self::WIRE_TYPE_LENGTH_DELIMITED) {
+                $reader->skipField($wireType);
+
+                continue;
+            }
+
+            switch ($fieldNumber) {
+                case 2:
+                    $currentBinding = ['method' => 'GET', 'path' => $reader->readString()];
+                    break;
+
+                case 3:
+                    $currentBinding = ['method' => 'PUT', 'path' => $reader->readString()];
+                    break;
+
+                case 4:
+                    $currentBinding = ['method' => 'POST', 'path' => $reader->readString()];
+                    break;
+
+                case 5:
+                    $currentBinding = ['method' => 'DELETE', 'path' => $reader->readString()];
+                    break;
+
+                case 6:
+                    $currentBinding = ['method' => 'PATCH', 'path' => $reader->readString()];
+                    break;
+
+                case 8:
+                    $currentBinding = $this->parseCustomHttpPattern($reader->readMessage());
+                    break;
+
+                case 11:
+                    $bindings = array_merge($bindings, $this->parseHttpRule($reader->readMessage()));
+
+                    continue 2;
+
+                default:
+                    $reader->skipField($wireType);
+
+                    continue 2;
+            }
+
+            if ($currentBinding !== null && $currentBinding['path'] !== '') {
+                $bindings[] = $currentBinding;
+            }
+        }
+
+        return $bindings;
+    }
+
+    /**
+     * @return array{method: string, path: string}|null
+     */
+    private function parseCustomHttpPattern(string $data): ?array
+    {
+        $reader = new ProtobufReader($data);
+        $method = '';
+        $path = '';
+
+        while ($reader->hasMore()) {
+            [$fieldNumber, $wireType] = $reader->readTag();
+
+            if ($wireType !== self::WIRE_TYPE_LENGTH_DELIMITED) {
+                $reader->skipField($wireType);
+
+                continue;
+            }
+
+            if ($fieldNumber === 1) {
+                $method = strtoupper($reader->readString());
+
+                continue;
+            }
+
+            if ($fieldNumber === 2) {
+                $path = $reader->readString();
+
+                continue;
+            }
+
+            $reader->skipField($wireType);
+        }
+
+        if ($method === '' || $path === '') {
+            return null;
+        }
+
+        return [
+            'method' => $method,
+            'path' => $path,
+        ];
     }
 
     /**

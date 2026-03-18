@@ -6,13 +6,14 @@
 
 ## Зачем существует генератор
 
-В основном project path `protoc-php-gen` сейчас нужен не для общего mapper framework, а для одной конкретной задачи:
+В основном project path `protoc-php-gen` сейчас нужен не для общего mapper framework, а для двух связанных transport-задач:
 
 - взять protobuf `service/rpc`;
 - сгенерировать transport contracts;
+- сгенерировать route manifests из `google.api.http`;
 - сократить ручной HTTP boilerplate в runtime.
 
-Это transport-oriented generator module, а не универсальный генератор для внутренних моделей проекта.
+Это transport-oriented codegen path, а не универсальный генератор для внутренних моделей проекта.
 
 ## Что считается правильной областью ответственности
 
@@ -21,6 +22,7 @@
 - читать protobuf descriptors;
 - генерировать endpoint interfaces;
 - генерировать HTTP handlers поверх общего runtime adapter;
+- генерировать route manifests для runtime routing;
 - держать naming conventions между generated transport-кодом и handwritten endpoint implementations.
 
 В генераторе недопустимо:

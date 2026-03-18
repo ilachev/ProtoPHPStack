@@ -64,7 +64,7 @@ task proto:gen:routes
 
 - `config/routes.php`
 
-Генерация routes основана на `google.api.http` annotations в core `.proto`.
+Маршруты больше не строятся отдельным descriptor-parser в runtime. Сначала `protoc-php-gen` генерирует route manifests, а затем `bin/generate-routes.php` собирает из них итоговый `config/routes.php`.
 
 ### 4. Server-side transport generation
 
@@ -77,11 +77,13 @@ task proto:gen:transport
 Результат:
 
 - `gen/Generated/Transport`
+- `gen/Generated/RouteManifest`
 
 Генератор создаёт:
 
 - endpoint interfaces для каждого `service/rpc`;
 - generic HTTP handlers поверх `AbstractProtobufRpcHandler`.
+- route manifests из `google.api.http` bindings.
 
 Это handwritten business logic не заменяет. Разработчик по-прежнему пишет endpoint implementation, а runtime резолвит её по соглашению namespace.
 
@@ -92,6 +94,7 @@ task proto:gen:transport
 - `protos/gen/App/...` — protobuf message classes и metadata для core API;
 - `protos/gen/Google/...` и `protos/gen/GPBMetadata/Google/...` — runtime support для `google.api.http`;
 - `gen/Generated/Transport/...` — generated server-side transport contracts и HTTP handlers.
+- `gen/Generated/RouteManifest/...` — generated route manifests for the core runtime.
 
 ## Текущий flow генерации
 
@@ -104,22 +107,19 @@ task proto:gen:all
 Состав:
 
 1. `proto:gen:sdk`
-2. `proto:gen:transport`
-3. `proto:gen:docs`
-4. `proto:gen:routes`
+2. `proto:gen:docs`
+3. `proto:gen:routes`
 
 ## Как устроена генерация маршрутов
 
-Файл `bin/generate-routes.php` создаёт `ProtoRouteProvider`, который:
+Теперь generation path для маршрутов двухшаговый:
 
-- читает generated metadata из `protos/gen/App/Api/V1/Metadata`;
-- извлекает `service`, `rpc`, `option (google.api.http)` из protobuf descriptors;
-- фильтрует descriptors по source prefix `app/v1/`, чтобы default route surface оставался core-only;
-- по `php_namespace` вычисляет generated handler class в `App\Generated\Transport\...`;
-- строит массив route definitions;
-- пишет `config/routes.php` для core runtime.
+1. `task proto:gen:transport` через `protoc-php-gen` генерирует route manifests в `gen/Generated/RouteManifest/...`
+2. `task proto:gen:routes` через `bin/generate-routes.php` читает эти manifests и пишет `config/routes.php`
 
-У route generation больше нет ручного handler mapping layer. Источник истины здесь только protobuf descriptors плюс namespace conventions generated transport-кода.
+Файл `bin/generate-routes.php` больше не интерпретирует protobuf descriptors сам. Он только собирает итоговый routes config из generated manifests через `GeneratedRouteManifestProvider`.
+
+Это важно: `service/rpc + google.api.http` теперь проходят через тот же основной toolchain, что и transport contracts, а не через отдельную runtime-ветку parsing logic.
 
 Сейчас core surface уже содержит `HealthService.Check`, поэтому default route generation создаёт непустой `config/routes.php` и `docs/api.swagger.json`.
 
@@ -130,9 +130,10 @@ task proto:gen:all
 Его текущая production-grade роль:
 
 - генерировать server-side transport contracts из protobuf `service/rpc`;
+- генерировать route manifests из `google.api.http` bindings;
 - поддерживать protobuf-first HTTP surface без ручного boilerplate в runtime.
 
-При этом инструмент надо понимать шире, чем один текущий generator module: `protoc-php-gen` рассматривается как отдельная modular codegen platform, но основной шаблон сейчас использует только стабильный `transport_contracts` path. Отдельно это зафиксировано в `docs/design/protoc-php-gen-product.md`.
+При этом инструмент надо понимать шире, чем один текущий generator module: `protoc-php-gen` рассматривается как отдельная modular codegen platform, а основной шаблон сейчас использует два стабильных модуля: `transport_contracts` и `route_manifest`. Отдельно это зафиксировано в `docs/design/protoc-php-gen-product.md`.
 
 При реструктуризации нельзя просто "спрятать" этот каталог. Нужно решить:
 
