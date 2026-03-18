@@ -159,7 +159,7 @@ task proto:gen:all
 ## Текущие проблемы codegen-потока
 
 - endpoint implementation теперь валидируется на этапе generation, но generator пока не проверяет полноту реализации интерфейса глубже, чем наличие файла и корректное объявление класса;
-- verify по-прежнему остаётся второй линией контроля для generated `*Endpoint`.
+- verify по-прежнему остаётся второй линией контроля для generated `*Endpoint` и дополнительно проверяет согласованность route manifests, generated handlers и endpoint bindings как единого transport surface.
 
 ## Что важно сохранить при реструктуризации
 

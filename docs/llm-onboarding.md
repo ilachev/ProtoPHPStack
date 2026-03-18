@@ -116,6 +116,7 @@ task run
 - storage/integration adapters всё ещё требуют аккуратного упрощения
 - hydration/data mapping layer всё ещё чувствителен к усложнению
 - endpoint implementations всё ещё пишутся вручную, а generator пока валидирует только наличие файла и корректное объявление класса
+- consistency между generated routes, handlers и endpoint bindings теперь проверяется в default `verify`, но это всё ещё verify-time guard, а не отдельный generator module
 - `protoc-php-gen` сейчас стабилен только в transport-контуре; дальнейшее расширение допустимо только как modular codegen, а не как возврат к старой смешанной генерации
 
 ## Как оценивать изменения
