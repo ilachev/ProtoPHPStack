@@ -39,7 +39,7 @@ service SystemService {
 message SystemDescribeRequest {
   string caller = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
     description: "Optional caller label to echo in the response"
-    example: "\"codex\""
+    example: "\"client\""
   }];
   repeated string requested_capabilities = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
     description: "Requested runtime capabilities to include when runtime data is enabled"
@@ -61,7 +61,7 @@ message SystemDescribeResponse {
   }];
   string caller = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
     description: "Echoed caller value"
-    example: "\"codex\""
+    example: "\"client\""
   }];
   repeated string capabilities = 4 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
     description: "Capabilities included in the neutral runtime description"

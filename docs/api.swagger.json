@@ -132,7 +132,7 @@
       "properties": {
         "caller": {
           "type": "string",
-          "example": "codex",
+          "example": "client",
           "description": "Optional caller label to echo in the response"
         },
         "requestedCapabilities": {
@@ -164,7 +164,7 @@
         },
         "caller": {
           "type": "string",
-          "example": "codex",
+          "example": "client",
           "description": "Echoed caller value"
         },
         "capabilities": {

@@ -24,7 +24,7 @@ final class SystemDescribeHandlerTest extends TestCase
 
         $request = new ServerRequest('POST', '/api/v1/system/describe');
         $request->getBody()->write(json_encode([
-            'caller' => 'codex',
+            'caller' => 'client',
             'requestedCapabilities' => ['sessions', 'metrics'],
             'includeRuntime' => true,
         ], JSON_THROW_ON_ERROR));
@@ -37,7 +37,7 @@ final class SystemDescribeHandlerTest extends TestCase
         self::assertIsArray($payload);
         self::assertSame('base-api-template', $payload['name'] ?? null);
         self::assertSame('core', $payload['mode'] ?? null);
-        self::assertSame('codex', $payload['caller'] ?? null);
+        self::assertSame('client', $payload['caller'] ?? null);
         self::assertTrue($payload['runtimeIncluded'] ?? false);
         self::assertSame(
             ['sessions', 'metrics', 'http', 'protobuf', 'routing'],

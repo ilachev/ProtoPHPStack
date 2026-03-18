@@ -55,6 +55,7 @@ final class EndpointImplementationValidatorTest extends TestCase
             'Platform/Http/Endpoint/Api/V1/HealthService/CheckEndpoint.php',
             'App\\Platform\\Http\\Endpoint\\Api\\V1\\HealthService',
             'CheckEndpoint',
+            '\\App\\Generated\\Transport\\Api\\V1\\HealthService\\CheckEndpoint',
         );
 
         $validator = $this->createValidator();
@@ -81,6 +82,7 @@ final class EndpointImplementationValidatorTest extends TestCase
             'Platform/Http/Endpoint/Api/V1/HealthService/CheckEndpoint.php',
             'App\\Platform\\Http\\Endpoint\\Api\\V1\\HealthService',
             'WrongEndpoint',
+            '\\App\\Generated\\Transport\\Api\\V1\\HealthService\\CheckEndpoint',
         );
 
         $validator = $this->createValidator();
@@ -93,10 +95,30 @@ final class EndpointImplementationValidatorTest extends TestCase
         $validator->generateForProtoFile($this->createHealthProtoFile(), $this->createTypeResolver());
     }
 
+    public function testFailsWhenEndpointImplementationDoesNotImplementExpectedInterface(): void
+    {
+        $this->writeEndpointImplementation(
+            'Platform/Http/Endpoint/Api/V1/HealthService/CheckEndpoint.php',
+            'App\\Platform\\Http\\Endpoint\\Api\\V1\\HealthService',
+            'CheckEndpoint',
+            '\\App\\Generated\\Transport\\Api\\V1\\SystemService\\DescribeEndpoint',
+        );
+
+        $validator = $this->createValidator();
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage(
+            'Endpoint implementation App\\Platform\\Http\\Endpoint\\Api\\V1\\HealthService\\CheckEndpoint must implement App\\Generated\\Transport\\Api\\V1\\HealthService\\CheckEndpoint',
+        );
+
+        $validator->generateForProtoFile($this->createHealthProtoFile(), $this->createTypeResolver());
+    }
+
     private function createValidator(): EndpointImplementationValidator
     {
         return new EndpointImplementationValidator(
             new PluginOptions(
+                namespace: 'App\\Generated\\Transport',
                 sourceRoot: $this->tempDir,
                 enabledModules: [EndpointImplementationValidator::MODULE_NAME => true],
             ),
@@ -144,7 +166,12 @@ final class EndpointImplementationValidatorTest extends TestCase
         ]);
     }
 
-    private function writeEndpointImplementation(string $relativePath, string $namespace, string $className): void
+    private function writeEndpointImplementation(
+        string $relativePath,
+        string $namespace,
+        string $className,
+        string $implementedInterface,
+    ): void
     {
         $path = $this->tempDir . '/' . $relativePath;
         $directory = \dirname($path);
@@ -154,7 +181,7 @@ final class EndpointImplementationValidatorTest extends TestCase
 
         file_put_contents(
             $path,
-            "<?php\n\ndeclare(strict_types=1);\n\nnamespace {$namespace};\n\nfinal class {$className}\n{\n}\n",
+            "<?php\n\ndeclare(strict_types=1);\n\nnamespace {$namespace};\n\nfinal class {$className} implements {$implementedInterface}\n{\n}\n",
         );
     }
 }
