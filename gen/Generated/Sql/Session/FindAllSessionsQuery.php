@@ -1,0 +1,43 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Generated\Sql\Session;
+
+use App\Platform\Storage\Sql\ExecutableQuery;
+use App\Platform\Storage\Sql\QueryResultKind;
+
+final readonly class FindAllSessionsQuery implements ExecutableQuery
+{
+    public function __construct(
+        private FindAllSessionsParams $params,
+    ) {
+    }
+
+    public function name(): string
+    {
+        return 'FindAllSessions';
+    }
+
+    public function resultKind(): QueryResultKind
+    {
+        return QueryResultKind::from('many');
+    }
+
+    public function sql(): string
+    {
+        return <<<'SQL'
+        SELECT id, user_id, payload, expires_at, created_at, updated_at
+        FROM sessions
+        ORDER BY created_at DESC;
+        SQL;
+    }
+
+    /**
+     * @return array<string, scalar|null>
+     */
+    public function params(): array
+    {
+        return [];
+    }
+}

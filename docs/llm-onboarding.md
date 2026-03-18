@@ -84,6 +84,7 @@ Reusable blocks:
 ```bash
 task install
 task proto:gen:all
+task sql:gen
 task lint
 task phpstan
 task test

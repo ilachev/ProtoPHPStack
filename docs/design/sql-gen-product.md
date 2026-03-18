@@ -40,7 +40,7 @@
 - сохраняет SQL читаемым и явным;
 - не скрывает SQL за fluent API;
 - проверяет запросы against PostgreSQL;
-- генерирует typed params и typed rows;
+- генерирует typed params и, когда это уже реализовано, typed rows;
 - оставляет runtime исполнение предельно простым.
 
 ## Что не нужно делать
@@ -83,7 +83,7 @@ WHERE expires_at < :now;
 
 Генератор должен создавать typed PHP-код, а не runtime arrays.
 
-Минимальный набор output artifacts:
+Целевая модель output:
 
 - `*Params`
 - `*Row` для `:one` и `:many`
@@ -96,6 +96,22 @@ WHERE expires_at < :now;
 - `gen/Generated/Sql/Session/SessionRow.php`
 - `gen/Generated/Sql/Session/FindSessionByIdQuery.php`
 - `gen/Generated/Sql/Session/SessionQueries.php`
+
+### MVP первого этапа
+
+На первом этапе допускается более узкий generated output:
+
+- `*Params`
+- `*Query`
+- `*Queries`
+
+То есть initial MVP не обязан сразу генерировать `*Row`.
+
+Главное требование первого этапа:
+
+- SQL уже становится source of truth;
+- generated PHP перестаёт быть shape-массивами;
+- runtime получает executable typed query objects.
 
 ## Runtime слой
 

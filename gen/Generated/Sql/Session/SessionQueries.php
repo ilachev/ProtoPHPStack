@@ -1,0 +1,28 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Generated\Sql\Session;
+
+final readonly class SessionQueries
+{
+    public function findSessionById(FindSessionByIdParams $params): FindSessionByIdQuery
+    {
+        return new FindSessionByIdQuery($params);
+    }
+
+    public function findSessionsByUserId(FindSessionsByUserIdParams $params): FindSessionsByUserIdQuery
+    {
+        return new FindSessionsByUserIdQuery($params);
+    }
+
+    public function findAllSessions(): FindAllSessionsQuery
+    {
+        return new FindAllSessionsQuery(new FindAllSessionsParams());
+    }
+
+    public function deleteExpiredSessions(DeleteExpiredSessionsParams $params): DeleteExpiredSessionsQuery
+    {
+        return new DeleteExpiredSessionsQuery($params);
+    }
+}

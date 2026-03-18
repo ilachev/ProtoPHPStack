@@ -124,6 +124,18 @@ tasks:
       - task: proto:gen:docs
       - task: proto:gen:endpoints
 
+  sql:gen:
+    desc: Generate typed PHP query classes from SQL source files
+    deps: [ tools:sql:setup ]
+    cmds:
+      - mkdir -p sql/queries
+      - rm -rf gen/Generated/Sql
+      - >
+        php tools/sql-gen/bin/sql-gen.php
+        --input-dir=sql/queries
+        --output-dir=gen/Generated/Sql
+        --namespace=App\\Generated\\Sql
+
   tools:proto:setup:
     desc: Setup protoc-php-gen plugin
     cmds:
@@ -155,6 +167,19 @@ tasks:
     desc: Run all code quality checks on the protoc-php-gen library
     cmds:
       - cd tools/protoc-php-gen && {{.COMPOSER}} check
+
+  tools:sql:setup:
+    desc: Setup sql-gen tool
+    cmds:
+      - cd tools/sql-gen && {{.COMPOSER}} install --no-dev --no-progress
+      - chmod +x tools/sql-gen/bin/sql-gen.php
+      - echo "SQL generator setup complete"
+
+  tools:sql:check:
+    desc: Run all code quality checks on the sql-gen library
+    cmds:
+      - cd tools/sql-gen && {{.COMPOSER}} install --no-progress
+      - cd tools/sql-gen && {{.COMPOSER}} check
 
   # Performance tasks
   perf:test:
