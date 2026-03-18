@@ -28,6 +28,7 @@
 - `protos/proto/app/v1/*.proto` — core API contracts
 - `protos/proto/examples/v1/*.proto` — example API contracts
 - `taskfile.yaml` — команды разработки
+- `docs/reusable-blocks.md` — каноническая карта reusable-блоков проекта
 
 ## Текущая структура
 
@@ -103,12 +104,13 @@ task run
 ## Минимальный порядок чтения
 
 1. `docs/architecture/request-lifecycle.md`
-2. `src/Platform/Runtime/App.php`
-3. `config/container.php`
-4. `src/Capabilities/*`
-5. `src/Examples/*`
-6. `src/Platform/Storage/*`
-7. `protos/proto/app/v1/*`
+2. `docs/reusable-blocks.md`
+3. `src/Platform/Runtime/App.php`
+4. `config/container.php`
+5. `src/Capabilities/*`
+6. `src/Examples/*`
+7. `src/Platform/Storage/*`
+8. `protos/proto/app/v1/*`
 
 ## Текущие зоны риска
 

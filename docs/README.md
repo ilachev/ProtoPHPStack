@@ -5,14 +5,16 @@
 ## Канонический набор
 
 1. [LLM Onboarding](./llm-onboarding.md) — главный обзор проекта: цель, структура, инварианты, зоны риска.
-2. [Поток запроса](./architecture/request-lifecycle.md) — как запрос проходит через runtime и middleware.
-3. [Protobuf и генерация кода](./architecture/protobuf-and-codegen.md) — как устроен transport-contract слой и codegen.
-4. [Инфраструктура и тестирование](./development/infrastructure-and-testing.md) — PostgreSQL, Redis, миграции, quality gates и test profiles.
-5. [Рекомендации по `protoc-php-gen`](./design/protoc-php-gen-guidelines.md) — правила для генерации и маппинга между Domain и Proto.
+2. [Карта reusable-блоков](./reusable-blocks.md) — что именно является reusable core шаблона, а что является optional или example.
+3. [Поток запроса](./architecture/request-lifecycle.md) — как запрос проходит через runtime и middleware.
+4. [Protobuf и генерация кода](./architecture/protobuf-and-codegen.md) — как устроен transport-contract слой и codegen.
+5. [Инфраструктура и тестирование](./development/infrastructure-and-testing.md) — PostgreSQL, Redis, миграции, quality gates и test profiles.
+6. [Рекомендации по `protoc-php-gen`](./design/protoc-php-gen-guidelines.md) — правила для генерации и маппинга между Domain и Proto.
 
 ## Как читать
 
 - Если нужен общий контекст, начинать с `llm-onboarding.md`.
+- Если нужно понять, какие части проекта реально составляют шаблон, читать `reusable-blocks.md`.
 - Если нужно понять runtime, читать `architecture/request-lifecycle.md`.
 - Если меняется API surface, читать `architecture/protobuf-and-codegen.md`.
 - Если меняется storage, cache, миграции или тестовый контур, читать `development/infrastructure-and-testing.md`.
