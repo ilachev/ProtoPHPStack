@@ -7,6 +7,7 @@ namespace ProtoPhpGen;
 use ProtoPhpGen\Generator\GeneratorRegistry;
 use ProtoPhpGen\Generator\TransportContractGenerator;
 use ProtoPhpGen\Plugin\PluginOptions;
+use ProtoPhpGen\Profile\TransportProfileRegistry;
 use ProtoPhpGen\Protoc\PluginRequest;
 use ProtoPhpGen\Protoc\PluginResponse;
 use ProtoPhpGen\Protoc\ProtocPlugin;
@@ -24,9 +25,10 @@ final readonly class PhpGeneratorPlugin extends ProtocPlugin
             $this->logDebug('Parameters: ' . json_encode($request->getParameters()));
 
             $options = PluginOptions::fromRequest($request);
+            $transportProfile = (new TransportProfileRegistry())->get($options->getTransportProfile());
             $registry = new GeneratorRegistry(
                 [
-                    new TransportContractGenerator($options),
+                    new TransportContractGenerator($options, $transportProfile),
                 ],
                 $options,
             );

@@ -8,6 +8,7 @@ use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PsrPrinter;
 use ProtoPhpGen\Descriptor\ProtoFileDescriptor;
 use ProtoPhpGen\Plugin\PluginOptions;
+use ProtoPhpGen\Profile\TransportProfile;
 use ProtoPhpGen\Type\TypeResolver;
 
 final readonly class TransportContractGenerator implements CodeGeneratorModule
@@ -18,6 +19,7 @@ final readonly class TransportContractGenerator implements CodeGeneratorModule
 
     public function __construct(
         private PluginOptions $options,
+        private TransportProfile $transportProfile,
     ) {
         $this->printer = new PsrPrinter();
     }
@@ -96,11 +98,11 @@ final readonly class TransportContractGenerator implements CodeGeneratorModule
 
     private function buildServiceNamespace(string $fileNamespace, string $serviceName): string
     {
-        $suffix = str_starts_with($fileNamespace, 'App\\')
-            ? substr($fileNamespace, 4)
-            : $fileNamespace;
-
-        return rtrim($this->options->getNamespace(), '\\') . '\\' . $suffix . '\\' . $serviceName;
+        return $this->transportProfile->buildServiceNamespace(
+            $this->options->getNamespace(),
+            $fileNamespace,
+            $serviceName,
+        );
     }
 
     private function generateEndpointInterface(
@@ -138,25 +140,28 @@ final readonly class TransportContractGenerator implements CodeGeneratorModule
         $file = new PhpFile();
         $file->setStrictTypes();
 
+        $handlerBaseClass = $this->transportProfile->getHandlerBaseClass();
+        $responseHelperClass = $this->transportProfile->getResponseHelperClass();
+        $responseHelperParameterName = $this->transportProfile->getResponseHelperParameterName();
         $namespace = $file->addNamespace($serviceNamespace);
         $namespace->addUse($inputClass);
         $namespace->addUse($outputClass);
-        $namespace->addUse('App\Platform\Http\Handler\AbstractProtobufRpcHandler');
-        $namespace->addUse('App\Platform\Http\JsonResponse');
+        $namespace->addUse($handlerBaseClass);
+        $namespace->addUse($responseHelperClass);
         $namespace->addUse('Psr\Http\Message\ResponseInterface');
         $namespace->addUse('Psr\Http\Message\ServerRequestInterface');
 
         $class = $namespace->addClass($methodName . 'HttpHandler');
         $class->setFinal(true);
         $class->setReadOnly(true);
-        $class->setExtends('App\Platform\Http\Handler\AbstractProtobufRpcHandler');
+        $class->setExtends($handlerBaseClass);
 
         $constructor = $class->addMethod('__construct');
         $constructor->addPromotedParameter('endpoint')
             ->setPrivate()
             ->setType($serviceNamespace . '\\' . $methodName . 'Endpoint');
-        $constructor->addParameter('jsonResponse')->setType('App\Platform\Http\JsonResponse');
-        $constructor->setBody('parent::__construct($jsonResponse);');
+        $constructor->addParameter($responseHelperParameterName)->setType($responseHelperClass);
+        $constructor->setBody('parent::__construct($' . $responseHelperParameterName . ');');
 
         $handle = $class->addMethod('handle');
         $handle->addComment('@throws \JsonException');
@@ -165,13 +170,13 @@ final readonly class TransportContractGenerator implements CodeGeneratorModule
         $inputShortName = $this->shortName($inputClass);
         $outputShortName = $this->shortName($outputClass);
         $handle->setBody(
-            '$message = $this->decodeRequest($request, ' . $inputShortName . "::class);\n"
+            '$message = $this->' . $this->transportProfile->getDecodeRequestMethodName() . '($request, ' . $inputShortName . "::class);\n"
             . 'if (!$message instanceof ' . $inputShortName . ") {\n"
-            . "    return \$this->invalidRequestResponse();\n"
+            . '    return $this->' . $this->transportProfile->getInvalidRequestResponseMethodName() . "();\n"
             . "}\n\n"
             . '/** @var ' . $outputShortName . " \$response */\n"
             . '$response = $this->endpoint->handle($message, $request);' . "\n\n"
-            . 'return $this->protobufResponse($response);',
+            . 'return $this->' . $this->transportProfile->getSuccessResponseMethodName() . '($response);',
         );
 
         return new GeneratedFile(

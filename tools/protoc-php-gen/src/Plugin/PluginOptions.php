@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ProtoPhpGen\Plugin;
 
 use ProtoPhpGen\Generator\TransportContractGenerator;
+use ProtoPhpGen\Profile\BaseApiTemplateTransportProfile;
 use ProtoPhpGen\Protoc\PluginRequest;
 
 final readonly class PluginOptions
@@ -15,6 +16,7 @@ final readonly class PluginOptions
     public function __construct(
         private string $namespace = 'App\Gen',
         private string $outputDir = 'gen',
+        private string $transportProfile = BaseApiTemplateTransportProfile::NAME,
         private array $enabledModules = [],
     ) {}
 
@@ -30,6 +32,7 @@ final readonly class PluginOptions
         return new self(
             namespace: $request->getParameter('namespace', 'App\Gen'),
             outputDir: $request->getParameter('output_dir', 'gen'),
+            transportProfile: $request->getParameter('transport_profile', BaseApiTemplateTransportProfile::NAME),
             enabledModules: $enabledModules,
         );
     }
@@ -42,6 +45,11 @@ final readonly class PluginOptions
     public function getOutputDir(): string
     {
         return $this->outputDir;
+    }
+
+    public function getTransportProfile(): string
+    {
+        return $this->transportProfile;
     }
 
     public function isModuleEnabled(string $moduleName): bool

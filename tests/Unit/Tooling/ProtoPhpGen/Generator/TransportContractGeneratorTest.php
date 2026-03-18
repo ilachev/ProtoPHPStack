@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use ProtoPhpGen\Descriptor\ProtoFileDescriptor;
 use ProtoPhpGen\Generator\TransportContractGenerator;
 use ProtoPhpGen\Plugin\PluginOptions;
+use ProtoPhpGen\Profile\BaseApiTemplateTransportProfile;
 use ProtoPhpGen\Type\TypeResolver;
 
 final class TransportContractGeneratorTest extends TestCase
@@ -19,6 +20,7 @@ final class TransportContractGeneratorTest extends TestCase
                 namespace: 'App\Generated\Transport',
                 outputDir: 'gen',
             ),
+            new BaseApiTemplateTransportProfile(),
         );
 
         $files = $generator->generateForProtoFile(
