@@ -4,120 +4,86 @@ declare(strict_types=1);
 
 namespace SqlGen\Schema;
 
+use SqlGen\Ast\DeleteQuery;
+use SqlGen\Ast\InsertQuery;
+use SqlGen\Ast\SelectQuery;
 use SqlGen\Model\DatabaseSchema;
 use SqlGen\Model\SchemaTable;
 use SqlGen\Model\SqlStatement;
+use SqlGen\Parser\PhplrtSqlParser;
 
 final class StatementTableMapResolver
 {
-    /**
-     * @var list<string>
-     */
-    private const RESERVED_ALIASES = [
-        'where',
-        'join',
-        'left',
-        'right',
-        'inner',
-        'outer',
-        'full',
-        'cross',
-        'on',
-        'order',
-        'group',
-        'limit',
-        'offset',
-        'returning',
-        'values',
-        'set',
-    ];
+    private PhplrtSqlParser $sqlParser;
+
+    public function __construct()
+    {
+        $this->sqlParser = new PhplrtSqlParser();
+    }
 
     public function resolve(SqlStatement $statement, DatabaseSchema $schema): StatementTableMap
     {
         $references = [];
         $tables = [];
-        $primaryTable = $this->resolvePrimaryTable($statement, $schema);
+        $query = $this->sqlParser->parse($statement->sql);
+        $primaryTable = null;
 
-        if ($primaryTable !== null) {
+        if ($query instanceof SelectQuery) {
+            $primaryTable = $this->resolveSchemaTable($query->from->table, $schema, $statement->name);
+            $references[$primaryTable->name] = $primaryTable;
+            $tables[] = $primaryTable;
+
+            if ($query->from->alias !== null) {
+                $references[strtolower($query->from->alias)] = $primaryTable;
+            }
+
+            foreach ($query->joins as $join) {
+                $table = $this->resolveSchemaTable($join->table->table, $schema, $statement->name);
+                $references[$table->name] = $table;
+
+                if ($join->table->alias !== null) {
+                    $references[strtolower($join->table->alias)] = $table;
+                }
+
+                if (!$this->containsTable($tables, $table)) {
+                    $tables[] = $table;
+                }
+            }
+        }
+
+        if ($query instanceof InsertQuery) {
+            $primaryTable = $this->resolveSchemaTable($query->table, $schema, $statement->name);
             $references[$primaryTable->name] = $primaryTable;
             $tables[] = $primaryTable;
         }
 
-        preg_match_all(
-            '/\b(?:FROM|JOIN)\s+(?<table>[a-zA-Z_][a-zA-Z0-9_]*)(?:\s+(?:AS\s+)?(?<alias>[a-zA-Z_][a-zA-Z0-9_]*))?/i',
-            $statement->sql,
-            $matches,
-            PREG_SET_ORDER,
-        );
-
-        foreach ($matches as $match) {
-            $tableName = strtolower($match['table']);
-            $table = $schema->getTable($tableName);
-            if ($table === null) {
-                throw new \RuntimeException("Table {$tableName} was not found in schema for query {$statement->name}");
-            }
-
-            $alias = $this->normalizeAlias($match['alias'] ?? null);
-            $references[$table->name] = $table;
-
-            if ($alias !== null) {
-                $references[$alias] = $table;
-            }
-
-            if (!$this->containsTable($tables, $table)) {
-                $tables[] = $table;
-            }
+        if ($query instanceof DeleteQuery) {
+            $primaryTable = $this->resolveSchemaTable($query->table, $schema, $statement->name);
+            $references[$primaryTable->name] = $primaryTable;
+            $tables[] = $primaryTable;
         }
 
-        if ($tables === []) {
+        if (!$primaryTable instanceof SchemaTable) {
             throw new \RuntimeException("Unable to resolve table name for query {$statement->name}");
         }
 
         return new StatementTableMap(
             references: $references,
             tables: $tables,
-            primaryTable: $primaryTable ?? $tables[0],
+            primaryTable: $primaryTable,
             queryName: $statement->name,
         );
     }
 
-    private function resolvePrimaryTable(SqlStatement $statement, DatabaseSchema $schema): ?SchemaTable
+    private function resolveSchemaTable(string $tableName, DatabaseSchema $schema, string $queryName): SchemaTable
     {
-        $tableName = null;
-
-        if (preg_match('/\bINSERT\s+INTO\s+(?<table>[a-zA-Z_][a-zA-Z0-9_]*)\b/i', $statement->sql, $matches)) {
-            $tableName = strtolower($matches['table']);
-        } elseif (preg_match('/\bDELETE\s+FROM\s+(?<table>[a-zA-Z_][a-zA-Z0-9_]*)\b/i', $statement->sql, $matches)) {
-            $tableName = strtolower($matches['table']);
-        } elseif (preg_match('/\bUPDATE\s+(?<table>[a-zA-Z_][a-zA-Z0-9_]*)\b/i', $statement->sql, $matches)) {
-            $tableName = strtolower($matches['table']);
-        }
-
-        if ($tableName === null) {
-            return null;
-        }
-
-        $table = $schema->getTable($tableName);
+        $normalizedTableName = strtolower($tableName);
+        $table = $schema->getTable($normalizedTableName);
         if ($table === null) {
-            throw new \RuntimeException("Table {$tableName} was not found in schema for query {$statement->name}");
+            throw new \RuntimeException("Table {$normalizedTableName} was not found in schema for query {$queryName}");
         }
 
         return $table;
-    }
-
-    private function normalizeAlias(?string $alias): ?string
-    {
-        if (!is_string($alias) || $alias === '') {
-            return null;
-        }
-
-        $normalized = strtolower($alias);
-
-        if (in_array($normalized, self::RESERVED_ALIASES, true)) {
-            return null;
-        }
-
-        return $normalized;
     }
 
     /**

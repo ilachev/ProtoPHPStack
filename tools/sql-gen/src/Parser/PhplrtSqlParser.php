@@ -1,0 +1,506 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlGen\Parser;
+
+use Phplrt\Compiler\Compiler;
+use Phplrt\Compiler\Runtime\PrintableNode;
+use Phplrt\Contracts\Lexer\TokenInterface;
+use SqlGen\Ast\DeleteQuery;
+use SqlGen\Ast\InsertConflictAssignment;
+use SqlGen\Ast\InsertConflictClause;
+use SqlGen\Ast\InsertQuery;
+use SqlGen\Ast\InsertValueMapping;
+use SqlGen\Ast\SelectAlias;
+use SqlGen\Ast\SelectColumnReference;
+use SqlGen\Ast\SelectComparison;
+use SqlGen\Ast\SelectJoin;
+use SqlGen\Ast\SelectOperand;
+use SqlGen\Ast\SelectPlaceholder;
+use SqlGen\Ast\SelectProjection;
+use SqlGen\Ast\SelectProjectionColumn;
+use SqlGen\Ast\SelectProjectionWildcard;
+use SqlGen\Ast\SelectQuery;
+use SqlGen\Ast\SelectTableReference;
+
+final class PhplrtSqlParser
+{
+    private readonly Compiler $compiler;
+
+    public function __construct()
+    {
+        $grammar = file_get_contents(__DIR__ . '/grammar/sql_subset.pp2');
+        if (!is_string($grammar)) {
+            throw new \RuntimeException('Unable to load phplrt SQL subset grammar.');
+        }
+
+        $this->compiler = new Compiler();
+        $this->compiler->load($grammar);
+    }
+
+    public function parse(string $sql): SelectQuery|InsertQuery|DeleteQuery
+    {
+        /** @var PrintableNode $parsed */
+        $parsed = $this->compiler->parse($sql);
+
+        $select = $this->findFirstChildNode($parsed, 'SelectStmt');
+        if ($select instanceof PrintableNode) {
+            return $this->normalizeSelectQuery($select);
+        }
+
+        $insert = $this->findFirstChildNode($parsed, 'InsertStmt');
+        if ($insert instanceof PrintableNode) {
+            return $this->normalizeInsertQuery($insert);
+        }
+
+        $delete = $this->findFirstChildNode($parsed, 'DeleteStmt');
+        if ($delete instanceof PrintableNode) {
+            return $this->normalizeDeleteQuery($delete);
+        }
+
+        throw new \RuntimeException('Unsupported SQL statement for sql-gen subset parser.');
+    }
+
+    private function normalizeSelectQuery(PrintableNode $select): SelectQuery
+    {
+        $selectList = $this->findFirstChildNode($select, 'SelectList');
+        $from = $this->findFirstChildNode($select, 'TableRef');
+
+        if (!$selectList instanceof PrintableNode || !$from instanceof PrintableNode) {
+            throw new \RuntimeException('Parsed SELECT query is missing SelectList or TableRef.');
+        }
+
+        $joins = [];
+        $where = [];
+        $whereOperators = [];
+
+        foreach ($select->children as $child) {
+            if (!$child instanceof PrintableNode) {
+                continue;
+            }
+
+            if ($child->getState() === 'JoinClause') {
+                $joins[] = $this->normalizeJoinClause($child);
+                continue;
+            }
+
+            if ($child->getState() === 'WhereClause') {
+                [$where, $whereOperators] = $this->normalizeWhereClause($child);
+            }
+        }
+
+        return new SelectQuery(
+            projections: $this->normalizeSelectList($selectList),
+            from: $this->normalizeTableRef($from),
+            joins: $joins,
+            where: $where,
+            whereOperators: $whereOperators,
+        );
+    }
+
+    private function normalizeInsertQuery(PrintableNode $insert): InsertQuery
+    {
+        $tableName = $this->findDirectTokenValueAfter($insert, 'T_INTO', 'T_IDENT');
+        if ($tableName === null) {
+            throw new \RuntimeException('InsertStmt must contain a table name.');
+        }
+
+        $identList = $this->findFirstChildNode($insert, 'IdentList');
+        $placeholderList = $this->findFirstChildNode($insert, 'PlaceholderList');
+
+        if (!$identList instanceof PrintableNode || !$placeholderList instanceof PrintableNode) {
+            throw new \RuntimeException('InsertStmt must contain IdentList and PlaceholderList.');
+        }
+
+        $columns = $this->normalizeIdentList($identList);
+        $placeholders = $this->normalizePlaceholderList($placeholderList);
+
+        if (count($columns) !== count($placeholders)) {
+            throw new \RuntimeException('Insert column and placeholder counts must match.');
+        }
+
+        $values = [];
+        foreach ($columns as $index => $column) {
+            $values[] = new InsertValueMapping(
+                column: $column,
+                placeholder: $placeholders[$index],
+            );
+        }
+
+        $conflictNode = $this->findFirstChildNode($insert, 'ConflictClause');
+        $returningNode = $this->findFirstChildNode($insert, 'ReturningClause');
+
+        return new InsertQuery(
+            table: $tableName,
+            values: $values,
+            conflict: $conflictNode instanceof PrintableNode ? $this->normalizeConflictClause($conflictNode) : null,
+            returning: $returningNode instanceof PrintableNode ? $this->normalizeReturningClause($returningNode) : [],
+        );
+    }
+
+    private function normalizeDeleteQuery(PrintableNode $delete): DeleteQuery
+    {
+        $tableName = $this->findDirectTokenValueAfter($delete, 'T_FROM', 'T_IDENT');
+        $whereNode = $this->findFirstChildNode($delete, 'WhereClause');
+
+        if ($tableName === null || !$whereNode instanceof PrintableNode) {
+            throw new \RuntimeException('DeleteStmt must contain table name and WhereClause.');
+        }
+
+        [$where, $operators] = $this->normalizeWhereClause($whereNode);
+
+        return new DeleteQuery(
+            table: $tableName,
+            where: $where,
+            whereOperators: $operators,
+        );
+    }
+
+    /**
+     * @return list<SelectProjection>
+     */
+    private function normalizeSelectList(PrintableNode $selectList): array
+    {
+        $items = [];
+
+        foreach ($selectList->children as $child) {
+            if ($child instanceof PrintableNode && $child->getState() === 'SelectItem') {
+                $items[] = $this->normalizeSelectItem($child);
+            }
+        }
+
+        return $items;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function normalizeIdentList(PrintableNode $identList): array
+    {
+        $identifiers = [];
+
+        foreach ($identList->children as $child) {
+            if ($child instanceof TokenInterface && $child->getName() === 'T_IDENT') {
+                $identifiers[] = $child->getValue();
+            }
+        }
+
+        return $identifiers;
+    }
+
+    /**
+     * @return list<SelectPlaceholder>
+     */
+    private function normalizePlaceholderList(PrintableNode $placeholderList): array
+    {
+        $placeholders = [];
+
+        foreach ($placeholderList->children as $child) {
+            if ($child instanceof PrintableNode && $child->getState() === 'Placeholder') {
+                $placeholders[] = $this->normalizePlaceholder($child);
+            }
+        }
+
+        return $placeholders;
+    }
+
+    /**
+     * @return list<SelectProjection>
+     */
+    private function normalizeReturningClause(PrintableNode $returning): array
+    {
+        $selectList = $this->findFirstChildNode($returning, 'SelectList');
+        if (!$selectList instanceof PrintableNode) {
+            throw new \RuntimeException('ReturningClause must contain SelectList.');
+        }
+
+        return $this->normalizeSelectList($selectList);
+    }
+
+    private function normalizeConflictClause(PrintableNode $conflict): InsertConflictClause
+    {
+        $identList = $this->findFirstChildNode($conflict, 'IdentList');
+        $assignmentsNode = $this->findFirstChildNode($conflict, 'ConflictAssignments');
+
+        if (!$identList instanceof PrintableNode || !$assignmentsNode instanceof PrintableNode) {
+            throw new \RuntimeException('ConflictClause must contain target columns and assignments.');
+        }
+
+        $assignments = [];
+
+        foreach ($assignmentsNode->children as $child) {
+            if ($child instanceof PrintableNode && $child->getState() === 'ConflictAssignment') {
+                $assignments[] = $this->normalizeConflictAssignment($child);
+            }
+        }
+
+        return new InsertConflictClause(
+            targetColumns: $this->normalizeIdentList($identList),
+            assignments: $assignments,
+        );
+    }
+
+    private function normalizeConflictAssignment(PrintableNode $assignment): InsertConflictAssignment
+    {
+        $column = null;
+        $excludedColumn = null;
+
+        foreach ($assignment->children as $child) {
+            if ($child instanceof TokenInterface && $child->getName() === 'T_IDENT') {
+                $column ??= $child->getValue();
+                continue;
+            }
+
+            if ($child instanceof PrintableNode && $child->getState() === 'ExcludedRef') {
+                $excludedRefTokens = $this->tokens($child);
+                $excludedColumn = $excludedRefTokens[2] ?? null;
+            }
+        }
+
+        if (!is_string($column) || !is_string($excludedColumn)) {
+            throw new \RuntimeException('ConflictAssignment must contain target and excluded columns.');
+        }
+
+        return new InsertConflictAssignment(
+            column: $column,
+            excludedColumn: $excludedColumn,
+        );
+    }
+
+    private function normalizeSelectItem(PrintableNode $item): SelectProjection
+    {
+        $wildcard = $this->findFirstChildNode($item, 'WildcardSelection');
+        if ($wildcard instanceof PrintableNode) {
+            return $this->normalizeWildcardSelection($wildcard);
+        }
+
+        $column = $this->findFirstChildNode($item, 'AliasedColumn');
+        if (!$column instanceof PrintableNode) {
+            throw new \RuntimeException('SelectItem must contain AliasedColumn or WildcardSelection.');
+        }
+
+        $columnRef = $this->findFirstChildNode($column, 'ColumnRef');
+        if (!$columnRef instanceof PrintableNode) {
+            throw new \RuntimeException('AliasedColumn must contain ColumnRef.');
+        }
+
+        $directTokens = [];
+        foreach ($column->children as $child) {
+            if ($child instanceof TokenInterface) {
+                $directTokens[] = $child->getValue();
+            }
+        }
+
+        $alias = $directTokens === [] ? null : new SelectAlias($directTokens[count($directTokens) - 1]);
+
+        return new SelectProjectionColumn(
+            reference: $this->normalizeColumnRef($columnRef),
+            alias: $alias,
+        );
+    }
+
+    private function normalizeWildcardSelection(PrintableNode $wildcard): SelectProjectionWildcard
+    {
+        $tokens = $this->tokens($wildcard);
+
+        return new SelectProjectionWildcard(
+            table: count($tokens) === 3 ? $tokens[0] : null,
+        );
+    }
+
+    private function normalizeTableRef(PrintableNode $tableRef): SelectTableReference
+    {
+        $tokens = $this->tokens($tableRef);
+        if ($tokens === []) {
+            throw new \RuntimeException('TableRef must contain at least one token.');
+        }
+
+        $lastToken = $tokens[count($tokens) - 1];
+
+        return new SelectTableReference(
+            table: $tokens[0],
+            alias: $lastToken !== $tokens[0] ? $lastToken : null,
+        );
+    }
+
+    private function normalizeJoinClause(PrintableNode $join): SelectJoin
+    {
+        $joinTypeNode = $this->findFirstChildNode($join, 'JoinType');
+        $tableNode = $this->findNthChildNode($join, 'TableRef', 0);
+        $comparisonNode = $this->findFirstChildNode($join, 'ComparisonExpr');
+
+        if (!$tableNode instanceof PrintableNode || !$comparisonNode instanceof PrintableNode) {
+            throw new \RuntimeException('JoinClause must contain TableRef and ComparisonExpr.');
+        }
+
+        return new SelectJoin(
+            type: $joinTypeNode instanceof PrintableNode ? strtolower($this->firstTokenValue($joinTypeNode)) : null,
+            table: $this->normalizeTableRef($tableNode),
+            condition: $this->normalizeComparison($comparisonNode),
+        );
+    }
+
+    /**
+     * @return array{0: list<SelectComparison>, 1: list<string>}
+     */
+    private function normalizeWhereClause(PrintableNode $where): array
+    {
+        $comparisons = [];
+        $operators = [];
+
+        foreach ($where->children as $child) {
+            if ($child instanceof PrintableNode && $child->getState() === 'ComparisonExpr') {
+                $comparisons[] = $this->normalizeComparison($child);
+                continue;
+            }
+
+            if ($child instanceof TokenInterface && in_array($child->getName(), ['T_AND', 'T_OR'], true)) {
+                $operators[] = strtolower($child->getValue());
+            }
+        }
+
+        return [$comparisons, $operators];
+    }
+
+    private function normalizeComparison(PrintableNode $comparison): SelectComparison
+    {
+        $operands = [];
+        $operator = null;
+
+        foreach ($comparison->children as $child) {
+            if ($child instanceof PrintableNode && $child->getState() === 'Operand') {
+                $operands[] = $this->normalizeOperand($child);
+                continue;
+            }
+
+            if ($child instanceof PrintableNode && $child->getState() === 'CompareOp') {
+                $operator = $this->firstTokenValue($child);
+            }
+        }
+
+        if (count($operands) !== 2 || !is_string($operator)) {
+            throw new \RuntimeException('ComparisonExpr must contain two operands and one operator.');
+        }
+
+        return new SelectComparison(
+            left: $operands[0],
+            operator: $operator,
+            right: $operands[1],
+        );
+    }
+
+    private function normalizeOperand(PrintableNode $operand): SelectOperand
+    {
+        $column = $this->findFirstChildNode($operand, 'ColumnRef');
+        if ($column instanceof PrintableNode) {
+            return $this->normalizeColumnRef($column);
+        }
+
+        $placeholder = $this->findFirstChildNode($operand, 'Placeholder');
+        if (!$placeholder instanceof PrintableNode) {
+            throw new \RuntimeException('Operand must contain ColumnRef or Placeholder.');
+        }
+
+        return $this->normalizePlaceholder($placeholder);
+    }
+
+    private function normalizePlaceholder(PrintableNode $placeholder): SelectPlaceholder
+    {
+        $tokens = $this->tokens($placeholder);
+        if (!isset($tokens[1])) {
+            throw new \RuntimeException('Placeholder must contain a parameter name token.');
+        }
+
+        return new SelectPlaceholder($tokens[1]);
+    }
+
+    private function normalizeColumnRef(PrintableNode $columnRef): SelectColumnReference
+    {
+        $tokens = $this->tokens($columnRef);
+
+        return match (count($tokens)) {
+            3 => new SelectColumnReference(
+                table: $tokens[0],
+                column: $tokens[2],
+            ),
+            1 => new SelectColumnReference(
+                table: null,
+                column: $tokens[0],
+            ),
+            default => throw new \RuntimeException('ColumnRef token sequence is not supported by sql-gen subset parser.'),
+        };
+    }
+
+    private function firstTokenValue(PrintableNode $node): string
+    {
+        $tokens = $this->tokens($node);
+        if ($tokens === []) {
+            throw new \RuntimeException('Node does not contain direct tokens.');
+        }
+
+        return $tokens[0];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function tokens(PrintableNode $node): array
+    {
+        $tokens = [];
+
+        foreach ($node->children as $child) {
+            if ($child instanceof TokenInterface) {
+                $tokens[] = $child->getValue();
+            }
+        }
+
+        return $tokens;
+    }
+
+    private function findDirectTokenValueAfter(PrintableNode $node, string $afterTokenName, string $targetTokenName): ?string
+    {
+        $seenAfter = false;
+
+        foreach ($node->children as $child) {
+            if (!$child instanceof TokenInterface) {
+                continue;
+            }
+
+            if ($child->getName() === $afterTokenName) {
+                $seenAfter = true;
+                continue;
+            }
+
+            if ($seenAfter && $child->getName() === $targetTokenName) {
+                return $child->getValue();
+            }
+        }
+
+        return null;
+    }
+
+    private function findFirstChildNode(PrintableNode $node, string $state): ?PrintableNode
+    {
+        foreach ($node->children as $child) {
+            if ($child instanceof PrintableNode && $child->getState() === $state) {
+                return $child;
+            }
+        }
+
+        return null;
+    }
+
+    private function findNthChildNode(PrintableNode $node, string $state, int $index): ?PrintableNode
+    {
+        $matches = [];
+
+        foreach ($node->children as $child) {
+            if ($child instanceof PrintableNode && $child->getState() === $state) {
+                $matches[] = $child;
+            }
+        }
+
+        return $matches[$index] ?? null;
+    }
+}
