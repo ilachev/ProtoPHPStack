@@ -310,25 +310,26 @@ final class PhplrtSqlParser
 
     private function normalizeWildcardSelection(PrintableNode $wildcard): SelectProjectionWildcard
     {
-        $tokens = $this->tokens($wildcard);
+        $tokens = new TokenValueSequence($this->tokens($wildcard));
 
         return new SelectProjectionWildcard(
-            table: count($tokens) === 3 ? $tokens[0] : null,
+            table: $tokens->count() === 3 ? $tokens->first() : null,
         );
     }
 
     private function normalizeTableRef(PrintableNode $tableRef): SelectTableReference
     {
-        $tokens = $this->tokens($tableRef);
-        if ($tokens === []) {
+        $tokens = new TokenValueSequence($this->tokens($tableRef));
+        if ($tokens->isEmpty()) {
             throw new \RuntimeException('TableRef must contain at least one token.');
         }
 
-        $lastToken = $tokens[count($tokens) - 1];
+        $firstToken = $tokens->first();
+        $lastToken = $tokens->last();
 
         return new SelectTableReference(
-            table: $tokens[0],
-            alias: $lastToken !== $tokens[0] ? $lastToken : null,
+            table: $firstToken,
+            alias: $lastToken !== $firstToken ? $lastToken : null,
         );
     }
 
@@ -456,26 +457,23 @@ final class PhplrtSqlParser
 
     private function normalizePlaceholder(PrintableNode $placeholder): SelectPlaceholder
     {
-        $tokens = $this->tokens($placeholder);
-        if (!isset($tokens[1])) {
-            throw new \RuntimeException('Placeholder must contain a parameter name token.');
-        }
+        $tokens = new TokenValueSequence($this->tokens($placeholder));
 
-        return new SelectPlaceholder($tokens[1]);
+        return new SelectPlaceholder($tokens->second());
     }
 
     private function normalizeColumnRef(PrintableNode $columnRef): SelectColumnReference
     {
-        $tokens = $this->tokens($columnRef);
+        $tokens = new TokenValueSequence($this->tokens($columnRef));
 
-        return match (count($tokens)) {
+        return match ($tokens->count()) {
             3 => new SelectColumnReference(
-                table: $tokens[0],
-                column: $tokens[2],
+                table: $tokens->first(),
+                column: $tokens->third(),
             ),
             1 => new SelectColumnReference(
                 table: null,
-                column: $tokens[0],
+                column: $tokens->first(),
             ),
             default => throw new \RuntimeException('ColumnRef token sequence is not supported by sql-gen subset parser.'),
         };
@@ -483,12 +481,12 @@ final class PhplrtSqlParser
 
     private function firstTokenValue(PrintableNode $node): string
     {
-        $tokens = $this->tokens($node);
-        if ($tokens === []) {
+        $tokens = new TokenValueSequence($this->tokens($node));
+        if ($tokens->isEmpty()) {
             throw new \RuntimeException('Node does not contain direct tokens.');
         }
 
-        return $tokens[0];
+        return $tokens->first();
     }
 
     /**

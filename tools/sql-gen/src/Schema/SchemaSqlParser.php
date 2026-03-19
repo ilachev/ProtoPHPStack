@@ -185,8 +185,10 @@ final class SchemaSqlParser
      */
     private function parseColumnDefinition(array $tokens): ?SchemaColumnDefinition
     {
-        $firstToken = $tokens[0] ?? null;
-        if (!$firstToken instanceof SchemaToken || $firstToken->type !== 'word') {
+        $tokenSequence = new SchemaTokenSequence($tokens);
+        $firstToken = $tokenSequence->first();
+
+        if ($firstToken->type !== 'word') {
             throw new \RuntimeException('Unsupported table element in schema SQL');
         }
 
@@ -195,9 +197,9 @@ final class SchemaSqlParser
         }
 
         $name = $firstToken->value;
-        $typeToken = $tokens[1] ?? null;
+        $typeToken = $tokenSequence->second();
 
-        if (!$typeToken instanceof SchemaToken || $typeToken->type !== 'word') {
+        if ($typeToken->type !== 'word') {
             throw new \RuntimeException("Unsupported column definition in schema SQL: {$name}");
         }
 
@@ -213,14 +215,14 @@ final class SchemaSqlParser
             $upper = strtoupper($token->value);
 
             if ($upper === 'NOT') {
-                $next = $tokens[$offset + 1] ?? null;
+                $next = $tokenSequence->next($offset);
                 if ($next instanceof SchemaToken && $next->type === 'word' && strtoupper($next->value) === 'NULL') {
                     $nullable = false;
                 }
             }
 
             if ($upper === 'PRIMARY') {
-                $next = $tokens[$offset + 1] ?? null;
+                $next = $tokenSequence->next($offset);
                 if ($next instanceof SchemaToken && $next->type === 'word' && strtoupper($next->value) === 'KEY') {
                     $nullable = false;
                 }
