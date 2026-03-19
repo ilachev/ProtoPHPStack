@@ -32,6 +32,7 @@ final class StatementParameterResolver
                 propertyName: $this->snakeToCamel($comparison['param']),
                 sqlType: $column->sqlType,
                 phpType: $column->phpType,
+                nullable: $column->nullable,
             );
         }
 
@@ -48,6 +49,7 @@ final class StatementParameterResolver
                 propertyName: $this->snakeToCamel($mapping['param']),
                 sqlType: $column->sqlType,
                 phpType: $column->phpType,
+                nullable: $column->nullable,
             );
         }
 
@@ -69,11 +71,11 @@ final class StatementParameterResolver
 
     private function resolveTable(SqlStatement $statement, DatabaseSchema $schema): SchemaTable
     {
-        if (preg_match('/\bFROM\s+(?<table>[a-zA-Z_][a-zA-Z0-9_]*)\b/i', $statement->sql, $matches)) {
+        if (preg_match('/\bINSERT\s+INTO\s+(?<table>[a-zA-Z_][a-zA-Z0-9_]*)\b/i', $statement->sql, $matches)) {
+            $tableName = $matches['table'];
+        } elseif (preg_match('/\bFROM\s+(?<table>[a-zA-Z_][a-zA-Z0-9_]*)\b/i', $statement->sql, $matches)) {
             $tableName = $matches['table'];
         } elseif (preg_match('/\bUPDATE\s+(?<table>[a-zA-Z_][a-zA-Z0-9_]*)\b/i', $statement->sql, $matches)) {
-            $tableName = $matches['table'];
-        } elseif (preg_match('/\bINSERT\s+INTO\s+(?<table>[a-zA-Z_][a-zA-Z0-9_]*)\b/i', $statement->sql, $matches)) {
             $tableName = $matches['table'];
         } else {
             throw new \RuntimeException("Unable to resolve table name for query {$statement->name}");

@@ -6,11 +6,6 @@ namespace Tests\Unit\Capabilities\Session\Infrastructure\Persistence;
 
 use App\Capabilities\Session\Domain\Session;
 use App\Capabilities\Session\Infrastructure\Persistence\SqlSessionRepository;
-use App\Platform\Hydration\Hydrator;
-use App\Platform\Hydration\LimitedReflectionCache;
-use App\Platform\Hydration\ReflectionHydrator;
-use App\Platform\Hydration\SetterProtobufHydration;
-use App\Platform\Storage\Query\QueryBuilderFactory;
 use App\Platform\Storage\Sql\SqlExecutor;
 use App\Platform\Storage\Storage;
 use PHPUnit\Framework\TestCase;
@@ -21,22 +16,11 @@ final class SqlSessionRepositoryTest extends TestCase
 
     private InMemoryTestStorage $storage;
 
-    private Hydrator $hydrator;
-
-    private QueryBuilderFactory $queryBuilderFactory;
-
     protected function setUp(): void
     {
         $this->storage = new InMemoryTestStorage();
-        $cache = new LimitedReflectionCache();
-        $protobufHydration = new SetterProtobufHydration();
-        $this->hydrator = new ReflectionHydrator($cache, $protobufHydration);
-        $this->queryBuilderFactory = new QueryBuilderFactory();
 
         $this->repository = new SqlSessionRepository(
-            $this->storage,
-            $this->hydrator,
-            $this->queryBuilderFactory,
             new SqlExecutor($this->storage),
         );
     }
@@ -159,6 +143,55 @@ final class SqlSessionRepositoryTest extends TestCase
         self::assertCount(1, $this->storage->getTables()['sessions']);
         self::assertSame('valid-session', $this->storage->getTables()['sessions'][0]['id']);
     }
+
+    public function testSaveUpsertsSession(): void
+    {
+        $session = new Session(
+            id: 'session-1',
+            userId: 10,
+            payload: '{"ip":"127.0.0.1"}',
+            expiresAt: 1_710_000_100,
+            createdAt: 1_710_000_000,
+            updatedAt: 1_710_000_050,
+        );
+
+        $this->repository->save($session);
+
+        self::assertCount(1, $this->storage->getTables()['sessions']);
+        self::assertSame('session-1', $this->storage->getTables()['sessions'][0]['id']);
+        self::assertSame(10, $this->storage->getTables()['sessions'][0]['user_id']);
+
+        $updatedSession = new Session(
+            id: 'session-1',
+            userId: null,
+            payload: '{"ip":"127.0.0.2"}',
+            expiresAt: 1_710_000_200,
+            createdAt: 1_710_000_000,
+            updatedAt: 1_710_000_150,
+        );
+
+        $this->repository->save($updatedSession);
+
+        self::assertCount(1, $this->storage->getTables()['sessions']);
+        self::assertNull($this->storage->getTables()['sessions'][0]['user_id']);
+        self::assertSame('{"ip":"127.0.0.2"}', $this->storage->getTables()['sessions'][0]['payload']);
+    }
+
+    public function testDeleteRemovesSessionById(): void
+    {
+        $this->storage->addRow('sessions', [
+            'id' => 'session-1',
+            'user_id' => 1,
+            'payload' => '{}',
+            'expires_at' => time() + 3600,
+            'created_at' => time() - 100,
+            'updated_at' => time() - 50,
+        ]);
+
+        $this->repository->delete('session-1');
+
+        self::assertEmpty($this->storage->getTables()['sessions']);
+    }
 }
 
 /**
@@ -276,7 +309,29 @@ final class InMemoryTestStorage implements Storage
     {
         $normalizedSql = $this->normalizeSql($sql);
 
-        if (str_starts_with($normalizedSql, 'INSERT INTO')) {
+        if (str_contains($normalizedSql, 'ON CONFLICT')) {
+            preg_match('/INSERT INTO\s+(\w+)/i', $normalizedSql, $matches);
+            if (\count($matches) >= 2) {
+                $tableName = $matches[1];
+
+                if (!isset($this->tables[$tableName])) {
+                    $this->tables[$tableName] = [];
+                }
+
+                $updated = false;
+                foreach ($this->tables[$tableName] as $index => $row) {
+                    if (($row['id'] ?? null) === ($params['id'] ?? null)) {
+                        $this->tables[$tableName][$index] = array_merge($row, $params);
+                        $updated = true;
+                        break;
+                    }
+                }
+
+                if (!$updated) {
+                    $this->tables[$tableName][] = $params;
+                }
+            }
+        } elseif (str_starts_with($normalizedSql, 'INSERT INTO')) {
             // Handle insert
             preg_match('/INSERT INTO\s+(\w+)/i', $normalizedSql, $matches);
             if (\count($matches) >= 2) {

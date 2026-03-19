@@ -8,7 +8,6 @@ use App\Platform\Config\ProjectPath;
 use App\Platform\DI\Container;
 use App\Platform\DI\ServiceProvider;
 use App\Platform\Logging\Logger;
-use App\Platform\Storage\Query\QueryFactory;
 use App\Platform\Storage\Sql\SqlExecutor;
 use App\Platform\Storage\Storage;
 use App\Platform\Storage\StorageConfig;
@@ -70,17 +69,6 @@ final readonly class StorageServiceProvider implements ServiceProvider
                 $factory = $container->get(StorageFactory::class);
 
                 return $factory->createStorage();
-            },
-        );
-
-        // PostgreSQL query factory
-        $container->set(
-            QueryFactory::class,
-            static function (Container $container): QueryFactory {
-                /** @var StorageFactory $factory */
-                $factory = $container->get(StorageFactory::class);
-
-                return $factory->createQueryFactory();
             },
         );
 

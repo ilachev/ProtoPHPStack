@@ -144,10 +144,13 @@ final readonly class PhpQueryGenerator
 
         $constructor = $class->addMethod('__construct');
         foreach ($parameters as $parameter) {
-            $constructor
+            $generatedParameter = $constructor
                 ->addPromotedParameter($parameter->propertyName)
-                ->setPrivate()
-                ->setType($parameter->phpType);
+                ->setPrivate();
+            $generatedParameter->setType($parameter->phpType);
+            if ($parameter->nullable) {
+                $generatedParameter->setNullable();
+            }
         }
 
         $factory = $class->addMethod('create');
@@ -156,7 +159,11 @@ final readonly class PhpQueryGenerator
 
         if ($parameters !== []) {
             foreach ($parameters as $parameter) {
-                $factory->addParameter($parameter->propertyName)->setType($parameter->phpType);
+                $generatedParameter = $factory->addParameter($parameter->propertyName);
+                $generatedParameter->setType($parameter->phpType);
+                if ($parameter->nullable) {
+                    $generatedParameter->setNullable();
+                }
             }
 
             $arguments = implode(
@@ -281,7 +288,11 @@ final readonly class PhpQueryGenerator
         }
 
         $parts = array_map(
-            static fn(ResolvedSqlParameter $parameter): string => "{$parameter->name}:{$parameter->phpType}",
+            static fn(ResolvedSqlParameter $parameter): string => sprintf(
+                '%s:%s',
+                $parameter->name,
+                $parameter->nullable ? $parameter->phpType . '|null' : $parameter->phpType,
+            ),
             $parameters,
         );
 

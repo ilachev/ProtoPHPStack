@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Platform\Storage;
 
 use App\Platform\Logging\Logger;
-use App\Platform\Storage\Query\QueryFactory;
 
 /**
  * Factory for creating storage instances based on configuration.
@@ -31,20 +30,6 @@ final readonly class StorageFactory
             'pgsql' => $this->createPostgreSQLStorage(),
             default => throw new StorageException("Unsupported storage engine: {$engine}"),
         };
-    }
-
-    /**
-     * Create a query factory for the configured storage engine.
-     */
-    public function createQueryFactory(): QueryFactory
-    {
-        $engine = $this->getEngine();
-
-        if ($engine === 'pgsql') {
-            return new Query\PostgreSQLQueryFactory($this->config->pgsql->schema);
-        }
-
-        return new Query\SQLiteQueryFactory();
     }
 
     private function createSQLiteStorage(): SQLiteStorage

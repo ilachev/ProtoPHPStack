@@ -13,16 +13,16 @@ use App\Platform\Storage\Sql\ExecutableQuery;
 use App\Platform\Storage\Sql\ManyRowsQuery;
 
 /**
- * @implements ManyRowsQuery<SessionRow, array{user_id:int}>
+ * @implements ManyRowsQuery<SessionRow, array{user_id:int|null}>
  */
 final readonly class FindSessionsByUserIdQuery implements ManyRowsQuery
 {
     public function __construct(
-        private int $userId,
+        private ?int $userId,
     ) {
     }
 
-    public static function create(int $userId): self
+    public static function create(?int $userId): self
     {
         return new self(
                     userId: $userId
@@ -48,7 +48,7 @@ final readonly class FindSessionsByUserIdQuery implements ManyRowsQuery
     }
 
     /**
-     * @return array{user_id:int}
+     * @return array{user_id:int|null}
      */
     public function params(): array
     {

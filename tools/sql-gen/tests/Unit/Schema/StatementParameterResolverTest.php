@@ -41,6 +41,7 @@ final class StatementParameterResolverTest extends TestCase
         self::assertSame('now', $resolved[0]->propertyName);
         self::assertSame('BIGINT', $resolved[0]->sqlType);
         self::assertSame('int', $resolved[0]->phpType);
+        self::assertFalse($resolved[0]->nullable);
     }
 
     public function testResolvesCamelCasePropertyNamesForSnakeCaseParameters(): void
@@ -66,6 +67,7 @@ final class StatementParameterResolverTest extends TestCase
         self::assertSame('userId', $resolved[0]->propertyName);
         self::assertSame('INTEGER', $resolved[0]->sqlType);
         self::assertSame('int', $resolved[0]->phpType);
+        self::assertTrue($resolved[0]->nullable);
     }
 
     public function testResolvesInsertValueParameterTypesFromSchemaColumns(): void
@@ -99,9 +101,47 @@ final class StatementParameterResolverTest extends TestCase
         self::assertCount(3, $resolved);
         self::assertSame('string', $resolved[0]->phpType);
         self::assertSame('TEXT', $resolved[0]->sqlType);
+        self::assertFalse($resolved[0]->nullable);
         self::assertSame('int', $resolved[1]->phpType);
         self::assertSame('INTEGER', $resolved[1]->sqlType);
+        self::assertFalse($resolved[1]->nullable);
         self::assertSame('float', $resolved[2]->phpType);
         self::assertSame('REAL', $resolved[2]->sqlType);
+        self::assertFalse($resolved[2]->nullable);
+    }
+
+    public function testResolvesUpsertTableFromInsertIntoClause(): void
+    {
+        $resolver = new StatementParameterResolver();
+        $schema = new DatabaseSchema([
+            'sessions' => new SchemaTable('sessions', [
+                'id' => new SchemaColumn('id', 'TEXT', 'string', false),
+                'payload' => new SchemaColumn('payload', 'JSONB', 'string', false),
+            ]),
+        ]);
+
+        $resolved = $resolver->resolve(
+            new SqlStatement(
+                name: 'UpsertSession',
+                resultKind: SqlResultKind::Exec,
+                sql: <<<'SQL'
+                    INSERT INTO sessions (id, payload)
+                    VALUES (:id, :payload)
+                    ON CONFLICT (id) DO UPDATE SET
+                        payload = EXCLUDED.payload;
+                    SQL,
+                parameters: [
+                    new SqlParameter('id'),
+                    new SqlParameter('payload'),
+                ],
+            ),
+            $schema,
+        );
+
+        self::assertCount(2, $resolved);
+        self::assertSame('TEXT', $resolved[0]->sqlType);
+        self::assertSame('JSONB', $resolved[1]->sqlType);
+        self::assertFalse($resolved[0]->nullable);
+        self::assertFalse($resolved[1]->nullable);
     }
 }

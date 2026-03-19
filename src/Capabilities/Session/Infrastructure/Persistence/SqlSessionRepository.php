@@ -7,28 +7,19 @@ namespace App\Capabilities\Session\Infrastructure\Persistence;
 use App\Capabilities\Session\Domain\Session;
 use App\Capabilities\Session\Domain\SessionRepository;
 use App\Generated\Sql\Session\DeleteExpiredSessionsQuery;
+use App\Generated\Sql\Session\DeleteSessionByIdQuery;
 use App\Generated\Sql\Session\FindAllSessionsQuery;
 use App\Generated\Sql\Session\FindSessionByIdQuery;
 use App\Generated\Sql\Session\FindSessionsByUserIdQuery;
 use App\Generated\Sql\Session\SessionRow;
-use App\Platform\Hydration\Hydrator;
-use App\Platform\Storage\Query\QueryFactory;
-use App\Platform\Storage\Repository\AbstractRepository;
+use App\Generated\Sql\Session\UpsertSessionQuery;
 use App\Platform\Storage\Sql\SqlExecutor;
-use App\Platform\Storage\Storage;
 
-final class SqlSessionRepository extends AbstractRepository implements SessionRepository
+final readonly class SqlSessionRepository implements SessionRepository
 {
-    private const TABLE_NAME = 'sessions';
-
     public function __construct(
-        Storage $storage,
-        Hydrator $hydrator,
-        QueryFactory $queryBuilderFactory,
         private readonly SqlExecutor $sqlExecutor,
-    ) {
-        parent::__construct($storage, $hydrator, $queryBuilderFactory);
-    }
+    ) {}
 
     public function findById(string $id): ?Session
     {
@@ -69,12 +60,23 @@ final class SqlSessionRepository extends AbstractRepository implements SessionRe
 
     public function save(Session $session): void
     {
-        $this->saveEntity($session, self::TABLE_NAME, 'id', $session->id);
+        $this->sqlExecutor->execute(
+            UpsertSessionQuery::create(
+                id: $session->id,
+                userId: $session->userId,
+                payload: $session->payload,
+                expiresAt: $session->expiresAt,
+                createdAt: $session->createdAt,
+                updatedAt: $session->updatedAt,
+            ),
+        );
     }
 
     public function delete(string $id): void
     {
-        $this->deleteEntity(self::TABLE_NAME, 'id', $id);
+        $this->sqlExecutor->execute(
+            DeleteSessionByIdQuery::create(id: $id),
+        );
     }
 
     public function deleteExpired(): void

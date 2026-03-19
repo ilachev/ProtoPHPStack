@@ -47,11 +47,11 @@
 
 ### `Platform/Storage`
 
-- Роль: storage abstractions, repositories, query builders, migrations.
+- Роль: storage abstractions, SQL executor, migrations.
 - Обязательность: обязательный reusable block для backend template.
-- Что здесь считается core: generic persistence API, migrations, adapters.
+- Что здесь считается core: storage adapters, typed SQL execution, migrations.
 - Optional-часть: дополнительные storage profiles и engine-specific tuning.
-- Целевое направление: explicit SQL с typed generation поверх него, а не разрастание runtime query-builder vocabulary.
+- Целевое направление: explicit SQL с typed generation поверх него.
 
 ### `Platform/Cache`
 

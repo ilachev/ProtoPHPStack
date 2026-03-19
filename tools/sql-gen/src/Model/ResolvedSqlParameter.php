@@ -11,5 +11,6 @@ final readonly class ResolvedSqlParameter
         public string $propertyName,
         public string $sqlType,
         public string $phpType,
+        public bool $nullable,
     ) {}
 }
