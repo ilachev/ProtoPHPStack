@@ -6,10 +6,6 @@ namespace App\Platform\Storage\Sql;
 
 interface ExecutableQuery
 {
-    public function name(): string;
-
-    public function resultKind(): QueryResultKind;
-
     public function sql(): string;
 
     /**

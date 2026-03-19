@@ -23,7 +23,7 @@ final readonly class SessionQueries
 
     public function findAllSessions(): FindAllSessionsQuery
     {
-        return new FindAllSessionsQuery(new FindAllSessionsParams());
+        return new FindAllSessionsQuery();
     }
 
     public function deleteExpiredSessions(DeleteExpiredSessionsParams $params): DeleteExpiredSessionsQuery

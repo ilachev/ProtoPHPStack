@@ -7,12 +7,10 @@ namespace App\Capabilities\Session\Infrastructure\Persistence;
 use App\Capabilities\Session\Domain\Session;
 use App\Capabilities\Session\Domain\SessionRepository;
 use App\Generated\Sql\Session\DeleteExpiredSessionsParams;
-use App\Generated\Sql\Session\FindAllSessionsRow;
 use App\Generated\Sql\Session\FindSessionByIdParams;
-use App\Generated\Sql\Session\FindSessionByIdRow;
 use App\Generated\Sql\Session\FindSessionsByUserIdParams;
-use App\Generated\Sql\Session\FindSessionsByUserIdRow;
 use App\Generated\Sql\Session\SessionQueries;
+use App\Generated\Sql\Session\SessionRow;
 use App\Platform\Hydration\Hydrator;
 use App\Platform\Storage\Query\QueryFactory;
 use App\Platform\Storage\Repository\AbstractRepository;
@@ -44,7 +42,7 @@ final class SqlSessionRepository extends AbstractRepository implements SessionRe
         }
 
         return $this->createSessionFromRow(
-            FindSessionByIdRow::fromDatabaseRow($row),
+            SessionRow::fromDatabaseRow($row),
         );
     }
 
@@ -56,7 +54,7 @@ final class SqlSessionRepository extends AbstractRepository implements SessionRe
 
         return array_map(
             fn(array $row): Session => $this->createSessionFromRow(
-                FindSessionsByUserIdRow::fromDatabaseRow($row),
+                SessionRow::fromDatabaseRow($row),
             ),
             $rows,
         );
@@ -70,7 +68,7 @@ final class SqlSessionRepository extends AbstractRepository implements SessionRe
 
         return array_map(
             fn(array $row): Session => $this->createSessionFromRow(
-                FindAllSessionsRow::fromDatabaseRow($row),
+                SessionRow::fromDatabaseRow($row),
             ),
             $rows,
         );
@@ -95,9 +93,8 @@ final class SqlSessionRepository extends AbstractRepository implements SessionRe
         );
     }
 
-    private function createSessionFromRow(
-        FindSessionByIdRow|FindSessionsByUserIdRow|FindAllSessionsRow $row,
-    ): Session {
+    private function createSessionFromRow(SessionRow $row): Session
+    {
         return new Session(
             id: $row->id,
             userId: $row->userId,

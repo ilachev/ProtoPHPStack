@@ -10,30 +10,9 @@ declare(strict_types=1);
 namespace App\Generated\Sql\Session;
 
 use App\Platform\Storage\Sql\ExecutableQuery;
-use App\Platform\Storage\Sql\QueryResultKind;
 
 final readonly class FindAllSessionsQuery implements ExecutableQuery
 {
-    public function __construct(
-        private FindAllSessionsParams $params,
-    ) {
-    }
-
-    public function name(): string
-    {
-        return 'FindAllSessions';
-    }
-
-    public function resultKind(): QueryResultKind
-    {
-        return QueryResultKind::from('many');
-    }
-
-    public function rowClass(): string
-    {
-        return 'App\Generated\Sql\Session\FindAllSessionsRow';
-    }
-
     public function sql(): string
     {
         return <<<'SQL'

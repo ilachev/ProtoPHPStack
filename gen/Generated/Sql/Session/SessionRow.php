@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace App\Generated\Sql\Session;
 
-final readonly class FindSessionByIdRow
+final readonly class SessionRow
 {
     public function __construct(
         public string $id,

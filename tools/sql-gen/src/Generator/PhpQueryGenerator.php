@@ -36,23 +36,29 @@ final readonly class PhpQueryGenerator
         $files = [];
         $namespace = rtrim($this->config->namespace, '\\') . '\\' . $sqlFile->moduleName;
         $outputDir = rtrim($this->config->outputDir, '/') . '/' . $sqlFile->moduleName;
+        $rowClassNames = $this->resolveRowClassNames($sqlFile);
+        $generatedRowClasses = [];
 
         foreach ($sqlFile->statements as $statement) {
             $rowFields = $this->rowResolver->resolve($statement, $this->schema);
+            $rowClassName = $rowClassNames[$statement->name] ?? null;
 
-            $files[] = new GeneratedFile(
-                path: $outputDir . '/' . $statement->getParamsClassName() . '.php',
-                content: $this->renderParamsClass($namespace, $statement, $sqlFile->sourcePath),
-            );
-            if ($rowFields !== []) {
+            if ($statement->parameters !== []) {
                 $files[] = new GeneratedFile(
-                    path: $outputDir . '/' . $statement->getRowClassName() . '.php',
-                    content: $this->renderRowClass($namespace, $statement, $rowFields, $sqlFile->sourcePath),
+                    path: $outputDir . '/' . $statement->getParamsClassName() . '.php',
+                    content: $this->renderParamsClass($namespace, $statement, $sqlFile->sourcePath),
                 );
+            }
+            if ($rowFields !== [] && is_string($rowClassName) && !isset($generatedRowClasses[$rowClassName])) {
+                $files[] = new GeneratedFile(
+                    path: $outputDir . '/' . $rowClassName . '.php',
+                    content: $this->renderRowClass($namespace, $rowClassName, $rowFields, $sqlFile->sourcePath),
+                );
+                $generatedRowClasses[$rowClassName] = true;
             }
             $files[] = new GeneratedFile(
                 path: $outputDir . '/' . $statement->getQueryClassName() . '.php',
-                content: $this->renderQueryClass($namespace, $statement, $rowFields !== [], $sqlFile->sourcePath),
+                content: $this->renderQueryClass($namespace, $statement, $sqlFile->sourcePath),
             );
         }
 
@@ -89,13 +95,13 @@ final readonly class PhpQueryGenerator
     /**
      * @param list<RowField> $fields
      */
-    private function renderRowClass(string $namespaceName, SqlStatement $statement, array $fields, string $sourcePath): string
+    private function renderRowClass(string $namespaceName, string $rowClassName, array $fields, string $sourcePath): string
     {
         $file = new PhpFile();
         $file->setStrictTypes();
 
         $namespace = $file->addNamespace($namespaceName);
-        $class = $namespace->addClass($statement->getRowClassName());
+        $class = $namespace->addClass($rowClassName);
         $class->setFinal(true);
         $class->setReadOnly(true);
 
@@ -119,43 +125,26 @@ final readonly class PhpQueryGenerator
         return $this->printGeneratedFile($file, $sourcePath);
     }
 
-    private function renderQueryClass(string $namespaceName, SqlStatement $statement, bool $hasRow, string $sourcePath): string
+    private function renderQueryClass(string $namespaceName, SqlStatement $statement, string $sourcePath): string
     {
-        $paramsClass = $namespaceName . '\\' . $statement->getParamsClassName();
-
         $file = new PhpFile();
         $file->setStrictTypes();
 
         $namespace = $file->addNamespace($namespaceName);
         $namespace->addUse('App\Platform\Storage\Sql\ExecutableQuery');
-        $namespace->addUse('App\Platform\Storage\Sql\QueryResultKind');
 
         $class = $namespace->addClass($statement->getQueryClassName());
         $class->setFinal(true);
         $class->setReadOnly(true);
         $class->addImplement('App\Platform\Storage\Sql\ExecutableQuery');
 
-        $constructor = $class->addMethod('__construct');
-        $constructor
-            ->addPromotedParameter('params')
-            ->setPrivate()
-            ->setType($paramsClass);
-
-        $nameMethod = $class->addMethod('name');
-        $nameMethod->setReturnType('string');
-        $nameMethod->setBody('return ?;', [$statement->name]);
-
-        $resultKindMethod = $class->addMethod('resultKind');
-        $resultKindMethod->setReturnType('App\Platform\Storage\Sql\QueryResultKind');
-        $resultKindMethod->setBody(
-            'return QueryResultKind::from(?);',
-            [$statement->resultKind->value],
-        );
-
-        if ($hasRow) {
-            $rowClassMethod = $class->addMethod('rowClass');
-            $rowClassMethod->setReturnType('string');
-            $rowClassMethod->setBody('return ?;', [$namespaceName . '\\' . $statement->getRowClassName()]);
+        if ($statement->parameters !== []) {
+            $paramsClass = $namespaceName . '\\' . $statement->getParamsClassName();
+            $constructor = $class->addMethod('__construct');
+            $constructor
+                ->addPromotedParameter('params')
+                ->setPrivate()
+                ->setType($paramsClass);
         }
 
         $sqlMethod = $class->addMethod('sql');
@@ -181,19 +170,19 @@ final readonly class PhpQueryGenerator
         $class->setReadOnly(true);
 
         foreach ($sqlFile->statements as $statement) {
-            $paramsClass = $namespaceName . '\\' . $statement->getParamsClassName();
             $queryClass = $namespaceName . '\\' . $statement->getQueryClassName();
             $method = $class->addMethod($statement->getFactoryMethodName());
             $method->setReturnType($queryClass);
 
             if ($statement->parameters !== []) {
+                $paramsClass = $namespaceName . '\\' . $statement->getParamsClassName();
                 $method->addParameter('params')->setType($paramsClass);
                 $method->setBody(
                     'return new ' . $statement->getQueryClassName() . '($params);',
                 );
             } else {
                 $method->setBody(
-                    'return new ' . $statement->getQueryClassName() . '(new ' . $statement->getParamsClassName() . '());',
+                    'return new ' . $statement->getQueryClassName() . '();',
                 );
             }
         }
@@ -280,5 +269,68 @@ final readonly class PhpQueryGenerator
              */
 
             PHP;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function resolveRowClassNames(SqlFile $sqlFile): array
+    {
+        $groups = [];
+
+        foreach ($sqlFile->statements as $statement) {
+            $rowFields = $this->rowResolver->resolve($statement, $this->schema);
+            if ($rowFields === []) {
+                continue;
+            }
+
+            $signature = $this->buildRowSignature($rowFields);
+            if (!isset($groups[$signature])) {
+                $groups[$signature] = [];
+            }
+
+            $groups[$signature][] = $statement;
+        }
+
+        $rowClassNames = [];
+        $sharedGroupIndex = 0;
+
+        foreach ($groups as $statements) {
+            if (count($statements) === 1) {
+                $statement = $statements[0];
+                $rowClassNames[$statement->name] = $statement->getRowClassName();
+                continue;
+            }
+
+            $sharedGroupIndex++;
+            $sharedClassName = $sharedGroupIndex === 1
+                ? $sqlFile->moduleName . 'Row'
+                : $sqlFile->moduleName . 'Row' . $sharedGroupIndex;
+
+            foreach ($statements as $statement) {
+                $rowClassNames[$statement->name] = $sharedClassName;
+            }
+        }
+
+        return $rowClassNames;
+    }
+
+    /**
+     * @param list<RowField> $fields
+     */
+    private function buildRowSignature(array $fields): string
+    {
+        return implode(
+            '|',
+            array_map(
+                static fn(RowField $field): string => implode(':', [
+                    $field->columnName,
+                    $field->propertyName,
+                    $field->phpType,
+                    $field->nullable ? 'nullable' : 'required',
+                ]),
+                $fields,
+            ),
+        );
     }
 }
