@@ -19,21 +19,23 @@ use SqlGen\Ast\SelectProjectionColumn;
 use SqlGen\Ast\SelectProjectionWildcard;
 use SqlGen\Ast\SelectQuery;
 use SqlGen\Ast\SelectTableReference;
+use SqlGen\Ast\SqlQuery;
 use SqlGen\Model\DatabaseSchema;
 use SqlGen\Model\ResolvedSqlParameter;
 use SqlGen\Model\SqlStatement;
 use SqlGen\Parser\PhplrtSqlParser;
+use SqlGen\Parser\SqlQueryParser;
 use SqlGen\Schema\StatementParameterResolver;
 
 final readonly class PostgreSqlStatementCompiler
 {
     private StatementParameterResolver $parameterResolver;
 
-    private PhplrtSqlParser $sqlParser;
+    private SqlQueryParser $sqlParser;
 
     public function __construct(
         ?StatementParameterResolver $parameterResolver = null,
-        ?PhplrtSqlParser $sqlParser = null,
+        ?SqlQueryParser $sqlParser = null,
     ) {
         $this->parameterResolver = $parameterResolver ?? new StatementParameterResolver();
         $this->sqlParser = $sqlParser ?? new PhplrtSqlParser();
@@ -63,7 +65,7 @@ final readonly class PostgreSqlStatementCompiler
     /**
      * @param array<string, int> $parameterIndexByName
      */
-    private function renderQuery(SelectQuery|InsertQuery|DeleteQuery $query, array $parameterIndexByName, string $statementName): string
+    private function renderQuery(SqlQuery $query, array $parameterIndexByName, string $statementName): string
     {
         if ($query instanceof SelectQuery) {
             return $this->renderSelectQuery($query, $parameterIndexByName, $statementName);
@@ -71,6 +73,10 @@ final readonly class PostgreSqlStatementCompiler
 
         if ($query instanceof InsertQuery) {
             return $this->renderInsertQuery($query, $parameterIndexByName, $statementName);
+        }
+
+        if (!$query instanceof DeleteQuery) {
+            throw new \RuntimeException('Unsupported SQL query type in PostgreSQL statement renderer.');
         }
 
         return $this->renderDeleteQuery($query, $parameterIndexByName, $statementName);

@@ -14,16 +14,19 @@ use SqlGen\Model\RowField;
 use SqlGen\Model\SqlResultKind;
 use SqlGen\Model\SqlStatement;
 use SqlGen\Parser\PhplrtSqlParser;
+use SqlGen\Parser\SqlQueryParser;
 
 final class StatementRowResolver
 {
     private StatementTableMapResolver $tableMapResolver;
-    private PhplrtSqlParser $sqlParser;
+    private SqlQueryParser $sqlParser;
 
-    public function __construct()
-    {
-        $this->tableMapResolver = new StatementTableMapResolver();
-        $this->sqlParser = new PhplrtSqlParser();
+    public function __construct(
+        ?StatementTableMapResolver $tableMapResolver = null,
+        ?SqlQueryParser $sqlParser = null,
+    ) {
+        $this->tableMapResolver = $tableMapResolver ?? new StatementTableMapResolver();
+        $this->sqlParser = $sqlParser ?? new PhplrtSqlParser();
     }
 
     /**

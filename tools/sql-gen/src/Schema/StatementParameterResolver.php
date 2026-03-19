@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlGen\Schema;
 
+use SqlGen\Ast\DeleteQuery;
 use SqlGen\Ast\InsertQuery;
 use SqlGen\Ast\SelectColumnReference;
 use SqlGen\Ast\SelectComparison;
@@ -13,16 +14,19 @@ use SqlGen\Model\DatabaseSchema;
 use SqlGen\Model\ResolvedSqlParameter;
 use SqlGen\Model\SqlStatement;
 use SqlGen\Parser\PhplrtSqlParser;
+use SqlGen\Parser\SqlQueryParser;
 
 final class StatementParameterResolver
 {
     private StatementTableMapResolver $tableMapResolver;
-    private PhplrtSqlParser $sqlParser;
+    private SqlQueryParser $sqlParser;
 
-    public function __construct()
-    {
-        $this->tableMapResolver = new StatementTableMapResolver();
-        $this->sqlParser = new PhplrtSqlParser();
+    public function __construct(
+        ?StatementTableMapResolver $tableMapResolver = null,
+        ?SqlQueryParser $sqlParser = null,
+    ) {
+        $this->tableMapResolver = $tableMapResolver ?? new StatementTableMapResolver();
+        $this->sqlParser = $sqlParser ?? new PhplrtSqlParser();
     }
 
     /**
@@ -100,6 +104,10 @@ final class StatementParameterResolver
             }
 
             return $mappings;
+        }
+
+        if (!$query instanceof DeleteQuery) {
+            throw new \RuntimeException("Unsupported SQL query type for parameter resolution in {$statement->name}");
         }
 
         $comparisons = [];

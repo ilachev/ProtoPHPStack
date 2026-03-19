@@ -11,14 +11,16 @@ use SqlGen\Model\DatabaseSchema;
 use SqlGen\Model\SchemaTable;
 use SqlGen\Model\SqlStatement;
 use SqlGen\Parser\PhplrtSqlParser;
+use SqlGen\Parser\SqlQueryParser;
 
 final class StatementTableMapResolver
 {
-    private PhplrtSqlParser $sqlParser;
+    private SqlQueryParser $sqlParser;
 
-    public function __construct()
-    {
-        $this->sqlParser = new PhplrtSqlParser();
+    public function __construct(
+        ?SqlQueryParser $sqlParser = null,
+    ) {
+        $this->sqlParser = $sqlParser ?? new PhplrtSqlParser();
     }
 
     public function resolve(SqlStatement $statement, DatabaseSchema $schema): StatementTableMap

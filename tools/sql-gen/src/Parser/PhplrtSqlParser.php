@@ -23,8 +23,9 @@ use SqlGen\Ast\SelectProjectionColumn;
 use SqlGen\Ast\SelectProjectionWildcard;
 use SqlGen\Ast\SelectQuery;
 use SqlGen\Ast\SelectTableReference;
+use SqlGen\Ast\SqlQuery;
 
-final class PhplrtSqlParser
+final class PhplrtSqlParser implements SqlQueryParser
 {
     private readonly Compiler $compiler;
 
@@ -39,7 +40,7 @@ final class PhplrtSqlParser
         $this->compiler->load($grammar);
     }
 
-    public function parse(string $sql): SelectQuery|InsertQuery|DeleteQuery
+    public function parse(string $sql): SqlQuery
     {
         /** @var PrintableNode $parsed */
         $parsed = $this->compiler->parse($sql);

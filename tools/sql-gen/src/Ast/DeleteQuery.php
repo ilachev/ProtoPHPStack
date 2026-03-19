@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlGen\Ast;
 
-final readonly class DeleteQuery
+final readonly class DeleteQuery implements SqlQuery
 {
     /**
      * @param list<SelectComparison> $where

@@ -7,14 +7,16 @@ namespace SqlGen\Application;
 use SqlGen\Config\GeneratorConfig;
 use SqlGen\Generator\GeneratedFile;
 use SqlGen\Generator\PhpQueryGenerator;
+use SqlGen\Parser\NamedSqlFileParser;
 use SqlGen\Parser\SqlFileParser;
+use SqlGen\Schema\DatabaseSchemaParser;
 use SqlGen\Schema\SqlSchemaParser;
 
 final readonly class SqlGenerationService
 {
     public function __construct(
-        private SqlFileParser $sqlFileParser = new SqlFileParser(),
-        private SqlSchemaParser $sqlSchemaParser = new SqlSchemaParser(),
+        private NamedSqlFileParser $sqlFileParser = new SqlFileParser(),
+        private DatabaseSchemaParser $sqlSchemaParser = new SqlSchemaParser(),
     ) {}
 
     /**

@@ -8,7 +8,7 @@ use SqlGen\Model\DatabaseSchema;
 use SqlGen\Model\SchemaColumn;
 use SqlGen\Model\SchemaTable;
 
-final class SqlSchemaParser
+final class SqlSchemaParser implements DatabaseSchemaParser
 {
     public function parseFile(string $path): DatabaseSchema
     {

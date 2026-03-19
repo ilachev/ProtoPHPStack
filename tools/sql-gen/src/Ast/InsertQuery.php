@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlGen\Ast;
 
-final readonly class InsertQuery
+final readonly class InsertQuery implements SqlQuery
 {
     /**
      * @param list<InsertValueMapping> $values

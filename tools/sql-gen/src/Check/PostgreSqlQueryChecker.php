@@ -4,18 +4,20 @@ declare(strict_types=1);
 
 namespace SqlGen\Check;
 
+use SqlGen\Parser\NamedSqlFileParser;
 use SqlGen\Parser\SqlFileParser;
+use SqlGen\Schema\DatabaseSchemaParser;
 use SqlGen\Schema\SqlSchemaParser;
 
 final readonly class PostgreSqlQueryChecker
 {
-    private SqlFileParser $sqlFileParser;
-    private SqlSchemaParser $sqlSchemaParser;
+    private NamedSqlFileParser $sqlFileParser;
+    private DatabaseSchemaParser $sqlSchemaParser;
     private PostgreSqlStatementCompiler $statementCompiler;
 
     public function __construct(
-        ?SqlFileParser $sqlFileParser = null,
-        ?SqlSchemaParser $sqlSchemaParser = null,
+        ?NamedSqlFileParser $sqlFileParser = null,
+        ?DatabaseSchemaParser $sqlSchemaParser = null,
         ?PostgreSqlStatementCompiler $statementCompiler = null,
     ) {
         $this->sqlFileParser = $sqlFileParser ?? new SqlFileParser();

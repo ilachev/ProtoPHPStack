@@ -9,7 +9,7 @@ use SqlGen\Model\SqlParameter;
 use SqlGen\Model\SqlResultKind;
 use SqlGen\Model\SqlStatement;
 
-final class SqlFileParser
+final class SqlFileParser implements NamedSqlFileParser
 {
     public function parseFile(string $path): SqlFile
     {
