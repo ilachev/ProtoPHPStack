@@ -10,8 +10,12 @@ declare(strict_types=1);
 namespace App\Generated\Sql\Session;
 
 use App\Platform\Storage\Sql\ExecutableQuery;
+use App\Platform\Storage\Sql\OneRowQuery;
 
-final readonly class UpsertSessionQuery implements ExecutableQuery
+/**
+ * @implements OneRowQuery<SessionRow, array{'id': string, 'user_id': null|int, 'payload': string, 'expires_at': int, 'created_at': int, 'updated_at': int}>
+ */
+final readonly class UpsertSessionQuery implements OneRowQuery
 {
     public function __construct(
         private string $id,
@@ -65,8 +69,17 @@ final readonly class UpsertSessionQuery implements ExecutableQuery
             payload = EXCLUDED.payload,
             expires_at = EXCLUDED.expires_at,
             created_at = EXCLUDED.created_at,
-            updated_at = EXCLUDED.updated_at;
+            updated_at = EXCLUDED.updated_at
+        RETURNING *;
         SQL;
+    }
+
+    /**
+     * @return class-string<SessionRow>
+     */
+    public function rowClass(): string
+    {
+        return SessionRow::class;
     }
 
     /**

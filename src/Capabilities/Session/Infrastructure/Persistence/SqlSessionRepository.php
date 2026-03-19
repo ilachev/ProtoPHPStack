@@ -58,9 +58,9 @@ final readonly class SqlSessionRepository implements SessionRepository
         );
     }
 
-    public function save(Session $session): void
+    public function save(Session $session): Session
     {
-        $this->sqlExecutor->execute(
+        $row = $this->sqlExecutor->fetchOneRow(
             UpsertSessionQuery::create(
                 id: $session->id,
                 userId: $session->userId,
@@ -70,6 +70,12 @@ final readonly class SqlSessionRepository implements SessionRepository
                 updatedAt: $session->updatedAt,
             ),
         );
+
+        if ($row === null) {
+            throw new \LogicException('UpsertSessionQuery must return the persisted session row.');
+        }
+
+        return $this->createSessionFromRow($row);
     }
 
     public function delete(string $id): void

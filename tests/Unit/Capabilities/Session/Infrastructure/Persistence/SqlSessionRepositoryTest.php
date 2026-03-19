@@ -155,11 +155,13 @@ final class SqlSessionRepositoryTest extends TestCase
             updatedAt: 1_710_000_050,
         );
 
-        $this->repository->save($session);
+        $savedSession = $this->repository->save($session);
 
         self::assertCount(1, $this->storage->getTables()['sessions']);
         self::assertSame('session-1', $this->storage->getTables()['sessions'][0]['id']);
         self::assertSame(10, $this->storage->getTables()['sessions'][0]['user_id']);
+        self::assertSame($session->id, $savedSession->id);
+        self::assertSame($session->payload, $savedSession->payload);
 
         $updatedSession = new Session(
             id: 'session-1',
@@ -170,11 +172,13 @@ final class SqlSessionRepositoryTest extends TestCase
             updatedAt: 1_710_000_150,
         );
 
-        $this->repository->save($updatedSession);
+        $persistedUpdatedSession = $this->repository->save($updatedSession);
 
         self::assertCount(1, $this->storage->getTables()['sessions']);
         self::assertNull($this->storage->getTables()['sessions'][0]['user_id']);
         self::assertSame('{"ip":"127.0.0.2"}', $this->storage->getTables()['sessions'][0]['payload']);
+        self::assertNull($persistedUpdatedSession->userId);
+        self::assertSame('{"ip":"127.0.0.2"}', $persistedUpdatedSession->payload);
     }
 
     public function testDeleteRemovesSessionById(): void
@@ -229,6 +233,10 @@ final class InMemoryTestStorage implements Storage
     public function query(string $sql, array $params = []): array
     {
         $normalizedSql = $this->normalizeSql($sql);
+
+        if (str_starts_with($normalizedSql, 'INSERT INTO') && str_contains($normalizedSql, 'RETURNING *')) {
+            return [$this->upsertRow('sessions', $params)];
+        }
 
         if (str_starts_with($normalizedSql, 'SELECT COUNT(*) as count')) {
             // Handle count query for checking existence
@@ -312,24 +320,7 @@ final class InMemoryTestStorage implements Storage
         if (str_contains($normalizedSql, 'ON CONFLICT')) {
             preg_match('/INSERT INTO\s+(\w+)/i', $normalizedSql, $matches);
             if (\count($matches) >= 2) {
-                $tableName = $matches[1];
-
-                if (!isset($this->tables[$tableName])) {
-                    $this->tables[$tableName] = [];
-                }
-
-                $updated = false;
-                foreach ($this->tables[$tableName] as $index => $row) {
-                    if (($row['id'] ?? null) === ($params['id'] ?? null)) {
-                        $this->tables[$tableName][$index] = array_merge($row, $params);
-                        $updated = true;
-                        break;
-                    }
-                }
-
-                if (!$updated) {
-                    $this->tables[$tableName][] = $params;
-                }
+                $this->upsertRow($matches[1], $params);
             }
         } elseif (str_starts_with($normalizedSql, 'INSERT INTO')) {
             // Handle insert
@@ -478,5 +469,31 @@ final class InMemoryTestStorage implements Storage
             $unserialized = unserialize($transaction['snapshot'], ['allowed_classes' => false]);
             $this->tables = $unserialized;
         }
+    }
+
+    /**
+     * @param array<string, bool|float|int|string|null> $params
+     * @return array<string, bool|float|int|string|null>
+     */
+    private function upsertRow(string $tableName, array $params): array
+    {
+        if (!isset($this->tables[$tableName])) {
+            $this->tables[$tableName] = [];
+        }
+
+        foreach ($this->tables[$tableName] as $index => $row) {
+            if (($row['id'] ?? null) === ($params['id'] ?? null)) {
+                $this->tables[$tableName][$index] = array_merge($row, $params);
+
+                /** @var array<string, bool|float|int|string|null> $persistedRow */
+                $persistedRow = $this->tables[$tableName][$index];
+
+                return $persistedRow;
+            }
+        }
+
+        $this->tables[$tableName][] = $params;
+
+        return $params;
     }
 }

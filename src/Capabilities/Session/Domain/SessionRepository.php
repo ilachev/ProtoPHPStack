@@ -18,7 +18,7 @@ interface SessionRepository
      */
     public function findAll(): array;
 
-    public function save(Session $session): void;
+    public function save(Session $session): Session;
 
     public function delete(string $id): void;
 

@@ -47,17 +47,19 @@ final readonly class CachedSessionRepository extends AbstractCachedRepository im
         return $this->repository->findAll();
     }
 
-    public function save(Session $session): void
+    public function save(Session $session): Session
     {
-        $this->repository->save($session);
+        $persistedSession = $this->repository->save($session);
 
-        $sessionCacheKey = $this->getSessionCacheKey($session->id);
-        $this->setCacheValue($sessionCacheKey, $session);
+        $sessionCacheKey = $this->getSessionCacheKey($persistedSession->id);
+        $this->setCacheValue($sessionCacheKey, $persistedSession);
 
-        if ($session->userId !== null) {
-            $userCacheKey = $this->getUserSessionsCacheKey($session->userId);
+        if ($persistedSession->userId !== null) {
+            $userCacheKey = $this->getUserSessionsCacheKey($persistedSession->userId);
             $this->deleteCacheValue($userCacheKey);
         }
+
+        return $persistedSession;
     }
 
     public function delete(string $id): void

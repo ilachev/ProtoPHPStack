@@ -33,9 +33,7 @@ final readonly class SessionService
             updatedAt: $now,
         );
 
-        $this->repository->save($session);
-
-        return $session;
+        return $this->repository->save($session);
     }
 
     public function validateSession(string $sessionId): ?Session
@@ -95,9 +93,7 @@ final readonly class SessionService
             updatedAt: $now,
         );
 
-        $this->repository->save($refreshedSession);
-
-        return $refreshedSession;
+        return $this->repository->save($refreshedSession);
     }
 
     public function deleteSession(string $sessionId): void

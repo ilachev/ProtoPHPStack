@@ -263,9 +263,11 @@ final class TestSessionRepository implements SessionRepository
         );
     }
 
-    public function save(Session $session): void
+    public function save(Session $session): Session
     {
         $this->sessions[$session->id] = $session;
+
+        return $session;
     }
 
     public function delete(string $id): void

@@ -135,12 +135,14 @@ final class CachedSessionRepositoryTest extends TestCase
         $this->innerRepository
             ->expects(self::once())
             ->method('save')
-            ->with($session);
+            ->with($session)
+            ->willReturn($session);
 
-        $this->repository->save($session);
+        $savedSession = $this->repository->save($session);
 
         // Проверяем, что сессия попала в кеш
         self::assertTrue($this->storage->has('test:session:' . self::SESSION_ID));
+        self::assertSame($session, $savedSession);
 
         // И что значение в кеше соответствует сессии
         $cachedSession = $this->cacheService->get('session:' . self::SESSION_ID);

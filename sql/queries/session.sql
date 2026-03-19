@@ -18,7 +18,7 @@ ORDER BY created_at DESC;
 DELETE FROM sessions
 WHERE expires_at < :now;
 
--- name: UpsertSession :exec
+-- name: UpsertSession :one
 INSERT INTO sessions (
     id,
     user_id,
@@ -40,7 +40,8 @@ ON CONFLICT (id) DO UPDATE SET
     payload = EXCLUDED.payload,
     expires_at = EXCLUDED.expires_at,
     created_at = EXCLUDED.created_at,
-    updated_at = EXCLUDED.updated_at;
+    updated_at = EXCLUDED.updated_at
+RETURNING *;
 
 -- name: DeleteSessionById :exec
 DELETE FROM sessions
