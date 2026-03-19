@@ -9,7 +9,9 @@ declare(strict_types=1);
 
 namespace App\Generated\Sql\Session;
 
-final readonly class SessionRow
+use App\Platform\Storage\Sql\DatabaseRow;
+
+final readonly class SessionRow implements DatabaseRow
 {
     public function __construct(
         public string $id,

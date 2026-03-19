@@ -101,9 +101,11 @@ final readonly class PhpQueryGenerator
         $file->setStrictTypes();
 
         $namespace = $file->addNamespace($namespaceName);
+        $namespace->addUse('App\Platform\Storage\Sql\DatabaseRow');
         $class = $namespace->addClass($rowClassName);
         $class->setFinal(true);
         $class->setReadOnly(true);
+        $class->addImplement('App\Platform\Storage\Sql\DatabaseRow');
 
         $constructor = $class->addMethod('__construct');
 

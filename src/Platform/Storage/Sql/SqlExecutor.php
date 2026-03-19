@@ -23,11 +23,43 @@ final readonly class SqlExecutor
     }
 
     /**
+     * @template T of DatabaseRow
+     * @param class-string<T> $rowClass
+     * @return T|null
+     */
+    public function fetchOneAs(ExecutableQuery $query, string $rowClass): ?object
+    {
+        $row = $this->fetchOne($query);
+        if ($row === null) {
+            return null;
+        }
+
+        /** @var T */
+        return $rowClass::fromDatabaseRow($row);
+    }
+
+    /**
      * @return list<array<string, scalar|null>>
      */
     public function fetchAll(ExecutableQuery $query): array
     {
         return $this->storage->query($query->sql(), $query->params());
+    }
+
+    /**
+     * @template T of DatabaseRow
+     * @param class-string<T> $rowClass
+     * @return list<T>
+     */
+    public function fetchAllAs(ExecutableQuery $query, string $rowClass): array
+    {
+        return array_map(
+            /**
+             * @return T
+             */
+            static fn(array $row): object => $rowClass::fromDatabaseRow($row),
+            $this->fetchAll($query),
+        );
     }
 
     public function execute(ExecutableQuery $query): bool
