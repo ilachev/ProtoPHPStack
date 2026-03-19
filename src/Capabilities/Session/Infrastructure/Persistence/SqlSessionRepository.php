@@ -47,7 +47,7 @@ final class SqlSessionRepository extends AbstractRepository implements SessionRe
     public function findByUserId(int $userId): array
     {
         $rows = $this->sqlExecutor->fetchAllAs(
-            FindSessionsByUserIdQuery::create(user_id: $userId),
+            FindSessionsByUserIdQuery::create(userId: $userId),
             SessionRow::class,
         );
 

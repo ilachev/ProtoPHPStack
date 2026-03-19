@@ -18,11 +18,11 @@ final readonly class FindSessionsByUserIdQuery implements ExecutableQuery
     ) {
     }
 
-    public static function create(string|int|float|bool|null $user_id): self
+    public static function create(string|int|float|bool|null $userId): self
     {
         return new self(
             new FindSessionsByUserIdParams(
-                    user_id: $user_id
+                    user_id: $userId
             ),
         );
     }

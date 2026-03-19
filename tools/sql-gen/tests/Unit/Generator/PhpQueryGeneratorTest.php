@@ -156,5 +156,7 @@ final class PhpQueryGeneratorTest extends TestCase
         self::assertSame('gen/Generated/Sql/Session/FindSessionByIdQuery.php', $files[2]->path);
         self::assertSame('gen/Generated/Sql/Session/FindSessionsByUserIdParams.php', $files[3]->path);
         self::assertSame('gen/Generated/Sql/Session/FindSessionsByUserIdQuery.php', $files[4]->path);
+        self::assertStringContainsString('public static function create(string|int|float|bool|null $userId): self', $files[4]->content);
+        self::assertStringContainsString('user_id: $userId', $files[4]->content);
     }
 }

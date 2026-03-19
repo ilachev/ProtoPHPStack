@@ -150,13 +150,13 @@ final readonly class PhpQueryGenerator
 
         if ($statement->parameters !== []) {
             foreach ($statement->parameters as $parameter) {
-                $factory->addParameter($parameter->name)->setType(self::PARAM_TYPE);
+                $factory->addParameter($this->toPropertyName($parameter->name))->setType(self::PARAM_TYPE);
             }
 
             $arguments = implode(
                 ",\n",
                 array_map(
-                    static fn($parameter): string => "            {$parameter->name}: \${$parameter->name}",
+                    fn($parameter): string => "            {$parameter->name}: \$" . $this->toPropertyName($parameter->name),
                     $statement->parameters,
                 ),
             );
@@ -263,6 +263,11 @@ final readonly class PhpQueryGenerator
              */
 
             PHP;
+    }
+
+    private function toPropertyName(string $parameterName): string
+    {
+        return lcfirst(str_replace('_', '', ucwords($parameterName, '_')));
     }
 
     /**
