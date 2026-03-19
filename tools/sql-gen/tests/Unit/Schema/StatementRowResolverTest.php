@@ -72,4 +72,66 @@ final class StatementRowResolverTest extends TestCase
         self::assertSame('ownerId', $fields[1]->propertyName);
         self::assertTrue($fields[1]->nullable);
     }
+
+    public function testResolvesReturningColumnsFromInsertStatement(): void
+    {
+        $resolver = new StatementRowResolver();
+        $schema = new DatabaseSchema([
+            'users' => new SchemaTable('users', [
+                'id' => new SchemaColumn('id', 'BIGSERIAL', 'int', false),
+                'email' => new SchemaColumn('email', 'TEXT', 'string', false),
+            ]),
+        ]);
+
+        $fields = $resolver->resolve(
+            new SqlStatement(
+                name: 'InsertUser',
+                resultKind: SqlResultKind::One,
+                sql: <<<'SQL'
+                    INSERT INTO users (email)
+                    VALUES (:email)
+                    RETURNING id, email AS login;
+                    SQL,
+                parameters: [],
+            ),
+            $schema,
+        );
+
+        self::assertCount(2, $fields);
+        self::assertSame('id', $fields[0]->sourceColumnName);
+        self::assertSame('id', $fields[0]->resultColumnName);
+        self::assertSame('id', $fields[0]->propertyName);
+        self::assertSame('email', $fields[1]->sourceColumnName);
+        self::assertSame('login', $fields[1]->resultColumnName);
+        self::assertSame('login', $fields[1]->propertyName);
+    }
+
+    public function testResolvesReturningWildcardFromInsertStatement(): void
+    {
+        $resolver = new StatementRowResolver();
+        $schema = new DatabaseSchema([
+            'users' => new SchemaTable('users', [
+                'id' => new SchemaColumn('id', 'BIGSERIAL', 'int', false),
+                'email' => new SchemaColumn('email', 'TEXT', 'string', false),
+            ]),
+        ]);
+
+        $fields = $resolver->resolve(
+            new SqlStatement(
+                name: 'InsertUser',
+                resultKind: SqlResultKind::One,
+                sql: <<<'SQL'
+                    INSERT INTO users (email)
+                    VALUES (:email)
+                    RETURNING *;
+                    SQL,
+                parameters: [],
+            ),
+            $schema,
+        );
+
+        self::assertCount(2, $fields);
+        self::assertSame('id', $fields[0]->resultColumnName);
+        self::assertSame('email', $fields[1]->resultColumnName);
+    }
 }

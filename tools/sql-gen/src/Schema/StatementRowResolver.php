@@ -22,7 +22,7 @@ final class StatementRowResolver
         }
 
         $table = $this->resolveTable($statement, $schema);
-        $columns = $this->resolveSelectedColumns($statement);
+        $columns = $this->resolveSelectedColumns($statement, $table);
 
         $fields = [];
 
@@ -48,11 +48,18 @@ final class StatementRowResolver
 
     private function resolveTable(SqlStatement $statement, DatabaseSchema $schema): SchemaTable
     {
-        if (!preg_match('/\bFROM\s+(?<table>[a-zA-Z_][a-zA-Z0-9_]*)\b/i', $statement->sql, $matches)) {
+        if (preg_match('/\bINSERT\s+INTO\s+(?<table>[a-zA-Z_][a-zA-Z0-9_]*)\b/i', $statement->sql, $matches)) {
+            $tableName = $matches['table'];
+        } elseif (preg_match('/\bDELETE\s+FROM\s+(?<table>[a-zA-Z_][a-zA-Z0-9_]*)\b/i', $statement->sql, $matches)) {
+            $tableName = $matches['table'];
+        } elseif (preg_match('/\bUPDATE\s+(?<table>[a-zA-Z_][a-zA-Z0-9_]*)\b/i', $statement->sql, $matches)) {
+            $tableName = $matches['table'];
+        } elseif (preg_match('/\bFROM\s+(?<table>[a-zA-Z_][a-zA-Z0-9_]*)\b/i', $statement->sql, $matches)) {
+            $tableName = $matches['table'];
+        } else {
             throw new \RuntimeException("Unable to resolve table name for query {$statement->name}");
         }
 
-        $tableName = $matches['table'];
         $table = $schema->getTable($tableName);
         if ($table === null) {
             throw new \RuntimeException("Table {$tableName} was not found in schema for query {$statement->name}");
@@ -64,21 +71,29 @@ final class StatementRowResolver
     /**
      * @return list<array{source: string, result: string}>
      */
-    private function resolveSelectedColumns(SqlStatement $statement): array
+    private function resolveSelectedColumns(SqlStatement $statement, SchemaTable $table): array
     {
-        if (!preg_match('/\bSELECT\s+(?<columns>.*?)\s+FROM\b/is', $statement->sql, $matches)) {
-            throw new \RuntimeException("Unable to resolve SELECT columns for query {$statement->name}");
+        if (preg_match('/\bSELECT\s+(?<columns>.*?)\s+FROM\b/is', $statement->sql, $matches)) {
+            $columnsExpression = trim($matches['columns']);
+        } elseif (preg_match('/\bRETURNING\s+(?<columns>.*?)(?:;|$)/is', $statement->sql, $matches)) {
+            $columnsExpression = trim($matches['columns']);
+        } else {
+            throw new \RuntimeException("Unable to resolve row columns for query {$statement->name}");
         }
 
-        $columnsExpression = trim($matches['columns']);
-
         if ($columnsExpression === '*') {
-            throw new \RuntimeException("SELECT * is not supported for typed row generation in query {$statement->name}");
+            return array_map(
+                static fn(string $columnName): array => [
+                    'source' => $columnName,
+                    'result' => $columnName,
+                ],
+                array_keys($table->columns),
+            );
         }
 
         $parts = preg_split('/\s*,\s*/', $columnsExpression);
         if (!\is_array($parts) || $parts === []) {
-            throw new \RuntimeException("Unable to parse selected columns for query {$statement->name}");
+            throw new \RuntimeException("Unable to parse row columns for query {$statement->name}");
         }
 
         $columns = [];
