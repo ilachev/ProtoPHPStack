@@ -12,7 +12,6 @@ use SqlGen\Ast\InsertConflictAssignment;
 use SqlGen\Ast\InsertConflictClause;
 use SqlGen\Ast\InsertQuery;
 use SqlGen\Ast\InsertValueMapping;
-use SqlGen\Ast\SelectAlias;
 use SqlGen\Ast\SelectColumnReference;
 use SqlGen\Ast\SelectComparison;
 use SqlGen\Ast\SelectJoin;
@@ -261,8 +260,7 @@ final class PhplrtSqlParser
             }
 
             if ($child instanceof PrintableNode && $child->getState() === 'ExcludedRef') {
-                $excludedRefTokens = $this->tokens($child);
-                $excludedColumn = $excludedRefTokens[2] ?? null;
+                $excludedColumn = (new ExcludedReferenceTokens($this->tokens($child)))->column();
             }
         }
 
@@ -293,44 +291,20 @@ final class PhplrtSqlParser
             throw new \RuntimeException('AliasedColumn must contain ColumnRef.');
         }
 
-        $directTokens = [];
-        foreach ($column->children as $child) {
-            if ($child instanceof TokenInterface) {
-                $directTokens[] = $child->getValue();
-            }
-        }
-
-        $alias = $directTokens === [] ? null : new SelectAlias($directTokens[count($directTokens) - 1]);
-
         return new SelectProjectionColumn(
             reference: $this->normalizeColumnRef($columnRef),
-            alias: $alias,
+            alias: (new SelectAliasTokens($this->tokens($column)))->toAlias(),
         );
     }
 
     private function normalizeWildcardSelection(PrintableNode $wildcard): SelectProjectionWildcard
     {
-        $tokens = new TokenValueSequence($this->tokens($wildcard));
-
-        return new SelectProjectionWildcard(
-            table: $tokens->count() === 3 ? $tokens->first() : null,
-        );
+        return (new WildcardSelectionTokens($this->tokens($wildcard)))->toProjectionWildcard();
     }
 
     private function normalizeTableRef(PrintableNode $tableRef): SelectTableReference
     {
-        $tokens = new TokenValueSequence($this->tokens($tableRef));
-        if ($tokens->isEmpty()) {
-            throw new \RuntimeException('TableRef must contain at least one token.');
-        }
-
-        $firstToken = $tokens->first();
-        $lastToken = $tokens->last();
-
-        return new SelectTableReference(
-            table: $firstToken,
-            alias: $lastToken !== $firstToken ? $lastToken : null,
-        );
+        return (new TableReferenceTokens($this->tokens($tableRef)))->toTableReference();
     }
 
     private function normalizeJoinClause(PrintableNode $join): SelectJoin
@@ -457,26 +431,12 @@ final class PhplrtSqlParser
 
     private function normalizePlaceholder(PrintableNode $placeholder): SelectPlaceholder
     {
-        $tokens = new TokenValueSequence($this->tokens($placeholder));
-
-        return new SelectPlaceholder($tokens->second());
+        return (new PlaceholderTokens($this->tokens($placeholder)))->toPlaceholder();
     }
 
     private function normalizeColumnRef(PrintableNode $columnRef): SelectColumnReference
     {
-        $tokens = new TokenValueSequence($this->tokens($columnRef));
-
-        return match ($tokens->count()) {
-            3 => new SelectColumnReference(
-                table: $tokens->first(),
-                column: $tokens->third(),
-            ),
-            1 => new SelectColumnReference(
-                table: null,
-                column: $tokens->first(),
-            ),
-            default => throw new \RuntimeException('ColumnRef token sequence is not supported by sql-gen subset parser.'),
-        };
+        return (new ColumnReferenceTokens($this->tokens($columnRef)))->toColumnReference();
     }
 
     private function firstTokenValue(PrintableNode $node): string
