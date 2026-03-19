@@ -46,20 +46,33 @@ final readonly class PhpQueryGenerator
         $generatedRowClasses = [];
 
         foreach ($sqlFile->statements as $statement) {
-            $rowFields = $this->rowResolver->resolve($statement, $this->schema);
-            $rowClassName = $rowClassNames[$statement->name] ?? null;
+            try {
+                $rowFields = $this->rowResolver->resolve($statement, $this->schema);
+                $rowClassName = $rowClassNames[$statement->name] ?? null;
 
-            if ($rowFields !== [] && is_string($rowClassName) && !isset($generatedRowClasses[$rowClassName])) {
+                if ($rowFields !== [] && is_string($rowClassName) && !isset($generatedRowClasses[$rowClassName])) {
+                    $files[] = new GeneratedFile(
+                        path: $outputDir . '/' . $rowClassName . '.php',
+                        content: $this->renderRowClass($namespace, $rowClassName, $rowFields, $sqlFile->sourcePath),
+                    );
+                    $generatedRowClasses[$rowClassName] = true;
+                }
                 $files[] = new GeneratedFile(
-                    path: $outputDir . '/' . $rowClassName . '.php',
-                    content: $this->renderRowClass($namespace, $rowClassName, $rowFields, $sqlFile->sourcePath),
+                    path: $outputDir . '/' . $statement->getQueryClassName() . '.php',
+                    content: $this->renderQueryClass($namespace, $statement, $rowClassName, $sqlFile->sourcePath),
                 );
-                $generatedRowClasses[$rowClassName] = true;
+            } catch (\Throwable $exception) {
+                throw new \RuntimeException(
+                    sprintf(
+                        'Failed to generate SQL artifacts for query %s from %s: %s',
+                        $statement->name,
+                        $sqlFile->sourcePath,
+                        $exception->getMessage(),
+                    ),
+                    0,
+                    $exception,
+                );
             }
-            $files[] = new GeneratedFile(
-                path: $outputDir . '/' . $statement->getQueryClassName() . '.php',
-                content: $this->renderQueryClass($namespace, $statement, $rowClassName, $sqlFile->sourcePath),
-            );
         }
 
         return $files;
@@ -309,7 +322,21 @@ final readonly class PhpQueryGenerator
         $groups = [];
 
         foreach ($sqlFile->statements as $statement) {
-            $rowFields = $this->rowResolver->resolve($statement, $this->schema);
+            try {
+                $rowFields = $this->rowResolver->resolve($statement, $this->schema);
+            } catch (\Throwable $exception) {
+                throw new \RuntimeException(
+                    sprintf(
+                        'Failed to generate SQL artifacts for query %s from %s: %s',
+                        $statement->name,
+                        $sqlFile->sourcePath,
+                        $exception->getMessage(),
+                    ),
+                    0,
+                    $exception,
+                );
+            }
+
             if ($rowFields === []) {
                 continue;
             }

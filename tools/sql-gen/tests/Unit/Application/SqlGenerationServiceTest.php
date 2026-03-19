@@ -54,4 +54,41 @@ final class SqlGenerationServiceTest extends TestCase
         self::assertSame('gen/Generated/Sql/Beta/FindBetaQuery.php', $files[2]->path);
         self::assertSame('gen/Generated/Sql/Beta/FindBetaRow.php', $files[3]->path);
     }
+
+    public function testIncludesSourcePathAndQueryNameInGenerationErrors(): void
+    {
+        $workspace = sys_get_temp_dir() . '/sql-gen-service-invalid-' . uniqid('', true);
+        mkdir($workspace . '/queries', 0777, true);
+        file_put_contents(
+            $workspace . '/schema.sql',
+            <<<'SQL'
+            CREATE TABLE users (
+                id TEXT PRIMARY KEY
+            );
+            SQL,
+        );
+        file_put_contents(
+            $workspace . '/queries/invalid.sql',
+            <<<'SQL'
+            -- name: FindInvalid :many
+            SELECT missing_column
+            FROM users;
+            SQL,
+        );
+
+        $service = new SqlGenerationService();
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Failed to generate SQL artifacts for query FindInvalid');
+        $this->expectExceptionMessage($workspace . '/queries/invalid.sql');
+
+        $service->generate(
+            new GeneratorConfig(
+                inputDir: $workspace . '/queries',
+                outputDir: 'gen/Generated/Sql',
+                namespace: 'App\\Generated\\Sql',
+                schemaPath: $workspace . '/schema.sql',
+            ),
+        );
+    }
 }
