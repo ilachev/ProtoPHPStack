@@ -137,6 +137,18 @@ tasks:
         --namespace=App\\Generated\\Sql
         --schema=sql/schema.sql
 
+  sql:check:
+    desc: Validate SQL sources and ensure generated SQL artifacts are synchronized
+    deps: [ tools:sql:runtime:setup ]
+    cmds:
+      - mkdir -p sql/queries
+      - >
+        php tools/sql-gen/bin/sql-check.php
+        --input-dir=sql/queries
+        --output-dir=gen/Generated/Sql
+        --namespace=App\\Generated\\Sql
+        --schema=sql/schema.sql
+
   tools:proto:setup:
     desc: Setup protoc-php-gen plugin
     cmds:
