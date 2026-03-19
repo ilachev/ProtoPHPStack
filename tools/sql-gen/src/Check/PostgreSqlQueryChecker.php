@@ -44,11 +44,36 @@ final readonly class PostgreSqlQueryChecker
                     continue;
                 }
 
-                $sqlFile = $this->sqlFileParser->parseFile($queryFile);
+                try {
+                    $sqlFile = $this->sqlFileParser->parseFile($queryFile);
+                } catch (\Throwable $exception) {
+                    throw new \RuntimeException(
+                        sprintf(
+                            'Failed to parse SQL query file %s during PostgreSQL validation: %s',
+                            $queryFile,
+                            $exception->getMessage(),
+                        ),
+                        0,
+                        $exception,
+                    );
+                }
 
                 foreach ($sqlFile->statements as $statement) {
-                    $compiled = $this->statementCompiler->compile($statement, $schema);
-                    $this->assertPrepared($pdo, $compiled);
+                    try {
+                        $compiled = $this->statementCompiler->compile($statement, $schema);
+                        $this->assertPrepared($pdo, $compiled);
+                    } catch (\Throwable $exception) {
+                        throw new \RuntimeException(
+                            sprintf(
+                                'PostgreSQL validation failed for query %s from %s: %s',
+                                $statement->name,
+                                $queryFile,
+                                $exception->getMessage(),
+                            ),
+                            0,
+                            $exception,
+                        );
+                    }
                 }
             }
         } finally {
@@ -96,11 +121,7 @@ final readonly class PostgreSqlQueryChecker
                 $statement->sql,
             ));
         } catch (\PDOException $exception) {
-            throw new \RuntimeException(
-                sprintf('PostgreSQL validation failed for query %s: %s', $statement->name, $exception->getMessage()),
-                0,
-                $exception,
-            );
+            throw new \RuntimeException($exception->getMessage(), 0, $exception);
         } finally {
             try {
                 $pdo->exec(sprintf('DEALLOCATE %s', $preparedName));
