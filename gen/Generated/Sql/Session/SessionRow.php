@@ -12,7 +12,7 @@ namespace App\Generated\Sql\Session;
 use App\Platform\Storage\Sql\DatabaseRow;
 
 /**
- * @implements DatabaseRow<array{id:string, user_id:int|null, payload:string, expires_at:int, created_at:int, updated_at:int}>
+ * @implements DatabaseRow<array{'id': string, 'user_id': null|int, 'payload': string, 'expires_at': int, 'created_at': int, 'updated_at': int}>
  */
 final readonly class SessionRow implements DatabaseRow
 {
@@ -27,7 +27,7 @@ final readonly class SessionRow implements DatabaseRow
     }
 
     /**
-     * @param array{id:string, user_id:int|null, payload:string, expires_at:int, created_at:int, updated_at:int} $row
+     * @param array{'id': string, 'user_id': null|int, 'payload': string, 'expires_at': int, 'created_at': int, 'updated_at': int} $row
      */
     public static function fromDatabaseRow(array $row): self
     {

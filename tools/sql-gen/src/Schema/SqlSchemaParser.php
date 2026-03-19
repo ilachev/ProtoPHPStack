@@ -24,12 +24,8 @@ final class SqlSchemaParser
         $tables = [];
 
         foreach ($matches as $match) {
-            $tableName = $match['name'] ?? null;
-            $body = $match['body'] ?? null;
-
-            if (!\is_string($tableName) || !\is_string($body)) {
-                continue;
-            }
+            $tableName = $match['name'];
+            $body = $match['body'];
 
             $tables[$tableName] = $this->parseTable($tableName, $body);
         }

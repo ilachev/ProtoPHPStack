@@ -31,9 +31,9 @@ final readonly class PostgreSqlStatementCompiler
         $sql = preg_replace_callback(
             '/(?<!:):(?<name>[A-Za-z_][A-Za-z0-9_]*)/',
             static function (array $matches) use ($parameterIndexByName, $statement): string {
-                $name = $matches['name'] ?? null;
+                $name = $matches['name'];
 
-                if (!is_string($name) || !isset($parameterIndexByName[$name])) {
+                if (!isset($parameterIndexByName[$name])) {
                     throw new \RuntimeException(
                         "Unable to compile PostgreSQL statement {$statement->name}: unknown parameter {$name}",
                     );

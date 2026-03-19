@@ -49,9 +49,9 @@ final class SqlGenerationServiceTest extends TestCase
             ),
         );
 
-        self::assertSame('gen/Generated/Sql/Alpha/FindAlphaRow.php', $files[0]->path);
-        self::assertSame('gen/Generated/Sql/Alpha/FindAlphaQuery.php', $files[1]->path);
-        self::assertSame('gen/Generated/Sql/Beta/FindBetaRow.php', $files[2]->path);
-        self::assertSame('gen/Generated/Sql/Beta/FindBetaQuery.php', $files[3]->path);
+        self::assertSame('gen/Generated/Sql/Alpha/FindAlphaQuery.php', $files[0]->path);
+        self::assertSame('gen/Generated/Sql/Alpha/FindAlphaRow.php', $files[1]->path);
+        self::assertSame('gen/Generated/Sql/Beta/FindBetaQuery.php', $files[2]->path);
+        self::assertSame('gen/Generated/Sql/Beta/FindBetaRow.php', $files[3]->path);
     }
 }

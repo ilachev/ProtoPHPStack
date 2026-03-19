@@ -13,7 +13,7 @@ use App\Platform\Storage\Sql\ExecutableQuery;
 use App\Platform\Storage\Sql\OneRowQuery;
 
 /**
- * @implements OneRowQuery<SessionRow, array{id:string}>
+ * @implements OneRowQuery<SessionRow, array{'id': string}>
  */
 final readonly class FindSessionByIdQuery implements OneRowQuery
 {
@@ -47,7 +47,7 @@ final readonly class FindSessionByIdQuery implements OneRowQuery
     }
 
     /**
-     * @return array{id:string}
+     * @return array{'id': string}
      */
     public function params(): array
     {

@@ -70,7 +70,7 @@ final readonly class UpsertSessionQuery implements ExecutableQuery
     }
 
     /**
-     * @return array{id:string, user_id:int|null, payload:string, expires_at:int, created_at:int, updated_at:int}
+     * @return array{'id': string, 'user_id': null|int, 'payload': string, 'expires_at': int, 'created_at': int, 'updated_at': int}
      */
     public function params(): array
     {

@@ -40,7 +40,7 @@ final readonly class PostgreSqlQueryChecker
             $this->createSchemaSandbox($pdo, $schemaName, $schemaPath);
 
             foreach ($queryFiles as $queryFile) {
-                if (!is_string($queryFile) || !is_file($queryFile)) {
+                if (!is_file($queryFile)) {
                     continue;
                 }
 

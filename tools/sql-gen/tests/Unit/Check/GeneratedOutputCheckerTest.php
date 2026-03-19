@@ -27,7 +27,7 @@ final class GeneratedOutputCheckerTest extends TestCase
             ],
         );
 
-        self::assertTrue(true);
+        self::assertFileExists($workspace . '/gen/Generated/Sql/Session/Query.php');
     }
 
     public function testFailsWhenGeneratedFileIsStale(): void

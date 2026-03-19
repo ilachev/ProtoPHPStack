@@ -13,7 +13,7 @@ use App\Platform\Storage\Sql\ExecutableQuery;
 use App\Platform\Storage\Sql\ManyRowsQuery;
 
 /**
- * @implements ManyRowsQuery<SessionRow, array{user_id:int|null}>
+ * @implements ManyRowsQuery<SessionRow, array{'user_id': null|int}>
  */
 final readonly class FindSessionsByUserIdQuery implements ManyRowsQuery
 {
@@ -48,7 +48,7 @@ final readonly class FindSessionsByUserIdQuery implements ManyRowsQuery
     }
 
     /**
-     * @return array{user_id:int|null}
+     * @return array{'user_id': null|int}
      */
     public function params(): array
     {

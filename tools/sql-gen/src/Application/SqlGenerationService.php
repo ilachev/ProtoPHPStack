@@ -34,7 +34,7 @@ final readonly class SqlGenerationService
         $generatedFiles = [];
 
         foreach ($files as $file) {
-            if (!is_string($file) || !is_file($file)) {
+            if (!is_file($file)) {
                 continue;
             }
 

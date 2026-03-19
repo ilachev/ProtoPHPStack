@@ -64,7 +64,7 @@ final readonly class InsertApiStatQuery implements ExecutableQuery
     }
 
     /**
-     * @return array{session_id:string, route:string, method:string, status_code:int, execution_time:float, request_time:int}
+     * @return array{'session_id': string, 'route': string, 'method': string, 'status_code': int, 'execution_time': float, 'request_time': int}
      */
     public function params(): array
     {

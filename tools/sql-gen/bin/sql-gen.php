@@ -3,8 +3,8 @@
 
 declare(strict_types=1);
 
-use SqlGen\Config\GeneratorConfig;
 use SqlGen\Application\SqlGenerationService;
+use SqlGen\Config\GeneratorConfig;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 

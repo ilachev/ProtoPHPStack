@@ -104,10 +104,10 @@ final class StatementParameterResolver
         $comparisons = [];
 
         foreach ($matches as $match) {
-            $column = $match['left_column'] ?: $match['right_column'];
-            $param = $match['right_param'] ?: $match['left_param'];
+            $column = $match['left_column'] ?? $match['right_column'] ?? null;
+            $param = $match['right_param'] ?? $match['left_param'] ?? null;
 
-            if (!is_string($column) || $column === '' || !is_string($param) || $param === '') {
+            if ($column === null || $param === null) {
                 continue;
             }
 
@@ -133,11 +133,8 @@ final class StatementParameterResolver
             return [];
         }
 
-        $columnsExpression = $matches['columns'] ?? null;
-        $valuesExpression = $matches['values'] ?? null;
-        if (!is_string($columnsExpression) || !is_string($valuesExpression)) {
-            return [];
-        }
+        $columnsExpression = $matches['columns'];
+        $valuesExpression = $matches['values'];
 
         $columns = preg_split('/\s*,\s*/', trim($columnsExpression));
         $values = preg_split('/\s*,\s*/', trim($valuesExpression));

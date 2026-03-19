@@ -34,7 +34,7 @@ final readonly class DeleteSessionByIdQuery implements ExecutableQuery
     }
 
     /**
-     * @return array{id:string}
+     * @return array{'id': string}
      */
     public function params(): array
     {
