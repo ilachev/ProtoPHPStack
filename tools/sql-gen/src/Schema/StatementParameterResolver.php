@@ -4,17 +4,22 @@ declare(strict_types=1);
 
 namespace SqlGen\Schema;
 
+use SqlGen\Ast\SelectColumnReference;
+use SqlGen\Ast\SelectPlaceholder;
 use SqlGen\Model\DatabaseSchema;
 use SqlGen\Model\ResolvedSqlParameter;
 use SqlGen\Model\SqlStatement;
+use SqlGen\Parser\PhplrtSelectParser;
 
 final class StatementParameterResolver
 {
     private StatementTableMapResolver $tableMapResolver;
+    private PhplrtSelectParser $selectParser;
 
     public function __construct()
     {
         $this->tableMapResolver = new StatementTableMapResolver();
+        $this->selectParser = new PhplrtSelectParser();
     }
 
     /**
@@ -25,7 +30,7 @@ final class StatementParameterResolver
         $tableMap = $this->tableMapResolver->resolve($statement, $schema);
         $resolvedByName = [];
 
-        foreach ($this->extractColumnComparisons($statement->sql) as $comparison) {
+        foreach ($this->extractColumnComparisons($statement) as $comparison) {
             $resolvedColumn = $tableMap->resolveColumn($comparison['qualifier'], $comparison['column']);
 
             $resolvedByName[$comparison['param']] = new ResolvedSqlParameter(
@@ -68,7 +73,23 @@ final class StatementParameterResolver
     /**
      * @return list<array{qualifier: string|null, column: string, param: string}>
      */
-    private function extractColumnComparisons(string $sql): array
+    private function extractColumnComparisons(SqlStatement $statement): array
+    {
+        if (preg_match('/\bSELECT\b/i', $statement->sql) === 1) {
+            try {
+                return $this->extractSelectComparisonsViaAst($statement);
+            } catch (\Throwable) {
+                return $this->extractColumnComparisonsViaRegex($statement->sql);
+            }
+        }
+
+        return $this->extractColumnComparisonsViaRegex($statement->sql);
+    }
+
+    /**
+     * @return list<array{qualifier: string|null, column: string, param: string}>
+     */
+    private function extractColumnComparisonsViaRegex(string $sql): array
     {
         preg_match_all(
             '/(?:(?<left_table>[a-zA-Z_][a-zA-Z0-9_]*)\.)?(?<left_column>[a-zA-Z_][a-zA-Z0-9_]*)\s*(?:=|<|>|<=|>=)\s*:(?<right_param>[a-zA-Z_][a-zA-Z0-9_]*)|:(?<left_param>[a-zA-Z_][a-zA-Z0-9_]*)\s*(?:=|<|>|<=|>=)\s*(?:(?<right_table>[a-zA-Z_][a-zA-Z0-9_]*)\.)?(?<right_column>[a-zA-Z_][a-zA-Z0-9_]*)/i',
@@ -102,6 +123,55 @@ final class StatementParameterResolver
         }
 
         return $comparisons;
+    }
+
+    /**
+     * @return list<array{qualifier: string|null, column: string, param: string}>
+     */
+    private function extractSelectComparisonsViaAst(SqlStatement $statement): array
+    {
+        $query = $this->selectParser->parse($statement->sql);
+        $comparisons = [];
+
+        foreach ($query->joins as $join) {
+            $comparison = $this->comparisonToParameterMapping($join->condition);
+            if ($comparison !== null) {
+                $comparisons[] = $comparison;
+            }
+        }
+
+        foreach ($query->where as $comparisonNode) {
+            $comparison = $this->comparisonToParameterMapping($comparisonNode);
+            if ($comparison !== null) {
+                $comparisons[] = $comparison;
+            }
+        }
+
+        return $comparisons;
+    }
+
+    /**
+     * @return array{qualifier: string|null, column: string, param: string}|null
+     */
+    private function comparisonToParameterMapping(\SqlGen\Ast\SelectComparison $comparison): ?array
+    {
+        if ($comparison->left instanceof SelectColumnReference && $comparison->right instanceof SelectPlaceholder) {
+            return [
+                'qualifier' => $comparison->left->table !== null ? strtolower($comparison->left->table) : null,
+                'column' => $comparison->left->column,
+                'param' => $comparison->right->name,
+            ];
+        }
+
+        if ($comparison->left instanceof SelectPlaceholder && $comparison->right instanceof SelectColumnReference) {
+            return [
+                'qualifier' => $comparison->right->table !== null ? strtolower($comparison->right->table) : null,
+                'column' => $comparison->right->column,
+                'param' => $comparison->left->name,
+            ];
+        }
+
+        return null;
     }
 
     /**

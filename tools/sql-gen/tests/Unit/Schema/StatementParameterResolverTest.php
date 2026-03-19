@@ -184,4 +184,5 @@ final class StatementParameterResolverTest extends TestCase
         self::assertSame('int', $resolved[1]->phpType);
         self::assertTrue($resolved[1]->nullable);
     }
+
 }
