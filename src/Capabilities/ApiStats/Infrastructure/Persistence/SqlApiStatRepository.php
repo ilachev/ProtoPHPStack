@@ -6,14 +6,26 @@ namespace App\Capabilities\ApiStats\Infrastructure\Persistence;
 
 use App\Capabilities\ApiStats\Domain\ApiStat;
 use App\Capabilities\ApiStats\Domain\ApiStatRepository;
-use App\Platform\Storage\Repository\AbstractRepository;
+use App\Generated\Sql\ApiStats\InsertApiStatQuery;
+use App\Platform\Storage\Sql\SqlExecutor;
 
-final class SqlApiStatRepository extends AbstractRepository implements ApiStatRepository
+final readonly class SqlApiStatRepository implements ApiStatRepository
 {
-    private const TABLE_NAME = 'api_stats';
+    public function __construct(
+        private SqlExecutor $sqlExecutor,
+    ) {}
 
     public function save(ApiStat $stat): void
     {
-        $this->saveEntity($stat, self::TABLE_NAME, 'id', $stat->id);
+        $this->sqlExecutor->execute(
+            InsertApiStatQuery::create(
+                sessionId: $stat->sessionId,
+                route: $stat->route,
+                method: $stat->method,
+                statusCode: $stat->statusCode,
+                executionTime: $stat->executionTime,
+                requestTime: $stat->requestTime,
+            ),
+        );
     }
 }

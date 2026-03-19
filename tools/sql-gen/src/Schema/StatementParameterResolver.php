@@ -35,6 +35,22 @@ final class StatementParameterResolver
             );
         }
 
+        foreach ($this->extractInsertValueMappings($statement->sql) as $mapping) {
+            $column = $table->getColumn($mapping['column']);
+            if ($column === null) {
+                throw new \RuntimeException(
+                    "Column {$mapping['column']} was not found in schema table {$table->name} for query {$statement->name}",
+                );
+            }
+
+            $resolvedByName[$mapping['param']] ??= new ResolvedSqlParameter(
+                name: $mapping['param'],
+                propertyName: $this->snakeToCamel($mapping['param']),
+                sqlType: $column->sqlType,
+                phpType: $column->phpType,
+            );
+        }
+
         $parameters = [];
 
         foreach ($statement->parameters as $parameter) {
@@ -100,6 +116,55 @@ final class StatementParameterResolver
         }
 
         return $comparisons;
+    }
+
+    /**
+     * @return list<array{column: string, param: string}>
+     */
+    private function extractInsertValueMappings(string $sql): array
+    {
+        if (!preg_match(
+            '/\bINSERT\s+INTO\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\((?<columns>.*?)\)\s*VALUES\s*\((?<values>.*?)\)/is',
+            $sql,
+            $matches,
+        )) {
+            return [];
+        }
+
+        $columnsExpression = $matches['columns'] ?? null;
+        $valuesExpression = $matches['values'] ?? null;
+        if (!is_string($columnsExpression) || !is_string($valuesExpression)) {
+            return [];
+        }
+
+        $columns = preg_split('/\s*,\s*/', trim($columnsExpression));
+        $values = preg_split('/\s*,\s*/', trim($valuesExpression));
+
+        if (!is_array($columns) || !is_array($values) || count($columns) !== count($values)) {
+            throw new \RuntimeException('Unable to parse INSERT column/value mappings');
+        }
+
+        $mappings = [];
+
+        foreach ($columns as $index => $columnExpression) {
+            $column = trim($columnExpression);
+            $value = trim($values[$index]);
+
+            if (!preg_match('/^(?<column>[a-zA-Z_][a-zA-Z0-9_]*)$/', $column, $columnMatches)) {
+                throw new \RuntimeException("Unsupported INSERT column expression '{$column}'");
+            }
+
+            if (!preg_match('/^:(?<param>[a-zA-Z_][a-zA-Z0-9_]*)$/', $value, $valueMatches)) {
+                continue;
+            }
+
+            $mappings[] = [
+                'column' => $columnMatches['column'],
+                'param' => $valueMatches['param'],
+            ];
+        }
+
+        return $mappings;
     }
 
     private function snakeToCamel(string $value): string

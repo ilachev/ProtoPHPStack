@@ -67,4 +67,41 @@ final class StatementParameterResolverTest extends TestCase
         self::assertSame('INTEGER', $resolved[0]->sqlType);
         self::assertSame('int', $resolved[0]->phpType);
     }
+
+    public function testResolvesInsertValueParameterTypesFromSchemaColumns(): void
+    {
+        $resolver = new StatementParameterResolver();
+        $schema = new DatabaseSchema([
+            'api_stats' => new SchemaTable('api_stats', [
+                'session_id' => new SchemaColumn('session_id', 'TEXT', 'string', false),
+                'status_code' => new SchemaColumn('status_code', 'INTEGER', 'int', false),
+                'execution_time' => new SchemaColumn('execution_time', 'REAL', 'float', false),
+            ]),
+        ]);
+
+        $resolved = $resolver->resolve(
+            new SqlStatement(
+                name: 'InsertApiStat',
+                resultKind: SqlResultKind::Exec,
+                sql: <<<'SQL'
+                    INSERT INTO api_stats (session_id, status_code, execution_time)
+                    VALUES (:session_id, :status_code, :execution_time);
+                    SQL,
+                parameters: [
+                    new SqlParameter('session_id'),
+                    new SqlParameter('status_code'),
+                    new SqlParameter('execution_time'),
+                ],
+            ),
+            $schema,
+        );
+
+        self::assertCount(3, $resolved);
+        self::assertSame('string', $resolved[0]->phpType);
+        self::assertSame('TEXT', $resolved[0]->sqlType);
+        self::assertSame('int', $resolved[1]->phpType);
+        self::assertSame('INTEGER', $resolved[1]->sqlType);
+        self::assertSame('float', $resolved[2]->phpType);
+        self::assertSame('REAL', $resolved[2]->sqlType);
+    }
 }
