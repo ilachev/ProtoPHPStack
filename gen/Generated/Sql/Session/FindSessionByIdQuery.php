@@ -13,7 +13,7 @@ use App\Platform\Storage\Sql\ExecutableQuery;
 use App\Platform\Storage\Sql\OneRowQuery;
 
 /**
- * @implements OneRowQuery<SessionRow>
+ * @implements OneRowQuery<SessionRow, array{id:string}>
  */
 final readonly class FindSessionByIdQuery implements OneRowQuery
 {

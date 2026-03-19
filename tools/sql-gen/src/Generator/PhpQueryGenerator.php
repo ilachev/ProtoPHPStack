@@ -76,6 +76,7 @@ final readonly class PhpQueryGenerator
         $class->setFinal(true);
         $class->setReadOnly(true);
         $class->addImplement('App\Platform\Storage\Sql\DatabaseRow');
+        $class->addComment(sprintf('@implements DatabaseRow<%s>', $this->renderRowShapeDocblock($fields)));
 
         $constructor = $class->addMethod('__construct');
 
@@ -131,7 +132,14 @@ final readonly class PhpQueryGenerator
                 SqlResultKind::Many => 'ManyRowsQuery',
                 SqlResultKind::Exec => 'RowReturningQuery',
             };
-            $class->addComment("@implements {$interfaceName}<{$rowClassName}>");
+            $class->addComment(
+                sprintf(
+                    '@implements %s<%s, %s>',
+                    $interfaceName,
+                    $rowClassName,
+                    $this->renderParamsShapeDocblock($parameters),
+                ),
+            );
         }
 
         $constructor = $class->addMethod('__construct');

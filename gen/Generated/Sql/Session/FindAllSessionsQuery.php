@@ -13,7 +13,7 @@ use App\Platform\Storage\Sql\ExecutableQuery;
 use App\Platform\Storage\Sql\ManyRowsQuery;
 
 /**
- * @implements ManyRowsQuery<SessionRow>
+ * @implements ManyRowsQuery<SessionRow, array{}>
  */
 final readonly class FindAllSessionsQuery implements ManyRowsQuery
 {

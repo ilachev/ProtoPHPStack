@@ -55,6 +55,7 @@ final class PhpQueryGeneratorTest extends TestCase
         self::assertStringContainsString('schema: sql/schema.sql', $files[0]->content);
         self::assertStringContainsString('final readonly class FindSessionByIdRow', $files[0]->content);
         self::assertStringContainsString('implements DatabaseRow', $files[0]->content);
+        self::assertStringContainsString('@implements DatabaseRow<array{id:string}>', $files[0]->content);
         self::assertStringContainsString('@param array{id:string} $row', $files[0]->content);
         self::assertStringContainsString('fromDatabaseRow', $files[0]->content);
         self::assertSame('gen/Generated/Sql/Session/FindSessionByIdQuery.php', $files[1]->path);
@@ -62,7 +63,7 @@ final class PhpQueryGeneratorTest extends TestCase
         self::assertStringContainsString('source: sql/queries/session.sql', $files[1]->content);
         self::assertStringContainsString('schema: sql/schema.sql', $files[1]->content);
         self::assertStringContainsString('implements OneRowQuery', $files[1]->content);
-        self::assertStringContainsString('@implements OneRowQuery<FindSessionByIdRow>', $files[1]->content);
+        self::assertStringContainsString('@implements OneRowQuery<FindSessionByIdRow, array{id:string}>', $files[1]->content);
         self::assertStringContainsString('private string $id', $files[1]->content);
         self::assertStringContainsString('public static function create(string $id): self', $files[1]->content);
         self::assertStringContainsString('return new self(', $files[1]->content);
@@ -153,15 +154,16 @@ final class PhpQueryGeneratorTest extends TestCase
         self::assertSame('gen/Generated/Sql/Session/SessionRow.php', $files[0]->path);
         self::assertStringContainsString('final readonly class SessionRow', $files[0]->content);
         self::assertStringContainsString('implements DatabaseRow', $files[0]->content);
+        self::assertStringContainsString('@implements DatabaseRow<array{id:string, user_id:int|null}>', $files[0]->content);
         self::assertStringContainsString('@param array{id:string, user_id:int|null} $row', $files[0]->content);
         self::assertSame('gen/Generated/Sql/Session/FindSessionByIdQuery.php', $files[1]->path);
         self::assertStringContainsString('implements OneRowQuery', $files[1]->content);
-        self::assertStringContainsString('@implements OneRowQuery<SessionRow>', $files[1]->content);
+        self::assertStringContainsString('@implements OneRowQuery<SessionRow, array{id:string}>', $files[1]->content);
         self::assertStringContainsString('return SessionRow::class;', $files[1]->content);
         self::assertStringContainsString('@return array{id:string}', $files[1]->content);
         self::assertSame('gen/Generated/Sql/Session/FindSessionsByUserIdQuery.php', $files[2]->path);
         self::assertStringContainsString('implements ManyRowsQuery', $files[2]->content);
-        self::assertStringContainsString('@implements ManyRowsQuery<SessionRow>', $files[2]->content);
+        self::assertStringContainsString('@implements ManyRowsQuery<SessionRow, array{user_id:int}>', $files[2]->content);
         self::assertStringContainsString('public static function create(int $userId): self', $files[2]->content);
         self::assertStringContainsString('userId: $userId', $files[2]->content);
         self::assertStringContainsString('@return array{user_id:int}', $files[2]->content);

@@ -47,6 +47,9 @@ final class SqlExecutorTest extends TestCase
     }
 }
 
+/**
+ * @implements DatabaseRow<array{id:string}>
+ */
 final readonly class StubDatabaseRow implements DatabaseRow
 {
     public function __construct(
@@ -62,6 +65,9 @@ final readonly class StubDatabaseRow implements DatabaseRow
     }
 }
 
+/**
+ * @implements ExecutableQuery<array{}>
+ */
 final readonly class StubExecutableQuery implements ExecutableQuery
 {
     public function sql(): string
@@ -79,7 +85,7 @@ final readonly class StubExecutableQuery implements ExecutableQuery
 }
 
 /**
- * @implements OneRowQuery<StubDatabaseRow>
+ * @implements OneRowQuery<StubDatabaseRow, array{}>
  */
 final readonly class StubOneRowQuery implements OneRowQuery
 {
@@ -100,7 +106,7 @@ final readonly class StubOneRowQuery implements OneRowQuery
 }
 
 /**
- * @implements ManyRowsQuery<StubDatabaseRow>
+ * @implements ManyRowsQuery<StubDatabaseRow, array{}>
  */
 final readonly class StubManyRowsQuery implements ManyRowsQuery
 {
