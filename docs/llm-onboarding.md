@@ -101,7 +101,8 @@ task run
 Практически:
 
 - `task verify` — основной локальный gate
-- `task test:integration` и `task verify:full` используют PostgreSQL profile
+- `task test:integration` использует PostgreSQL profile
+- `task verify:full` дополнительно включает `tools/sql-gen` quality gate и PostgreSQL profile
 - storage/runtime изменения нельзя проверять только unit-тестами
 
 ## Минимальный порядок чтения

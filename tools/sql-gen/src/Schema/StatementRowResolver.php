@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlGen\Schema;
 
+use SqlGen\Ast\InsertQuery;
 use SqlGen\Ast\SelectProjection;
 use SqlGen\Ast\SelectProjectionColumn;
 use SqlGen\Ast\SelectProjectionWildcard;
@@ -71,6 +72,10 @@ final class StatementRowResolver
 
         if ($query instanceof SelectQuery) {
             return $this->resolveProjections($query->projections, $statement->name, $tableMap);
+        }
+
+        if (!$query instanceof InsertQuery) {
+            throw new \RuntimeException("SQL statement {$statement->name} does not expose row projections.");
         }
 
         return $this->resolveProjections($query->returning, $statement->name, $tableMap);

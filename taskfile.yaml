@@ -56,6 +56,7 @@ tasks:
     desc: Run all verification steps including integration tests
     cmds:
       - task: verify
+      - task: tools:sql:check
       - task: verify:integration
 
   phpstan:

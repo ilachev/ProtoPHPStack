@@ -28,11 +28,28 @@ final class ProjectSqlQueriesCompatibilityTest extends TestCase
 
             foreach ($sqlFile->statements as $statement) {
                 $parsed = $sqlParser->parse($statement->sql);
+                $normalizedSql = strtoupper(ltrim($statement->sql));
 
-                self::assertTrue(
-                    $parsed instanceof SelectQuery || $parsed instanceof InsertQuery || $parsed instanceof DeleteQuery,
-                    sprintf('Unsupported AST type for query %s from %s', $statement->name, basename($queryFile)),
-                );
+                if (str_starts_with($normalizedSql, 'SELECT')) {
+                    self::assertInstanceOf(SelectQuery::class, $parsed, $statement->name);
+                    continue;
+                }
+
+                if (str_starts_with($normalizedSql, 'INSERT')) {
+                    self::assertInstanceOf(InsertQuery::class, $parsed, $statement->name);
+                    continue;
+                }
+
+                if (str_starts_with($normalizedSql, 'DELETE')) {
+                    self::assertInstanceOf(DeleteQuery::class, $parsed, $statement->name);
+                    continue;
+                }
+
+                self::fail(sprintf(
+                    'Unsupported SQL statement prefix for query %s from %s',
+                    $statement->name,
+                    basename($queryFile),
+                ));
             }
         }
     }

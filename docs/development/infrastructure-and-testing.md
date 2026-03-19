@@ -180,7 +180,7 @@ task verify:full
 
 `task verify:integration` запускает PostgreSQL-backed SQL validation и integration profile.
 
-`task verify:full` объединяет оба контура.
+`task verify:full` объединяет оба контура и дополнительно запускает полный quality gate самой `sql-gen` тулзы.
 
 ## Что должна помнить LLM при изменениях
 
