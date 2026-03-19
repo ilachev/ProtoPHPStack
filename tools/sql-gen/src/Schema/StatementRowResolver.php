@@ -45,19 +45,19 @@ final class StatementRowResolver
         $seenResultColumns = [];
 
         foreach ($columns as $column) {
-            if (isset($seenResultColumns[$column['result']])) {
+            if (isset($seenResultColumns[$column->resultColumn])) {
                 throw new \RuntimeException(
-                    "Duplicate result column {$column['result']} in query {$statement->name}",
+                    "Duplicate result column {$column->resultColumn} in query {$statement->name}",
                 );
             }
 
-            $seenResultColumns[$column['result']] = true;
-            $resolvedColumn = $tableMap->resolveColumn($column['qualifier'], $column['source']);
+            $seenResultColumns[$column->resultColumn] = true;
+            $resolvedColumn = $tableMap->resolveColumn($column->qualifier, $column->sourceColumn);
 
             $fields[] = new RowField(
-                sourceColumnName: $column['source'],
-                resultColumnName: $column['result'],
-                propertyName: $this->snakeToCamel($column['result']),
+                sourceColumnName: $column->sourceColumn,
+                resultColumnName: $column->resultColumn,
+                propertyName: $this->snakeToCamel($column->resultColumn),
                 phpType: $resolvedColumn->column->phpType,
                 nullable: $resolvedColumn->column->nullable,
             );
@@ -67,7 +67,7 @@ final class StatementRowResolver
     }
 
     /**
-     * @return list<array{qualifier: string|null, source: string, result: string}>
+     * @return list<ResolvedProjectionColumn>
      */
     private function resolveSelectedColumns(SqlStatement $statement, StatementTableMap $tableMap): array
     {
@@ -86,7 +86,7 @@ final class StatementRowResolver
 
     /**
      * @param list<SelectProjection> $projections
-     * @return list<array{qualifier: string|null, source: string, result: string}>
+     * @return list<ResolvedProjectionColumn>
      */
     private function resolveProjections(array $projections, string $queryName, StatementTableMap $tableMap): array
     {
@@ -99,11 +99,11 @@ final class StatementRowResolver
             }
 
             if ($projection instanceof SelectProjectionColumn) {
-                $columns[] = [
-                    'qualifier' => $projection->reference->table !== null ? strtolower($projection->reference->table) : null,
-                    'source' => $projection->reference->column,
-                    'result' => $projection->alias !== null ? $projection->alias->value : $projection->reference->column,
-                ];
+                $columns[] = new ResolvedProjectionColumn(
+                    qualifier: $projection->reference->table !== null ? strtolower($projection->reference->table) : null,
+                    sourceColumn: $projection->reference->column,
+                    resultColumn: $projection->alias !== null ? $projection->alias->value : $projection->reference->column,
+                );
                 continue;
             }
 
@@ -114,18 +114,18 @@ final class StatementRowResolver
     }
 
     /**
-     * @return list<array{qualifier: string|null, source: string, result: string}>
+     * @return list<ResolvedProjectionColumn>
      */
     private function expandWildcardColumns(StatementTableMap $tableMap, ?string $qualifier): array
     {
         $columns = [];
 
         foreach ($tableMap->expandWildcard($qualifier) as $column) {
-            $columns[] = [
-                'qualifier' => $qualifier,
-                'source' => $column->name,
-                'result' => $column->name,
-            ];
+            $columns[] = new ResolvedProjectionColumn(
+                qualifier: $qualifier,
+                sourceColumn: $column->name,
+                resultColumn: $column->name,
+            );
         }
 
         return $columns;

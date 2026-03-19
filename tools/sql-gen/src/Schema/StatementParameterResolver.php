@@ -38,11 +38,11 @@ final class StatementParameterResolver
         $resolvedByName = [];
 
         foreach ($this->extractParameterMappings($statement) as $mapping) {
-            $resolvedColumn = $tableMap->resolveColumn($mapping['qualifier'], $mapping['column']);
+            $resolvedColumn = $tableMap->resolveColumn($mapping->qualifier, $mapping->column);
 
-            $resolvedByName[$mapping['param']] = new ResolvedSqlParameter(
-                name: $mapping['param'],
-                propertyName: $this->snakeToCamel($mapping['param']),
+            $resolvedByName[$mapping->parameterName] = new ResolvedSqlParameter(
+                name: $mapping->parameterName,
+                propertyName: $this->snakeToCamel($mapping->parameterName),
                 sqlType: $resolvedColumn->column->sqlType,
                 phpType: $resolvedColumn->column->phpType,
                 nullable: $resolvedColumn->column->nullable,
@@ -66,7 +66,7 @@ final class StatementParameterResolver
     }
 
     /**
-     * @return list<array{qualifier: string|null, column: string, param: string}>
+     * @return list<ResolvedParameterMapping>
      */
     private function extractParameterMappings(SqlStatement $statement): array
     {
@@ -96,11 +96,11 @@ final class StatementParameterResolver
             $mappings = [];
 
             foreach ($query->values as $valueMapping) {
-                $mappings[] = [
-                    'qualifier' => strtolower($query->table),
-                    'column' => $valueMapping->column,
-                    'param' => $valueMapping->placeholder->name,
-                ];
+                $mappings[] = new ResolvedParameterMapping(
+                    qualifier: strtolower($query->table),
+                    column: $valueMapping->column,
+                    parameterName: $valueMapping->placeholder->name,
+                );
             }
 
             return $mappings;
@@ -123,24 +123,24 @@ final class StatementParameterResolver
     }
 
     /**
-     * @return array{qualifier: string|null, column: string, param: string}|null
+     * @return ResolvedParameterMapping|null
      */
-    private function comparisonToParameterMapping(SelectComparison $comparison, ?string $defaultQualifier = null): ?array
+    private function comparisonToParameterMapping(SelectComparison $comparison, ?string $defaultQualifier = null): ?ResolvedParameterMapping
     {
         if ($comparison->left instanceof SelectColumnReference && $comparison->right instanceof SelectPlaceholder) {
-            return [
-                'qualifier' => $comparison->left->table !== null ? strtolower($comparison->left->table) : $defaultQualifier,
-                'column' => $comparison->left->column,
-                'param' => $comparison->right->name,
-            ];
+            return new ResolvedParameterMapping(
+                qualifier: $comparison->left->table !== null ? strtolower($comparison->left->table) : $defaultQualifier,
+                column: $comparison->left->column,
+                parameterName: $comparison->right->name,
+            );
         }
 
         if ($comparison->left instanceof SelectPlaceholder && $comparison->right instanceof SelectColumnReference) {
-            return [
-                'qualifier' => $comparison->right->table !== null ? strtolower($comparison->right->table) : $defaultQualifier,
-                'column' => $comparison->right->column,
-                'param' => $comparison->left->name,
-            ];
+            return new ResolvedParameterMapping(
+                qualifier: $comparison->right->table !== null ? strtolower($comparison->right->table) : $defaultQualifier,
+                column: $comparison->right->column,
+                parameterName: $comparison->left->name,
+            );
         }
 
         return null;
