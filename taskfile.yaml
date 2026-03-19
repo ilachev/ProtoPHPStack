@@ -37,11 +37,12 @@ tasks:
           CLI_ARGS: "--dry-run {{.CLI_ARGS}}"
 
   verify:
-    desc: Run the default verification gate (lint, phpstan, unit tests)
+    desc: Run the default verification gate (lint, phpstan, sql check, unit tests)
     deps: [ var, install ]
     cmds:
       - task: lint
       - task: phpstan
+      - task: sql:check
       - task: test
 
   verify:integration:
