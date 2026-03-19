@@ -66,6 +66,8 @@ final class PhpQueryGeneratorTest extends TestCase
         self::assertStringContainsString('source: sql/queries/session.sql', $files[2]->content);
         self::assertStringContainsString('schema: sql/schema.sql', $files[2]->content);
         self::assertStringContainsString('implements ExecutableQuery', $files[2]->content);
+        self::assertStringContainsString('public static function create(string|int|float|bool|null $id): self', $files[2]->content);
+        self::assertStringContainsString('new FindSessionByIdParams(', $files[2]->content);
         self::assertStringContainsString("'id' => \$this->params->id", $files[2]->content);
     }
 
@@ -104,6 +106,8 @@ final class PhpQueryGeneratorTest extends TestCase
         self::assertSame('gen/Generated/Sql/Session/FindAllSessionsRow.php', $files[0]->path);
         self::assertSame('gen/Generated/Sql/Session/FindAllSessionsQuery.php', $files[1]->path);
         self::assertStringNotContainsString('private FindAllSessionsParams $params', $files[1]->content);
+        self::assertStringContainsString('public static function create(): self', $files[1]->content);
+        self::assertStringContainsString('return new self();', $files[1]->content);
         self::assertStringContainsString('return [];', $files[1]->content);
     }
 

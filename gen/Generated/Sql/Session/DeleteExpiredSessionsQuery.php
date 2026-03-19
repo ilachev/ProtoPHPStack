@@ -18,6 +18,15 @@ final readonly class DeleteExpiredSessionsQuery implements ExecutableQuery
     ) {
     }
 
+    public static function create(string|int|float|bool|null $now): self
+    {
+        return new self(
+            new DeleteExpiredSessionsParams(
+                    now: $now
+            ),
+        );
+    }
+
     public function sql(): string
     {
         return <<<'SQL'

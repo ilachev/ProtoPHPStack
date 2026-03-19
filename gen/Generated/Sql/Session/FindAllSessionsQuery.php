@@ -13,6 +13,11 @@ use App\Platform\Storage\Sql\ExecutableQuery;
 
 final readonly class FindAllSessionsQuery implements ExecutableQuery
 {
+    public static function create(): self
+    {
+        return new self();
+    }
+
     public function sql(): string
     {
         return <<<'SQL'

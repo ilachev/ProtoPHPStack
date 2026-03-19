@@ -6,12 +6,9 @@ namespace App\Capabilities\Session\Infrastructure\Persistence;
 
 use App\Capabilities\Session\Domain\Session;
 use App\Capabilities\Session\Domain\SessionRepository;
-use App\Generated\Sql\Session\DeleteExpiredSessionsParams;
 use App\Generated\Sql\Session\DeleteExpiredSessionsQuery;
 use App\Generated\Sql\Session\FindAllSessionsQuery;
-use App\Generated\Sql\Session\FindSessionByIdParams;
 use App\Generated\Sql\Session\FindSessionByIdQuery;
-use App\Generated\Sql\Session\FindSessionsByUserIdParams;
 use App\Generated\Sql\Session\FindSessionsByUserIdQuery;
 use App\Generated\Sql\Session\SessionRow;
 use App\Platform\Hydration\Hydrator;
@@ -36,7 +33,7 @@ final class SqlSessionRepository extends AbstractRepository implements SessionRe
     public function findById(string $id): ?Session
     {
         $row = $this->sqlExecutor->fetchOneAs(
-            new FindSessionByIdQuery(new FindSessionByIdParams($id)),
+            FindSessionByIdQuery::create(id: $id),
             SessionRow::class,
         );
 
@@ -50,7 +47,7 @@ final class SqlSessionRepository extends AbstractRepository implements SessionRe
     public function findByUserId(int $userId): array
     {
         $rows = $this->sqlExecutor->fetchAllAs(
-            new FindSessionsByUserIdQuery(new FindSessionsByUserIdParams($userId)),
+            FindSessionsByUserIdQuery::create(user_id: $userId),
             SessionRow::class,
         );
 
@@ -63,7 +60,7 @@ final class SqlSessionRepository extends AbstractRepository implements SessionRe
     public function findAll(): array
     {
         $rows = $this->sqlExecutor->fetchAllAs(
-            new FindAllSessionsQuery(),
+            FindAllSessionsQuery::create(),
             SessionRow::class,
         );
 
@@ -86,7 +83,7 @@ final class SqlSessionRepository extends AbstractRepository implements SessionRe
     public function deleteExpired(): void
     {
         $this->sqlExecutor->execute(
-            new DeleteExpiredSessionsQuery(new DeleteExpiredSessionsParams(time())),
+            DeleteExpiredSessionsQuery::create(now: time()),
         );
     }
 

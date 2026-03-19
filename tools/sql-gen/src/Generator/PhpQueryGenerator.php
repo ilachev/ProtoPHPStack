@@ -144,6 +144,34 @@ final readonly class PhpQueryGenerator
                 ->setType($paramsClass);
         }
 
+        $factory = $class->addMethod('create');
+        $factory->setStatic();
+        $factory->setReturnType('self');
+
+        if ($statement->parameters !== []) {
+            foreach ($statement->parameters as $parameter) {
+                $factory->addParameter($parameter->name)->setType(self::PARAM_TYPE);
+            }
+
+            $arguments = implode(
+                ",\n",
+                array_map(
+                    static fn($parameter): string => "            {$parameter->name}: \${$parameter->name}",
+                    $statement->parameters,
+                ),
+            );
+
+            $factory->setBody(
+                "return new self(\n"
+                . "    new {$statement->getParamsClassName()}(\n"
+                . "{$arguments}\n"
+                . "    ),\n"
+                . ');',
+            );
+        } else {
+            $factory->setBody('return new self();');
+        }
+
         $sqlMethod = $class->addMethod('sql');
         $sqlMethod->setReturnType('string');
         $sqlMethod->setBody("return <<<'SQL'\n{$statement->sql}\nSQL;");

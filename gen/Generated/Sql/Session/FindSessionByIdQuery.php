@@ -18,6 +18,15 @@ final readonly class FindSessionByIdQuery implements ExecutableQuery
     ) {
     }
 
+    public static function create(string|int|float|bool|null $id): self
+    {
+        return new self(
+            new FindSessionByIdParams(
+                    id: $id
+            ),
+        );
+    }
+
     public function sql(): string
     {
         return <<<'SQL'
