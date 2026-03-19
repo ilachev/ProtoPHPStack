@@ -8,17 +8,18 @@ use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PsrPrinter;
 use SqlGen\Config\GeneratorConfig;
 use SqlGen\Model\DatabaseSchema;
+use SqlGen\Model\ResolvedSqlParameter;
 use SqlGen\Model\RowField;
 use SqlGen\Model\SqlFile;
 use SqlGen\Model\SqlStatement;
+use SqlGen\Schema\StatementParameterResolver;
 use SqlGen\Schema\StatementRowResolver;
 
 final readonly class PhpQueryGenerator
 {
-    private const PARAM_TYPE = 'string|int|float|bool|null';
-
     private PsrPrinter $printer;
     private StatementRowResolver $rowResolver;
+    private StatementParameterResolver $parameterResolver;
 
     public function __construct(
         private GeneratorConfig $config,
@@ -26,6 +27,7 @@ final readonly class PhpQueryGenerator
     ) {
         $this->printer = new PsrPrinter();
         $this->rowResolver = new StatementRowResolver();
+        $this->parameterResolver = new StatementParameterResolver();
     }
 
     /**
@@ -102,6 +104,7 @@ final readonly class PhpQueryGenerator
     ): string
     {
         $rowFields = $this->rowResolver->resolve($statement, $this->schema);
+        $parameters = $this->parameterResolver->resolve($statement, $this->schema);
 
         $file = new PhpFile();
         $file->setStrictTypes();
@@ -123,27 +126,27 @@ final readonly class PhpQueryGenerator
         }
 
         $constructor = $class->addMethod('__construct');
-        foreach ($statement->parameters as $parameter) {
+        foreach ($parameters as $parameter) {
             $constructor
-                ->addPromotedParameter($this->toPropertyName($parameter->name))
+                ->addPromotedParameter($parameter->propertyName)
                 ->setPrivate()
-                ->setType(self::PARAM_TYPE);
+                ->setType($parameter->phpType);
         }
 
         $factory = $class->addMethod('create');
         $factory->setStatic();
         $factory->setReturnType('self');
 
-        if ($statement->parameters !== []) {
-            foreach ($statement->parameters as $parameter) {
-                $factory->addParameter($this->toPropertyName($parameter->name))->setType(self::PARAM_TYPE);
+        if ($parameters !== []) {
+            foreach ($parameters as $parameter) {
+                $factory->addParameter($parameter->propertyName)->setType($parameter->phpType);
             }
 
             $arguments = implode(
                 ",\n",
                 array_map(
-                    fn($parameter): string => "            {$this->toPropertyName($parameter->name)}: \$" . $this->toPropertyName($parameter->name),
-                    $statement->parameters,
+                    static fn(ResolvedSqlParameter $parameter): string => "            {$parameter->propertyName}: \${$parameter->propertyName}",
+                    $parameters,
                 ),
             );
 
@@ -170,7 +173,7 @@ final readonly class PhpQueryGenerator
         $paramsMethod = $class->addMethod('params');
         $paramsMethod->setReturnType('array');
         $paramsMethod->addComment('@return array<string, scalar|null>');
-        $paramsMethod->setBody($this->renderParamsMethodBody($statement));
+        $paramsMethod->setBody($this->renderParamsMethodBody($parameters));
 
         return $this->printGeneratedFile($file, $sourcePath);
     }
@@ -192,16 +195,19 @@ final readonly class PhpQueryGenerator
         return implode("\n", $lines);
     }
 
-    private function renderParamsMethodBody(SqlStatement $statement): string
+    /**
+     * @param list<ResolvedSqlParameter> $parameters
+     */
+    private function renderParamsMethodBody(array $parameters): string
     {
-        if ($statement->parameters === []) {
+        if ($parameters === []) {
             return 'return [];';
         }
 
         $lines = ['return ['];
 
-        foreach ($statement->parameters as $parameter) {
-            $lines[] = "    '{$parameter->name}' => \$this->{$this->toPropertyName($parameter->name)},";
+        foreach ($parameters as $parameter) {
+            $lines[] = "    '{$parameter->name}' => \$this->{$parameter->propertyName},";
         }
 
         $lines[] = '];';
@@ -254,11 +260,6 @@ final readonly class PhpQueryGenerator
              */
 
             PHP;
-    }
-
-    private function toPropertyName(string $parameterName): string
-    {
-        return lcfirst(str_replace('_', '', ucwords($parameterName, '_')));
     }
 
     /**

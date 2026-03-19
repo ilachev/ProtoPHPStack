@@ -61,8 +61,8 @@ final class PhpQueryGeneratorTest extends TestCase
         self::assertStringContainsString('source: sql/queries/session.sql', $files[1]->content);
         self::assertStringContainsString('schema: sql/schema.sql', $files[1]->content);
         self::assertStringContainsString('implements ExecutableQuery', $files[1]->content);
-        self::assertStringContainsString('private string|int|float|bool|null $id', $files[1]->content);
-        self::assertStringContainsString('public static function create(string|int|float|bool|null $id): self', $files[1]->content);
+        self::assertStringContainsString('private string $id', $files[1]->content);
+        self::assertStringContainsString('public static function create(string $id): self', $files[1]->content);
         self::assertStringContainsString('return new self(', $files[1]->content);
         self::assertStringContainsString("'id' => \$this->id", $files[1]->content);
     }
@@ -153,7 +153,7 @@ final class PhpQueryGeneratorTest extends TestCase
         self::assertStringContainsString('implements RowReturningQuery', $files[1]->content);
         self::assertStringContainsString('return SessionRow::class;', $files[1]->content);
         self::assertSame('gen/Generated/Sql/Session/FindSessionsByUserIdQuery.php', $files[2]->path);
-        self::assertStringContainsString('public static function create(string|int|float|bool|null $userId): self', $files[2]->content);
+        self::assertStringContainsString('public static function create(int $userId): self', $files[2]->content);
         self::assertStringContainsString('userId: $userId', $files[2]->content);
         self::assertStringContainsString("'user_id' => \$this->userId", $files[2]->content);
     }

@@ -14,11 +14,11 @@ use App\Platform\Storage\Sql\ExecutableQuery;
 final readonly class DeleteExpiredSessionsQuery implements ExecutableQuery
 {
     public function __construct(
-        private string|int|float|bool|null $now,
+        private int $now,
     ) {
     }
 
-    public static function create(string|int|float|bool|null $now): self
+    public static function create(int $now): self
     {
         return new self(
                     now: $now

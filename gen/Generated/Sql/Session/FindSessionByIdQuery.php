@@ -18,11 +18,11 @@ use App\Platform\Storage\Sql\RowReturningQuery;
 final readonly class FindSessionByIdQuery implements RowReturningQuery
 {
     public function __construct(
-        private string|int|float|bool|null $id,
+        private string $id,
     ) {
     }
 
-    public static function create(string|int|float|bool|null $id): self
+    public static function create(string $id): self
     {
         return new self(
                     id: $id
