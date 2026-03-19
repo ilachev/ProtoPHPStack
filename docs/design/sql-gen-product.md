@@ -205,3 +205,61 @@ Runtime не должен заново интерпретировать SQL.
 - generated PHP уменьшает boilerplate, а не прячет запрос;
 - PostgreSQL проверяется как реальный target;
 - developer и LLM видят один явный source of truth: SQL файл.
+
+## Parser strategy
+
+Текущий regex-based parsing допустим только как переходный слой.
+
+Для долгосрочного развития `sql-gen` parser-front-end должен эволюционировать в сторону собственного subset parser-а, а не в сторону бесконечного наращивания regex-эвристик.
+
+Правильная целевая модель:
+
+- `sql-gen` не пытается реализовать весь PostgreSQL parser;
+- `sql-gen` поддерживает только свой документированный SQL subset;
+- grammar этого subset-а может быть реализована на `phplrt`;
+- parser строит внутренний AST `sql-gen`, а не тянет чужую AST-модель сквозь весь кодогенератор;
+- PostgreSQL-backed `sql:check:pg` остаётся обязательным safety net даже после перехода на AST.
+
+Неправильная модель:
+
+- обещать поддержку произвольного PostgreSQL SQL;
+- продолжать масштабировать regex-parser для `JOIN`, `RETURNING`, `CASE`, `COALESCE`, nested expressions и других конструкций;
+- превращать parser spike сразу в production path без ограничения subset-а.
+
+### Что считать первым поддерживаемым subset-ом
+
+Первый осмысленный subset для `phplrt`-parser-а:
+
+- `SELECT ... FROM ...`
+- `JOIN ... ON ...`
+- `WHERE`
+- `INSERT INTO ... VALUES ...`
+- `ON CONFLICT ... DO UPDATE`
+- `RETURNING`
+- column references
+- aliases
+- placeholders `:param`
+- простые function/expression nodes как структурированные AST-элементы
+
+Что не нужно поддерживать на первом этапе:
+
+- CTE
+- `UNION`
+- nested subqueries
+- window functions
+- полный expression grammar PostgreSQL
+
+### Архитектурный принцип
+
+Если `phplrt` будет использоваться в `sql-gen`, то только так:
+
+```text
+SQL text
+-> phplrt grammar/parser
+-> internal sql-gen AST
+-> schema/type resolution
+-> PHP generation
+-> PostgreSQL-backed validation
+```
+
+То есть `phplrt` нужен не как “готовый SQL parser”, а как основа для нашего subset parser-а.
