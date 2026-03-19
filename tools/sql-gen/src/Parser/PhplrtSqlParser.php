@@ -17,6 +17,7 @@ use SqlGen\Ast\SelectColumnReference;
 use SqlGen\Ast\SelectComparison;
 use SqlGen\Ast\SelectJoin;
 use SqlGen\Ast\SelectOperand;
+use SqlGen\Ast\SelectOrderByItem;
 use SqlGen\Ast\SelectPlaceholder;
 use SqlGen\Ast\SelectProjection;
 use SqlGen\Ast\SelectProjectionColumn;
@@ -74,6 +75,7 @@ final class PhplrtSqlParser
         $joins = [];
         $where = [];
         $whereOperators = [];
+        $orderBy = [];
 
         foreach ($select->children as $child) {
             if (!$child instanceof PrintableNode) {
@@ -87,6 +89,11 @@ final class PhplrtSqlParser
 
             if ($child->getState() === 'WhereClause') {
                 [$where, $whereOperators] = $this->normalizeWhereClause($child);
+                continue;
+            }
+
+            if ($child->getState() === 'OrderByClause') {
+                $orderBy = $this->normalizeOrderByClause($child);
             }
         }
 
@@ -96,6 +103,7 @@ final class PhplrtSqlParser
             joins: $joins,
             where: $where,
             whereOperators: $whereOperators,
+            orderBy: $orderBy,
         );
     }
 
@@ -387,6 +395,47 @@ final class PhplrtSqlParser
             left: $operands[0],
             operator: $operator,
             right: $operands[1],
+        );
+    }
+
+    /**
+     * @return list<SelectOrderByItem>
+     */
+    private function normalizeOrderByClause(PrintableNode $orderBy): array
+    {
+        $items = [];
+
+        foreach ($orderBy->children as $child) {
+            if ($child instanceof PrintableNode && $child->getState() === 'OrderItem') {
+                $items[] = $this->normalizeOrderItem($child);
+            }
+        }
+
+        return $items;
+    }
+
+    private function normalizeOrderItem(PrintableNode $orderItem): SelectOrderByItem
+    {
+        $columnRef = $this->findFirstChildNode($orderItem, 'ColumnRef');
+        if (!$columnRef instanceof PrintableNode) {
+            throw new \RuntimeException('OrderItem must contain ColumnRef.');
+        }
+
+        $direction = null;
+
+        foreach ($orderItem->children as $child) {
+            if (!$child instanceof TokenInterface) {
+                continue;
+            }
+
+            if (in_array($child->getName(), ['T_ASC', 'T_DESC'], true)) {
+                $direction = strtolower($child->getValue());
+            }
+        }
+
+        return new SelectOrderByItem(
+            column: $this->normalizeColumnRef($columnRef),
+            direction: $direction,
         );
     }
 

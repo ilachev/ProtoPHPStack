@@ -4,19 +4,39 @@ declare(strict_types=1);
 
 namespace SqlGen\Check;
 
+use SqlGen\Ast\DeleteQuery;
+use SqlGen\Ast\InsertConflictAssignment;
+use SqlGen\Ast\InsertQuery;
+use SqlGen\Ast\InsertValueMapping;
+use SqlGen\Ast\SelectColumnReference;
+use SqlGen\Ast\SelectComparison;
+use SqlGen\Ast\SelectJoin;
+use SqlGen\Ast\SelectOperand;
+use SqlGen\Ast\SelectOrderByItem;
+use SqlGen\Ast\SelectPlaceholder;
+use SqlGen\Ast\SelectProjection;
+use SqlGen\Ast\SelectProjectionColumn;
+use SqlGen\Ast\SelectProjectionWildcard;
+use SqlGen\Ast\SelectQuery;
+use SqlGen\Ast\SelectTableReference;
 use SqlGen\Model\DatabaseSchema;
 use SqlGen\Model\ResolvedSqlParameter;
 use SqlGen\Model\SqlStatement;
+use SqlGen\Parser\PhplrtSqlParser;
 use SqlGen\Schema\StatementParameterResolver;
 
 final readonly class PostgreSqlStatementCompiler
 {
     private StatementParameterResolver $parameterResolver;
 
+    private PhplrtSqlParser $sqlParser;
+
     public function __construct(
         ?StatementParameterResolver $parameterResolver = null,
+        ?PhplrtSqlParser $sqlParser = null,
     ) {
         $this->parameterResolver = $parameterResolver ?? new StatementParameterResolver();
+        $this->sqlParser = $sqlParser ?? new PhplrtSqlParser();
     }
 
     public function compile(SqlStatement $statement, DatabaseSchema $schema): PreparedPostgreSqlStatement
@@ -28,34 +48,229 @@ final readonly class PostgreSqlStatementCompiler
             $parameterIndexByName[$parameter->name] = $index + 1;
         }
 
-        $sql = preg_replace_callback(
-            '/(?<!:):(?<name>[A-Za-z_][A-Za-z0-9_]*)/',
-            static function (array $matches) use ($parameterIndexByName, $statement): string {
-                $name = $matches['name'];
-
-                if (!isset($parameterIndexByName[$name])) {
-                    throw new \RuntimeException(
-                        "Unable to compile PostgreSQL statement {$statement->name}: unknown parameter {$name}",
-                    );
-                }
-
-                return '$' . $parameterIndexByName[$name];
-            },
-            rtrim($statement->sql, " \t\n\r\0\x0B;"),
-        );
-
-        if (!is_string($sql)) {
-            throw new \RuntimeException("Unable to compile PostgreSQL statement {$statement->name}");
-        }
+        $query = $this->sqlParser->parse($statement->sql);
 
         return new PreparedPostgreSqlStatement(
             name: $statement->name,
-            sql: $sql,
+            sql: $this->renderQuery($query, $parameterIndexByName, $statement->name),
             parameterTypes: array_map(
                 fn(ResolvedSqlParameter $parameter): string => $this->mapParameterType($parameter->sqlType),
                 $parameters,
             ),
         );
+    }
+
+    /**
+     * @param array<string, int> $parameterIndexByName
+     */
+    private function renderQuery(SelectQuery|InsertQuery|DeleteQuery $query, array $parameterIndexByName, string $statementName): string
+    {
+        if ($query instanceof SelectQuery) {
+            return $this->renderSelectQuery($query, $parameterIndexByName, $statementName);
+        }
+
+        if ($query instanceof InsertQuery) {
+            return $this->renderInsertQuery($query, $parameterIndexByName, $statementName);
+        }
+
+        return $this->renderDeleteQuery($query, $parameterIndexByName, $statementName);
+    }
+
+    /**
+     * @param array<string, int> $parameterIndexByName
+     */
+    private function renderSelectQuery(SelectQuery $query, array $parameterIndexByName, string $statementName): string
+    {
+        $sql = 'SELECT ' . implode(', ', array_map(
+            fn(SelectProjection $projection): string => $this->renderProjection($projection),
+            $query->projections,
+        ));
+        $sql .= ' FROM ' . $this->renderTableReference($query->from);
+
+        foreach ($query->joins as $join) {
+            $sql .= ' ' . $this->renderJoin($join, $parameterIndexByName, $statementName);
+        }
+
+        if ($query->where !== []) {
+            $sql .= ' WHERE ' . $this->renderComparisons($query->where, $query->whereOperators, $parameterIndexByName, $statementName);
+        }
+
+        if ($query->orderBy !== []) {
+            $sql .= ' ORDER BY ' . implode(', ', array_map(
+                fn(SelectOrderByItem $item): string => $this->renderOrderByItem($item),
+                $query->orderBy,
+            ));
+        }
+
+        return $sql;
+    }
+
+    /**
+     * @param array<string, int> $parameterIndexByName
+     */
+    private function renderInsertQuery(InsertQuery $query, array $parameterIndexByName, string $statementName): string
+    {
+        $sql = 'INSERT INTO ' . $query->table;
+        $sql .= ' (' . implode(', ', array_map(
+            static fn(InsertValueMapping $value): string => $value->column,
+            $query->values,
+        )) . ')';
+        $sql .= ' VALUES (' . implode(', ', array_map(
+            fn(InsertValueMapping $value): string => $this->renderPlaceholder($value->placeholder, $parameterIndexByName, $statementName),
+            $query->values,
+        )) . ')';
+
+        if ($query->conflict !== null) {
+            $sql .= ' ON CONFLICT (' . implode(', ', $query->conflict->targetColumns) . ')';
+            $sql .= ' DO UPDATE SET ' . implode(', ', array_map(
+                static fn(InsertConflictAssignment $assignment): string => \sprintf(
+                    '%s = EXCLUDED.%s',
+                    $assignment->column,
+                    $assignment->excludedColumn,
+                ),
+                $query->conflict->assignments,
+            ));
+        }
+
+        if ($query->returning !== []) {
+            $sql .= ' RETURNING ' . implode(', ', array_map(
+                fn(SelectProjection $projection): string => $this->renderProjection($projection),
+                $query->returning,
+            ));
+        }
+
+        return $sql;
+    }
+
+    /**
+     * @param array<string, int> $parameterIndexByName
+     */
+    private function renderDeleteQuery(DeleteQuery $query, array $parameterIndexByName, string $statementName): string
+    {
+        return 'DELETE FROM ' . $query->table
+            . ' WHERE '
+            . $this->renderComparisons($query->where, $query->whereOperators, $parameterIndexByName, $statementName);
+    }
+
+    private function renderProjection(SelectProjection $projection): string
+    {
+        if ($projection instanceof SelectProjectionWildcard) {
+            return $projection->table !== null ? $projection->table . '.*' : '*';
+        }
+
+        if (!$projection instanceof SelectProjectionColumn) {
+            throw new \RuntimeException('Unsupported projection type in PostgreSQL statement renderer.');
+        }
+
+        $column = $this->renderColumnReference($projection->reference);
+
+        if ($projection->alias === null) {
+            return $column;
+        }
+
+        return $column . ' AS ' . $projection->alias->value;
+    }
+
+    private function renderTableReference(SelectTableReference $tableReference): string
+    {
+        if ($tableReference->alias === null) {
+            return $tableReference->table;
+        }
+
+        return $tableReference->table . ' AS ' . $tableReference->alias;
+    }
+
+    /**
+     * @param array<string, int> $parameterIndexByName
+     * @param list<SelectComparison> $comparisons
+     * @param list<string> $operators
+     */
+    private function renderComparisons(array $comparisons, array $operators, array $parameterIndexByName, string $statementName): string
+    {
+        $parts = [];
+
+        foreach ($comparisons as $index => $comparison) {
+            if ($index > 0) {
+                $parts[] = strtoupper($operators[$index - 1] ?? 'and');
+            }
+
+            $parts[] = $this->renderComparison($comparison, $parameterIndexByName, $statementName);
+        }
+
+        return implode(' ', $parts);
+    }
+
+    /**
+     * @param array<string, int> $parameterIndexByName
+     */
+    private function renderComparison(SelectComparison $comparison, array $parameterIndexByName, string $statementName): string
+    {
+        return $this->renderOperand($comparison->left, $parameterIndexByName, $statementName)
+            . ' ' . $comparison->operator . ' '
+            . $this->renderOperand($comparison->right, $parameterIndexByName, $statementName);
+    }
+
+    /**
+     * @param array<string, int> $parameterIndexByName
+     */
+    private function renderOperand(SelectOperand $operand, array $parameterIndexByName, string $statementName): string
+    {
+        if ($operand instanceof SelectColumnReference) {
+            return $this->renderColumnReference($operand);
+        }
+
+        if (!$operand instanceof SelectPlaceholder) {
+            throw new \RuntimeException('Unsupported operand type in PostgreSQL statement renderer.');
+        }
+
+        return $this->renderPlaceholder($operand, $parameterIndexByName, $statementName);
+    }
+
+    private function renderColumnReference(SelectColumnReference $columnReference): string
+    {
+        if ($columnReference->table === null) {
+            return $columnReference->column;
+        }
+
+        return $columnReference->table . '.' . $columnReference->column;
+    }
+
+    /**
+     * @param array<string, int> $parameterIndexByName
+     */
+    private function renderPlaceholder(SelectPlaceholder $placeholder, array $parameterIndexByName, string $statementName): string
+    {
+        $index = $parameterIndexByName[$placeholder->name] ?? null;
+        if (!\is_int($index)) {
+            throw new \RuntimeException(
+                "Unable to compile PostgreSQL statement {$statementName}: unknown parameter {$placeholder->name}",
+            );
+        }
+
+        return '$' . $index;
+    }
+
+    /**
+     * @param array<string, int> $parameterIndexByName
+     */
+    private function renderJoin(SelectJoin $join, array $parameterIndexByName, string $statementName): string
+    {
+        $prefix = $join->type !== null ? strtoupper($join->type) . ' JOIN' : 'JOIN';
+
+        return $prefix
+            . ' ' . $this->renderTableReference($join->table)
+            . ' ON ' . $this->renderComparison($join->condition, $parameterIndexByName, $statementName);
+    }
+
+    private function renderOrderByItem(SelectOrderByItem $item): string
+    {
+        $sql = $this->renderColumnReference($item->column);
+
+        if ($item->direction !== null) {
+            $sql .= ' ' . strtoupper($item->direction);
+        }
+
+        return $sql;
     }
 
     private function mapParameterType(string $sqlType): string

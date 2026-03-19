@@ -84,6 +84,9 @@ final class PhplrtSqlParserTest extends TestCase
         self::assertInstanceOf(SelectProjectionColumn::class, $query->projections[1]);
         self::assertSame('updated_at', $query->projections[1]->reference->column);
         self::assertCount(1, $query->where);
+        self::assertCount(1, $query->orderBy);
+        self::assertSame('updated_at', $query->orderBy[0]->column->column);
+        self::assertSame('desc', $query->orderBy[0]->direction);
     }
 
     public function testParsesInsertWithReturningAndConflictClause(): void

@@ -11,6 +11,7 @@ final readonly class SelectQuery
      * @param list<SelectJoin> $joins
      * @param list<SelectComparison> $where
      * @param list<string> $whereOperators
+     * @param list<SelectOrderByItem> $orderBy
      */
     public function __construct(
         public array $projections,
@@ -18,5 +19,6 @@ final readonly class SelectQuery
         public array $joins,
         public array $where,
         public array $whereOperators,
+        public array $orderBy,
     ) {}
 }
