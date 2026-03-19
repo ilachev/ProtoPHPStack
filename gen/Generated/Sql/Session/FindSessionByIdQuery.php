@@ -10,12 +10,12 @@ declare(strict_types=1);
 namespace App\Generated\Sql\Session;
 
 use App\Platform\Storage\Sql\ExecutableQuery;
-use App\Platform\Storage\Sql\RowReturningQuery;
+use App\Platform\Storage\Sql\OneRowQuery;
 
 /**
- * @implements RowReturningQuery<SessionRow>
+ * @implements OneRowQuery<SessionRow>
  */
-final readonly class FindSessionByIdQuery implements RowReturningQuery
+final readonly class FindSessionByIdQuery implements OneRowQuery
 {
     public function __construct(
         private string $id,

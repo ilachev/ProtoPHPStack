@@ -24,10 +24,10 @@ final readonly class SqlExecutor
 
     /**
      * @template T of DatabaseRow
-     * @param RowReturningQuery<T> $query
+     * @param OneRowQuery<T> $query
      * @return T|null
      */
-    public function fetchOneRow(RowReturningQuery $query): ?DatabaseRow
+    public function fetchOneRow(OneRowQuery $query): ?DatabaseRow
     {
         $row = $this->fetchOne($query);
         if ($row === null) {
@@ -51,10 +51,10 @@ final readonly class SqlExecutor
 
     /**
      * @template T of DatabaseRow
-     * @param RowReturningQuery<T> $query
+     * @param ManyRowsQuery<T> $query
      * @return list<T>
      */
-    public function fetchAllRows(RowReturningQuery $query): array
+    public function fetchAllRows(ManyRowsQuery $query): array
     {
         /** @var class-string<T> $rowClass */
         $rowClass = $query->rowClass();

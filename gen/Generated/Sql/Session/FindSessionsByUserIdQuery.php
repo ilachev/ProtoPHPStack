@@ -10,12 +10,12 @@ declare(strict_types=1);
 namespace App\Generated\Sql\Session;
 
 use App\Platform\Storage\Sql\ExecutableQuery;
-use App\Platform\Storage\Sql\RowReturningQuery;
+use App\Platform\Storage\Sql\ManyRowsQuery;
 
 /**
- * @implements RowReturningQuery<SessionRow>
+ * @implements ManyRowsQuery<SessionRow>
  */
-final readonly class FindSessionsByUserIdQuery implements RowReturningQuery
+final readonly class FindSessionsByUserIdQuery implements ManyRowsQuery
 {
     public function __construct(
         private int $userId,

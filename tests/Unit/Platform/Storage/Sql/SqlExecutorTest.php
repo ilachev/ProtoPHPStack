@@ -6,7 +6,8 @@ namespace Tests\Unit\Platform\Storage\Sql;
 
 use App\Platform\Storage\Sql\DatabaseRow;
 use App\Platform\Storage\Sql\ExecutableQuery;
-use App\Platform\Storage\Sql\RowReturningQuery;
+use App\Platform\Storage\Sql\ManyRowsQuery;
+use App\Platform\Storage\Sql\OneRowQuery;
 use App\Platform\Storage\Sql\SqlExecutor;
 use App\Platform\Storage\Storage;
 use PHPUnit\Framework\TestCase;
@@ -21,7 +22,7 @@ final class SqlExecutorTest extends TestCase
             ]),
         );
 
-        $row = $executor->fetchOneRow(new StubRowReturningQuery());
+        $row = $executor->fetchOneRow(new StubOneRowQuery());
 
         self::assertInstanceOf(StubDatabaseRow::class, $row);
         self::assertSame('session-1', $row->id);
@@ -36,7 +37,7 @@ final class SqlExecutorTest extends TestCase
             ]),
         );
 
-        $rows = $executor->fetchAllRows(new StubRowReturningQuery());
+        $rows = $executor->fetchAllRows(new StubManyRowsQuery());
 
         self::assertCount(2, $rows);
         self::assertInstanceOf(StubDatabaseRow::class, $rows[0]);
@@ -78,9 +79,30 @@ final readonly class StubExecutableQuery implements ExecutableQuery
 }
 
 /**
- * @implements RowReturningQuery<StubDatabaseRow>
+ * @implements OneRowQuery<StubDatabaseRow>
  */
-final readonly class StubRowReturningQuery implements RowReturningQuery
+final readonly class StubOneRowQuery implements OneRowQuery
+{
+    public function sql(): string
+    {
+        return 'SELECT id FROM sessions';
+    }
+
+    public function rowClass(): string
+    {
+        return StubDatabaseRow::class;
+    }
+
+    public function params(): array
+    {
+        return [];
+    }
+}
+
+/**
+ * @implements ManyRowsQuery<StubDatabaseRow>
+ */
+final readonly class StubManyRowsQuery implements ManyRowsQuery
 {
     public function sql(): string
     {

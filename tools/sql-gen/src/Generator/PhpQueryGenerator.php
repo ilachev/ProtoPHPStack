@@ -11,6 +11,7 @@ use SqlGen\Model\DatabaseSchema;
 use SqlGen\Model\ResolvedSqlParameter;
 use SqlGen\Model\RowField;
 use SqlGen\Model\SqlFile;
+use SqlGen\Model\SqlResultKind;
 use SqlGen\Model\SqlStatement;
 use SqlGen\Schema\StatementParameterResolver;
 use SqlGen\Schema\StatementRowResolver;
@@ -112,17 +113,25 @@ final readonly class PhpQueryGenerator
         $namespace = $file->addNamespace($namespaceName);
         $namespace->addUse('App\Platform\Storage\Sql\ExecutableQuery');
         if ($rowFields !== [] && is_string($rowClassName)) {
-            $namespace->addUse('App\Platform\Storage\Sql\RowReturningQuery');
+            $namespace->addUse(match ($statement->resultKind) {
+                SqlResultKind::One => 'App\Platform\Storage\Sql\OneRowQuery',
+                SqlResultKind::Many => 'App\Platform\Storage\Sql\ManyRowsQuery',
+                SqlResultKind::Exec => 'App\Platform\Storage\Sql\RowReturningQuery',
+            });
         }
 
         $class = $namespace->addClass($statement->getQueryClassName());
         $class->setFinal(true);
         $class->setReadOnly(true);
-        $class->addImplement($rowFields !== [] && is_string($rowClassName)
-            ? 'App\Platform\Storage\Sql\RowReturningQuery'
-            : 'App\Platform\Storage\Sql\ExecutableQuery');
+        $implementedInterface = $this->resolveQueryInterface($statement, $rowFields !== [] && is_string($rowClassName));
+        $class->addImplement($implementedInterface);
         if ($rowFields !== [] && is_string($rowClassName)) {
-            $class->addComment("@implements RowReturningQuery<{$rowClassName}>");
+            $interfaceName = match ($statement->resultKind) {
+                SqlResultKind::One => 'OneRowQuery',
+                SqlResultKind::Many => 'ManyRowsQuery',
+                SqlResultKind::Exec => 'RowReturningQuery',
+            };
+            $class->addComment("@implements {$interfaceName}<{$rowClassName}>");
         }
 
         $constructor = $class->addMethod('__construct');
@@ -280,6 +289,19 @@ final readonly class PhpQueryGenerator
         }
 
         return $this->renderGeneratedHeader($sourcePath) . ltrim(substr($content, strlen('<?php')));
+    }
+
+    private function resolveQueryInterface(SqlStatement $statement, bool $returnsRows): string
+    {
+        if (!$returnsRows) {
+            return 'App\Platform\Storage\Sql\ExecutableQuery';
+        }
+
+        return match ($statement->resultKind) {
+            SqlResultKind::One => 'App\Platform\Storage\Sql\OneRowQuery',
+            SqlResultKind::Many => 'App\Platform\Storage\Sql\ManyRowsQuery',
+            SqlResultKind::Exec => 'App\Platform\Storage\Sql\ExecutableQuery',
+        };
     }
 
     private function renderGeneratedHeader(string $sourcePath): string
