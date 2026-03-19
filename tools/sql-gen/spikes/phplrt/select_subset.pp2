@@ -20,9 +20,10 @@
 %token T_GE       >=
 %token T_LT       <
 %token T_GT       >
+%token T_SEMICOLON ;
 %skip  T_WS       \s+
 
-#Query: SelectStmt();
+#Query: SelectStmt() <T_SEMICOLON>?;
 #SelectStmt: <T_SELECT> SelectList() <T_FROM> TableRef() JoinClause()* WhereClause()?;
 #SelectList: SelectItem() (<T_COMMA> SelectItem())*;
 #SelectItem: WildcardSelection() | AliasedColumn();
