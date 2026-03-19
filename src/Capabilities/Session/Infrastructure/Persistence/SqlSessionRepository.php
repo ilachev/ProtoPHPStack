@@ -7,9 +7,12 @@ namespace App\Capabilities\Session\Infrastructure\Persistence;
 use App\Capabilities\Session\Domain\Session;
 use App\Capabilities\Session\Domain\SessionRepository;
 use App\Generated\Sql\Session\DeleteExpiredSessionsParams;
+use App\Generated\Sql\Session\DeleteExpiredSessionsQuery;
+use App\Generated\Sql\Session\FindAllSessionsQuery;
 use App\Generated\Sql\Session\FindSessionByIdParams;
+use App\Generated\Sql\Session\FindSessionByIdQuery;
 use App\Generated\Sql\Session\FindSessionsByUserIdParams;
-use App\Generated\Sql\Session\SessionQueries;
+use App\Generated\Sql\Session\FindSessionsByUserIdQuery;
 use App\Generated\Sql\Session\SessionRow;
 use App\Platform\Hydration\Hydrator;
 use App\Platform\Storage\Query\QueryFactory;
@@ -26,7 +29,6 @@ final class SqlSessionRepository extends AbstractRepository implements SessionRe
         Hydrator $hydrator,
         QueryFactory $queryBuilderFactory,
         private readonly SqlExecutor $sqlExecutor,
-        private readonly SessionQueries $sessionQueries,
     ) {
         parent::__construct($storage, $hydrator, $queryBuilderFactory);
     }
@@ -34,7 +36,7 @@ final class SqlSessionRepository extends AbstractRepository implements SessionRe
     public function findById(string $id): ?Session
     {
         $row = $this->sqlExecutor->fetchOneAs(
-            $this->sessionQueries->findSessionById(new FindSessionByIdParams($id)),
+            new FindSessionByIdQuery(new FindSessionByIdParams($id)),
             SessionRow::class,
         );
 
@@ -48,7 +50,7 @@ final class SqlSessionRepository extends AbstractRepository implements SessionRe
     public function findByUserId(int $userId): array
     {
         $rows = $this->sqlExecutor->fetchAllAs(
-            $this->sessionQueries->findSessionsByUserId(new FindSessionsByUserIdParams($userId)),
+            new FindSessionsByUserIdQuery(new FindSessionsByUserIdParams($userId)),
             SessionRow::class,
         );
 
@@ -61,7 +63,7 @@ final class SqlSessionRepository extends AbstractRepository implements SessionRe
     public function findAll(): array
     {
         $rows = $this->sqlExecutor->fetchAllAs(
-            $this->sessionQueries->findAllSessions(),
+            new FindAllSessionsQuery(),
             SessionRow::class,
         );
 
@@ -84,9 +86,7 @@ final class SqlSessionRepository extends AbstractRepository implements SessionRe
     public function deleteExpired(): void
     {
         $this->sqlExecutor->execute(
-            $this->sessionQueries->deleteExpiredSessions(
-                new DeleteExpiredSessionsParams(time()),
-            ),
+            new DeleteExpiredSessionsQuery(new DeleteExpiredSessionsParams(time())),
         );
     }
 

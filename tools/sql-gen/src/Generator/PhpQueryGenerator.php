@@ -62,11 +62,6 @@ final readonly class PhpQueryGenerator
             );
         }
 
-        $files[] = new GeneratedFile(
-            path: $outputDir . '/' . $sqlFile->moduleName . 'Queries.php',
-            content: $this->renderQueriesFacade($namespace, $sqlFile, $sqlFile->sourcePath),
-        );
-
         return $files;
     }
 
@@ -157,37 +152,6 @@ final readonly class PhpQueryGenerator
         $paramsMethod->setReturnType('array');
         $paramsMethod->addComment('@return array<string, scalar|null>');
         $paramsMethod->setBody($this->renderParamsMethodBody($statement));
-
-        return $this->printGeneratedFile($file, $sourcePath);
-    }
-
-    private function renderQueriesFacade(string $namespaceName, SqlFile $sqlFile, string $sourcePath): string
-    {
-        $file = new PhpFile();
-        $file->setStrictTypes();
-
-        $namespace = $file->addNamespace($namespaceName);
-        $class = $namespace->addClass($sqlFile->moduleName . 'Queries');
-        $class->setFinal(true);
-        $class->setReadOnly(true);
-
-        foreach ($sqlFile->statements as $statement) {
-            $queryClass = $namespaceName . '\\' . $statement->getQueryClassName();
-            $method = $class->addMethod($statement->getFactoryMethodName());
-            $method->setReturnType($queryClass);
-
-            if ($statement->parameters !== []) {
-                $paramsClass = $namespaceName . '\\' . $statement->getParamsClassName();
-                $method->addParameter('params')->setType($paramsClass);
-                $method->setBody(
-                    'return new ' . $statement->getQueryClassName() . '($params);',
-                );
-            } else {
-                $method->setBody(
-                    'return new ' . $statement->getQueryClassName() . '();',
-                );
-            }
-        }
 
         return $this->printGeneratedFile($file, $sourcePath);
     }

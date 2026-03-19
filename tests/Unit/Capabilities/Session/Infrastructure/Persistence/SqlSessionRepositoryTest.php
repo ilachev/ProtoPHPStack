@@ -6,7 +6,6 @@ namespace Tests\Unit\Capabilities\Session\Infrastructure\Persistence;
 
 use App\Capabilities\Session\Domain\Session;
 use App\Capabilities\Session\Infrastructure\Persistence\SqlSessionRepository;
-use App\Generated\Sql\Session\SessionQueries;
 use App\Platform\Hydration\Hydrator;
 use App\Platform\Hydration\LimitedReflectionCache;
 use App\Platform\Hydration\ReflectionHydrator;
@@ -39,7 +38,6 @@ final class SqlSessionRepositoryTest extends TestCase
             $this->hydrator,
             $this->queryBuilderFactory,
             new SqlExecutor($this->storage),
-            new SessionQueries(),
         );
     }
 
