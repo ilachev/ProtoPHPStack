@@ -34,7 +34,7 @@ final readonly class DeleteExpiredSessionsQuery implements ExecutableQuery
     }
 
     /**
-     * @return array<string, scalar|null>
+     * @return array{now:int}
      */
     public function params(): array
     {

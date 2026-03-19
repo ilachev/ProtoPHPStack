@@ -24,7 +24,7 @@ final readonly class SessionRow implements DatabaseRow
     }
 
     /**
-     * @param array<string, scalar|null> $row
+     * @param array{id:string, user_id:int|null, payload:string, expires_at:int, created_at:int, updated_at:int} $row
      */
     public static function fromDatabaseRow(array $row): self
     {

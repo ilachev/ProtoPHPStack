@@ -48,7 +48,7 @@ final readonly class FindSessionsByUserIdQuery implements RowReturningQuery
     }
 
     /**
-     * @return array<string, scalar|null>
+     * @return array{user_id:int}
      */
     public function params(): array
     {

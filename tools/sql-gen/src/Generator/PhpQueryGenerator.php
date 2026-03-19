@@ -90,7 +90,7 @@ final readonly class PhpQueryGenerator
         $factory->setStatic();
         $factory->setReturnType('self');
         $factory->addParameter('row')->setType('array');
-        $factory->addComment('@param array<string, scalar|null> $row');
+        $factory->addComment(sprintf('@param %s $row', $this->renderRowShapeDocblock($fields)));
         $factory->setBody($this->renderRowFactoryBody($fields));
 
         return $this->printGeneratedFile($file, $sourcePath);
@@ -172,7 +172,7 @@ final readonly class PhpQueryGenerator
 
         $paramsMethod = $class->addMethod('params');
         $paramsMethod->setReturnType('array');
-        $paramsMethod->addComment('@return array<string, scalar|null>');
+        $paramsMethod->addComment(sprintf('@return %s', $this->renderParamsShapeDocblock($parameters)));
         $paramsMethod->setBody($this->renderParamsMethodBody($parameters));
 
         return $this->printGeneratedFile($file, $sourcePath);
@@ -235,6 +235,40 @@ final readonly class PhpQueryGenerator
             'bool' => "{$hasValue} ? (bool) {$source} : throw new \\InvalidArgumentException('Missing required column {$field->columnName}.')",
             default => "{$hasValue} ? (string) {$source} : throw new \\InvalidArgumentException('Missing required column {$field->columnName}.')",
         };
+    }
+
+    /**
+     * @param list<RowField> $fields
+     */
+    private function renderRowShapeDocblock(array $fields): string
+    {
+        $parts = array_map(
+            static fn(RowField $field): string => sprintf(
+                '%s:%s',
+                $field->columnName,
+                $field->nullable ? $field->phpType . '|null' : $field->phpType,
+            ),
+            $fields,
+        );
+
+        return 'array{' . implode(', ', $parts) . '}';
+    }
+
+    /**
+     * @param list<ResolvedSqlParameter> $parameters
+     */
+    private function renderParamsShapeDocblock(array $parameters): string
+    {
+        if ($parameters === []) {
+            return 'array{}';
+        }
+
+        $parts = array_map(
+            static fn(ResolvedSqlParameter $parameter): string => "{$parameter->name}:{$parameter->phpType}",
+            $parameters,
+        );
+
+        return 'array{' . implode(', ', $parts) . '}';
     }
 
     private function printGeneratedFile(PhpFile $file, string $sourcePath): string

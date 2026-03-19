@@ -44,7 +44,7 @@ final readonly class FindAllSessionsQuery implements RowReturningQuery
     }
 
     /**
-     * @return array<string, scalar|null>
+     * @return array{}
      */
     public function params(): array
     {
