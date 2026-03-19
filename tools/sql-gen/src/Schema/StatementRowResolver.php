@@ -26,17 +26,18 @@ final class StatementRowResolver
 
         $fields = [];
 
-        foreach ($columns as $columnName) {
-            $schemaColumn = $table->getColumn($columnName);
+        foreach ($columns as $column) {
+            $schemaColumn = $table->getColumn($column['source']);
             if ($schemaColumn === null) {
                 throw new \RuntimeException(
-                    "Column {$columnName} was not found in schema table {$table->name} for query {$statement->name}",
+                    "Column {$column['source']} was not found in schema table {$table->name} for query {$statement->name}",
                 );
             }
 
             $fields[] = new RowField(
-                columnName: $columnName,
-                propertyName: $this->snakeToCamel($columnName),
+                sourceColumnName: $column['source'],
+                resultColumnName: $column['result'],
+                propertyName: $this->snakeToCamel($column['result']),
                 phpType: $schemaColumn->phpType,
                 nullable: $schemaColumn->nullable,
             );
@@ -61,7 +62,7 @@ final class StatementRowResolver
     }
 
     /**
-     * @return list<string>
+     * @return list<array{source: string, result: string}>
      */
     private function resolveSelectedColumns(SqlStatement $statement): array
     {
@@ -88,13 +89,15 @@ final class StatementRowResolver
                 continue;
             }
 
-            if (preg_match('/^(?<table>[a-zA-Z_][a-zA-Z0-9_]*)\.(?<column>[a-zA-Z_][a-zA-Z0-9_]*)$/', $column, $qualified)) {
-                $columns[] = $qualified['column'];
-                continue;
-            }
+            if (preg_match('/^(?:(?<table>[a-zA-Z_][a-zA-Z0-9_]*)\.)?(?<column>[a-zA-Z_][a-zA-Z0-9_]*)(?:\s+AS\s+(?<alias>[a-zA-Z_][a-zA-Z0-9_]*))?$/i', $column, $named)) {
+                $sourceColumn = $named['column'];
+                $alias = $named['alias'] ?? null;
+                $resultColumn = is_string($alias) ? $alias : $sourceColumn;
 
-            if (preg_match('/^(?<column>[a-zA-Z_][a-zA-Z0-9_]*)$/', $column, $simple)) {
-                $columns[] = $simple['column'];
+                $columns[] = [
+                    'source' => $sourceColumn,
+                    'result' => $resultColumn,
+                ];
                 continue;
             }
 

@@ -30,7 +30,7 @@ final readonly class PhpDocTypeRenderer
         $elements = [];
 
         foreach ($fields as $field) {
-            $elements[$field->columnName] = $this->resolveType($field->phpType, $field->nullable);
+            $elements[$field->resultColumnName] = $this->resolveType($field->phpType, $field->nullable);
         }
 
         return stringify(arrayShapeT($elements));

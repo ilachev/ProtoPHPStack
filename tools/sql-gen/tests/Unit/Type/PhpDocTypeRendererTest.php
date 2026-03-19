@@ -16,8 +16,8 @@ final class PhpDocTypeRendererTest extends TestCase
         $renderer = new PhpDocTypeRenderer();
 
         $shape = $renderer->renderRowShape([
-            new RowField('id', 'id', 'string', false),
-            new RowField('user_id', 'userId', 'int', true),
+            new RowField('id', 'id', 'id', 'string', false),
+            new RowField('user_id', 'user_id', 'userId', 'int', true),
         ]);
 
         self::assertSame("array{'id': string, 'user_id': null|int}", $shape);

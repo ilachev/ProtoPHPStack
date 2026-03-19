@@ -169,4 +169,44 @@ final class PhpQueryGeneratorTest extends TestCase
         self::assertStringContainsString("@return array{'user_id': null|int}", $files[2]->content);
         self::assertStringContainsString("'user_id' => \$this->userId", $files[2]->content);
     }
+
+    public function testGeneratesRowsFromAliasedSelectColumns(): void
+    {
+        $generator = new PhpQueryGenerator(
+            new GeneratorConfig(
+                inputDir: 'sql/queries',
+                outputDir: 'gen/Generated/Sql',
+                namespace: 'App\\Generated\\Sql',
+                schemaPath: 'sql/schema.sql',
+            ),
+            new DatabaseSchema([
+                'sessions' => new SchemaTable('sessions', [
+                    'id' => new SchemaColumn('id', 'TEXT', 'string', false),
+                    'user_id' => new SchemaColumn('user_id', 'BIGINT', 'int', true),
+                ]),
+            ]),
+        );
+
+        $files = $generator->generateForSqlFile(
+            new SqlFile(
+                sourcePath: 'sql/queries/session.sql',
+                moduleName: 'Session',
+                statements: [
+                    new SqlStatement(
+                        name: 'FindAliasedSessions',
+                        resultKind: SqlResultKind::Many,
+                        sql: 'SELECT id AS session_id, user_id AS owner_id FROM sessions;',
+                        parameters: [],
+                    ),
+                ],
+            ),
+        );
+
+        self::assertCount(2, $files);
+        self::assertStringContainsString("@implements DatabaseRow<array{'session_id': string, 'owner_id': null|int}>", $files[0]->content);
+        self::assertStringContainsString('public string $sessionId', $files[0]->content);
+        self::assertStringContainsString('public ?int $ownerId', $files[0]->content);
+        self::assertStringContainsString("\$row['session_id']", $files[0]->content);
+        self::assertStringContainsString("\$row['owner_id']", $files[0]->content);
+    }
 }

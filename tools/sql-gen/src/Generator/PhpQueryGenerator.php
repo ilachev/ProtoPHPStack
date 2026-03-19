@@ -243,8 +243,8 @@ final readonly class PhpQueryGenerator
 
     private function renderRowFieldExpression(RowField $field): string
     {
-        $source = "\$row['{$field->columnName}']";
-        $hasValue = "array_key_exists('{$field->columnName}', \$row) && {$source} !== null";
+        $source = "\$row['{$field->resultColumnName}']";
+        $hasValue = "array_key_exists('{$field->resultColumnName}', \$row) && {$source} !== null";
 
         if ($field->nullable) {
             return match ($field->phpType) {
@@ -256,10 +256,10 @@ final readonly class PhpQueryGenerator
         }
 
         return match ($field->phpType) {
-            'int' => "{$hasValue} ? (int) {$source} : throw new \\InvalidArgumentException('Missing required column {$field->columnName}.')",
-            'float' => "{$hasValue} ? (float) {$source} : throw new \\InvalidArgumentException('Missing required column {$field->columnName}.')",
-            'bool' => "{$hasValue} ? (bool) {$source} : throw new \\InvalidArgumentException('Missing required column {$field->columnName}.')",
-            default => "{$hasValue} ? (string) {$source} : throw new \\InvalidArgumentException('Missing required column {$field->columnName}.')",
+            'int' => "{$hasValue} ? (int) {$source} : throw new \\InvalidArgumentException('Missing required column {$field->resultColumnName}.')",
+            'float' => "{$hasValue} ? (float) {$source} : throw new \\InvalidArgumentException('Missing required column {$field->resultColumnName}.')",
+            'bool' => "{$hasValue} ? (bool) {$source} : throw new \\InvalidArgumentException('Missing required column {$field->resultColumnName}.')",
+            default => "{$hasValue} ? (string) {$source} : throw new \\InvalidArgumentException('Missing required column {$field->resultColumnName}.')",
         };
     }
 
@@ -354,7 +354,8 @@ final readonly class PhpQueryGenerator
             '|',
             array_map(
                 static fn(RowField $field): string => implode(':', [
-                    $field->columnName,
+                    $field->sourceColumnName,
+                    $field->resultColumnName,
                     $field->propertyName,
                     $field->phpType,
                     $field->nullable ? 'nullable' : 'required',
