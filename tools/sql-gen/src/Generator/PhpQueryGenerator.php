@@ -58,7 +58,7 @@ final readonly class PhpQueryGenerator
             }
             $files[] = new GeneratedFile(
                 path: $outputDir . '/' . $statement->getQueryClassName() . '.php',
-                content: $this->renderQueryClass($namespace, $statement, $sqlFile->sourcePath),
+                content: $this->renderQueryClass($namespace, $statement, $rowClassName, $sqlFile->sourcePath),
             );
         }
 
@@ -122,18 +122,33 @@ final readonly class PhpQueryGenerator
         return $this->printGeneratedFile($file, $sourcePath);
     }
 
-    private function renderQueryClass(string $namespaceName, SqlStatement $statement, string $sourcePath): string
+    private function renderQueryClass(
+        string $namespaceName,
+        SqlStatement $statement,
+        ?string $rowClassName,
+        string $sourcePath,
+    ): string
     {
+        $rowFields = $this->rowResolver->resolve($statement, $this->schema);
+
         $file = new PhpFile();
         $file->setStrictTypes();
 
         $namespace = $file->addNamespace($namespaceName);
         $namespace->addUse('App\Platform\Storage\Sql\ExecutableQuery');
+        if ($rowFields !== [] && is_string($rowClassName)) {
+            $namespace->addUse('App\Platform\Storage\Sql\RowReturningQuery');
+        }
 
         $class = $namespace->addClass($statement->getQueryClassName());
         $class->setFinal(true);
         $class->setReadOnly(true);
-        $class->addImplement('App\Platform\Storage\Sql\ExecutableQuery');
+        $class->addImplement($rowFields !== [] && is_string($rowClassName)
+            ? 'App\Platform\Storage\Sql\RowReturningQuery'
+            : 'App\Platform\Storage\Sql\ExecutableQuery');
+        if ($rowFields !== [] && is_string($rowClassName)) {
+            $class->addComment("@implements RowReturningQuery<{$rowClassName}>");
+        }
 
         if ($statement->parameters !== []) {
             $paramsClass = $namespaceName . '\\' . $statement->getParamsClassName();
@@ -175,6 +190,13 @@ final readonly class PhpQueryGenerator
         $sqlMethod = $class->addMethod('sql');
         $sqlMethod->setReturnType('string');
         $sqlMethod->setBody("return <<<'SQL'\n{$statement->sql}\nSQL;");
+
+        if ($rowFields !== [] && is_string($rowClassName)) {
+            $rowClassMethod = $class->addMethod('rowClass');
+            $rowClassMethod->setReturnType('string');
+            $rowClassMethod->addComment("@return class-string<{$rowClassName}>");
+            $rowClassMethod->setBody("return {$rowClassName}::class;");
+        }
 
         $paramsMethod = $class->addMethod('params');
         $paramsMethod->setReturnType('array');

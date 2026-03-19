@@ -32,9 +32,8 @@ final class SqlSessionRepository extends AbstractRepository implements SessionRe
 
     public function findById(string $id): ?Session
     {
-        $row = $this->sqlExecutor->fetchOneAs(
+        $row = $this->sqlExecutor->fetchOneRow(
             FindSessionByIdQuery::create(id: $id),
-            SessionRow::class,
         );
 
         if ($row === null) {
@@ -46,9 +45,8 @@ final class SqlSessionRepository extends AbstractRepository implements SessionRe
 
     public function findByUserId(int $userId): array
     {
-        $rows = $this->sqlExecutor->fetchAllAs(
+        $rows = $this->sqlExecutor->fetchAllRows(
             FindSessionsByUserIdQuery::create(userId: $userId),
-            SessionRow::class,
         );
 
         return array_map(
@@ -59,9 +57,8 @@ final class SqlSessionRepository extends AbstractRepository implements SessionRe
 
     public function findAll(): array
     {
-        $rows = $this->sqlExecutor->fetchAllAs(
+        $rows = $this->sqlExecutor->fetchAllRows(
             FindAllSessionsQuery::create(),
-            SessionRow::class,
         );
 
         return array_map(

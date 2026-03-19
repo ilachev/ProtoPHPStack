@@ -24,15 +24,18 @@ final readonly class SqlExecutor
 
     /**
      * @template T of DatabaseRow
-     * @param class-string<T> $rowClass
+     * @param RowReturningQuery<T> $query
      * @return T|null
      */
-    public function fetchOneAs(ExecutableQuery $query, string $rowClass): ?object
+    public function fetchOneRow(RowReturningQuery $query): ?DatabaseRow
     {
         $row = $this->fetchOne($query);
         if ($row === null) {
             return null;
         }
+
+        /** @var class-string<T> $rowClass */
+        $rowClass = $query->rowClass();
 
         /** @var T */
         return $rowClass::fromDatabaseRow($row);
@@ -48,16 +51,19 @@ final readonly class SqlExecutor
 
     /**
      * @template T of DatabaseRow
-     * @param class-string<T> $rowClass
+     * @param RowReturningQuery<T> $query
      * @return list<T>
      */
-    public function fetchAllAs(ExecutableQuery $query, string $rowClass): array
+    public function fetchAllRows(RowReturningQuery $query): array
     {
+        /** @var class-string<T> $rowClass */
+        $rowClass = $query->rowClass();
+
         return array_map(
             /**
              * @return T
              */
-            static fn(array $row): object => $rowClass::fromDatabaseRow($row),
+            static fn(array $row): DatabaseRow => $rowClass::fromDatabaseRow($row),
             $this->fetchAll($query),
         );
     }

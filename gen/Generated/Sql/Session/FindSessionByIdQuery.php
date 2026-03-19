@@ -10,8 +10,12 @@ declare(strict_types=1);
 namespace App\Generated\Sql\Session;
 
 use App\Platform\Storage\Sql\ExecutableQuery;
+use App\Platform\Storage\Sql\RowReturningQuery;
 
-final readonly class FindSessionByIdQuery implements ExecutableQuery
+/**
+ * @implements RowReturningQuery<SessionRow>
+ */
+final readonly class FindSessionByIdQuery implements RowReturningQuery
 {
     public function __construct(
         private FindSessionByIdParams $params,
@@ -34,6 +38,14 @@ final readonly class FindSessionByIdQuery implements ExecutableQuery
         FROM sessions
         WHERE id = :id;
         SQL;
+    }
+
+    /**
+     * @return class-string<SessionRow>
+     */
+    public function rowClass(): string
+    {
+        return SessionRow::class;
     }
 
     /**

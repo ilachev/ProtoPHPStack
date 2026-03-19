@@ -10,8 +10,12 @@ declare(strict_types=1);
 namespace App\Generated\Sql\Session;
 
 use App\Platform\Storage\Sql\ExecutableQuery;
+use App\Platform\Storage\Sql\RowReturningQuery;
 
-final readonly class FindAllSessionsQuery implements ExecutableQuery
+/**
+ * @implements RowReturningQuery<SessionRow>
+ */
+final readonly class FindAllSessionsQuery implements RowReturningQuery
 {
     public static function create(): self
     {
@@ -25,6 +29,14 @@ final readonly class FindAllSessionsQuery implements ExecutableQuery
         FROM sessions
         ORDER BY created_at DESC;
         SQL;
+    }
+
+    /**
+     * @return class-string<SessionRow>
+     */
+    public function rowClass(): string
+    {
+        return SessionRow::class;
     }
 
     /**

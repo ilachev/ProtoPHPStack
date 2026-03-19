@@ -154,6 +154,8 @@ final class PhpQueryGeneratorTest extends TestCase
         self::assertStringContainsString('final readonly class SessionRow', $files[1]->content);
         self::assertStringContainsString('implements DatabaseRow', $files[1]->content);
         self::assertSame('gen/Generated/Sql/Session/FindSessionByIdQuery.php', $files[2]->path);
+        self::assertStringContainsString('implements RowReturningQuery', $files[2]->content);
+        self::assertStringContainsString("return 'App\\\\Generated\\\\Sql\\\\Session\\\\SessionRow';", $files[2]->content);
         self::assertSame('gen/Generated/Sql/Session/FindSessionsByUserIdParams.php', $files[3]->path);
         self::assertSame('gen/Generated/Sql/Session/FindSessionsByUserIdQuery.php', $files[4]->path);
         self::assertStringContainsString('public static function create(string|int|float|bool|null $userId): self', $files[4]->content);

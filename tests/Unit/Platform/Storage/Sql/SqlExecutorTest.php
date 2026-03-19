@@ -6,6 +6,7 @@ namespace Tests\Unit\Platform\Storage\Sql;
 
 use App\Platform\Storage\Sql\DatabaseRow;
 use App\Platform\Storage\Sql\ExecutableQuery;
+use App\Platform\Storage\Sql\RowReturningQuery;
 use App\Platform\Storage\Sql\SqlExecutor;
 use App\Platform\Storage\Storage;
 use PHPUnit\Framework\TestCase;
@@ -20,7 +21,7 @@ final class SqlExecutorTest extends TestCase
             ]),
         );
 
-        $row = $executor->fetchOneAs(new StubExecutableQuery(), StubDatabaseRow::class);
+        $row = $executor->fetchOneRow(new StubRowReturningQuery());
 
         self::assertInstanceOf(StubDatabaseRow::class, $row);
         self::assertSame('session-1', $row->id);
@@ -35,7 +36,7 @@ final class SqlExecutorTest extends TestCase
             ]),
         );
 
-        $rows = $executor->fetchAllAs(new StubExecutableQuery(), StubDatabaseRow::class);
+        $rows = $executor->fetchAllRows(new StubRowReturningQuery());
 
         self::assertCount(2, $rows);
         self::assertInstanceOf(StubDatabaseRow::class, $rows[0]);
@@ -73,6 +74,30 @@ final readonly class StubExecutableQuery implements ExecutableQuery
     public function params(): array
     {
         return [];
+    }
+}
+
+/**
+ * @implements RowReturningQuery<StubDatabaseRow>
+ */
+final readonly class StubRowReturningQuery implements RowReturningQuery
+{
+    public function sql(): string
+    {
+        return 'SELECT id FROM sessions';
+    }
+
+    /**
+     * @return array<string, scalar|null>
+     */
+    public function params(): array
+    {
+        return [];
+    }
+
+    public function rowClass(): string
+    {
+        return StubDatabaseRow::class;
     }
 }
 
