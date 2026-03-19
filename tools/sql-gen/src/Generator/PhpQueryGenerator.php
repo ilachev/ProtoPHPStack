@@ -7,19 +7,25 @@ namespace SqlGen\Generator;
 use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PsrPrinter;
 use SqlGen\Config\GeneratorConfig;
+use SqlGen\Model\DatabaseSchema;
+use SqlGen\Model\RowField;
 use SqlGen\Model\SqlFile;
 use SqlGen\Model\SqlStatement;
+use SqlGen\Schema\StatementRowResolver;
 
 final readonly class PhpQueryGenerator
 {
     private const PARAM_TYPE = 'string|int|float|bool|null';
 
     private PsrPrinter $printer;
+    private StatementRowResolver $rowResolver;
 
     public function __construct(
         private GeneratorConfig $config,
+        private DatabaseSchema $schema,
     ) {
         $this->printer = new PsrPrinter();
+        $this->rowResolver = new StatementRowResolver();
     }
 
     /**
@@ -32,13 +38,21 @@ final readonly class PhpQueryGenerator
         $outputDir = rtrim($this->config->outputDir, '/') . '/' . $sqlFile->moduleName;
 
         foreach ($sqlFile->statements as $statement) {
+            $rowFields = $this->rowResolver->resolve($statement, $this->schema);
+
             $files[] = new GeneratedFile(
                 path: $outputDir . '/' . $statement->getParamsClassName() . '.php',
                 content: $this->renderParamsClass($namespace, $statement),
             );
+            if ($rowFields !== []) {
+                $files[] = new GeneratedFile(
+                    path: $outputDir . '/' . $statement->getRowClassName() . '.php',
+                    content: $this->renderRowClass($namespace, $statement, $rowFields),
+                );
+            }
             $files[] = new GeneratedFile(
                 path: $outputDir . '/' . $statement->getQueryClassName() . '.php',
-                content: $this->renderQueryClass($namespace, $statement),
+                content: $this->renderQueryClass($namespace, $statement, $rowFields !== []),
             );
         }
 
@@ -72,7 +86,40 @@ final readonly class PhpQueryGenerator
         return $this->printer->printFile($file);
     }
 
-    private function renderQueryClass(string $namespaceName, SqlStatement $statement): string
+    /**
+     * @param list<RowField> $fields
+     */
+    private function renderRowClass(string $namespaceName, SqlStatement $statement, array $fields): string
+    {
+        $file = new PhpFile();
+        $file->setStrictTypes();
+
+        $namespace = $file->addNamespace($namespaceName);
+        $class = $namespace->addClass($statement->getRowClassName());
+        $class->setFinal(true);
+        $class->setReadOnly(true);
+
+        $constructor = $class->addMethod('__construct');
+
+        foreach ($fields as $field) {
+            $type = $field->nullable ? '?' . $field->phpType : $field->phpType;
+            $constructor
+                ->addPromotedParameter($field->propertyName)
+                ->setPublic()
+                ->setType($type);
+        }
+
+        $factory = $class->addMethod('fromDatabaseRow');
+        $factory->setStatic();
+        $factory->setReturnType('self');
+        $factory->addParameter('row')->setType('array');
+        $factory->addComment('@param array<string, scalar|null> $row');
+        $factory->setBody($this->renderRowFactoryBody($fields));
+
+        return $this->printer->printFile($file);
+    }
+
+    private function renderQueryClass(string $namespaceName, SqlStatement $statement, bool $hasRow): string
     {
         $paramsClass = $namespaceName . '\\' . $statement->getParamsClassName();
 
@@ -104,6 +151,12 @@ final readonly class PhpQueryGenerator
             'return QueryResultKind::from(?);',
             [$statement->resultKind->value],
         );
+
+        if ($hasRow) {
+            $rowClassMethod = $class->addMethod('rowClass');
+            $rowClassMethod->setReturnType('string');
+            $rowClassMethod->setBody('return ?;', [$namespaceName . '\\' . $statement->getRowClassName()]);
+        }
 
         $sqlMethod = $class->addMethod('sql');
         $sqlMethod->setReturnType('string');
@@ -148,6 +201,23 @@ final readonly class PhpQueryGenerator
         return $this->printer->printFile($file);
     }
 
+    /**
+     * @param list<RowField> $fields
+     */
+    private function renderRowFactoryBody(array $fields): string
+    {
+        $lines = ['return new self('];
+
+        foreach ($fields as $field) {
+            $expression = $this->renderRowFieldExpression($field);
+            $lines[] = "    {$field->propertyName}: {$expression},";
+        }
+
+        $lines[] = ');';
+
+        return implode("\n", $lines);
+    }
+
     private function renderParamsMethodBody(SqlStatement $statement): string
     {
         if ($statement->parameters === []) {
@@ -163,5 +233,27 @@ final readonly class PhpQueryGenerator
         $lines[] = '];';
 
         return implode("\n", $lines);
+    }
+
+    private function renderRowFieldExpression(RowField $field): string
+    {
+        $source = "\$row['{$field->columnName}']";
+        $hasValue = "array_key_exists('{$field->columnName}', \$row) && {$source} !== null";
+
+        if ($field->nullable) {
+            return match ($field->phpType) {
+                'int' => "{$hasValue} ? (int) {$source} : null",
+                'float' => "{$hasValue} ? (float) {$source} : null",
+                'bool' => "{$hasValue} ? (bool) {$source} : null",
+                default => "{$hasValue} ? (string) {$source} : null",
+            };
+        }
+
+        return match ($field->phpType) {
+            'int' => "{$hasValue} ? (int) {$source} : throw new \\InvalidArgumentException('Missing required column {$field->columnName}.')",
+            'float' => "{$hasValue} ? (float) {$source} : throw new \\InvalidArgumentException('Missing required column {$field->columnName}.')",
+            'bool' => "{$hasValue} ? (bool) {$source} : throw new \\InvalidArgumentException('Missing required column {$field->columnName}.')",
+            default => "{$hasValue} ? (string) {$source} : throw new \\InvalidArgumentException('Missing required column {$field->columnName}.')",
+        };
     }
 }

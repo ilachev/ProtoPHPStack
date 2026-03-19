@@ -55,6 +55,7 @@
 
 Канонический input должен жить отдельно от runtime-кода, например:
 
+- `sql/schema.sql`
 - `sql/queries/session.sql`
 - `sql/queries/api_stats.sql`
 
@@ -78,6 +79,8 @@ WHERE expires_at < :now;
 ```
 
 Для проекта предпочтительны именованные параметры `:param`, а не позиционные placeholders.
+
+Типы для generated row classes должны резолвиться из SQL schema source, а не дублироваться в ручных PHP metadata files.
 
 ## Целевой output
 
@@ -113,6 +116,14 @@ WHERE expires_at < :now;
 - generated PHP перестаёт быть shape-массивами;
 - runtime получает executable typed query objects.
 
+### Следующий этап
+
+Следующий обязательный шаг после MVP:
+
+- `sql/schema.sql` становится SQL source of truth для column types;
+- генератор начинает резолвить row fields из `SELECT` + schema SQL;
+- `:one` и `:many` queries получают generated `*Row`.
+
 ## Runtime слой
 
 Runtime должен оставаться тонким.
@@ -147,6 +158,7 @@ Runtime не должен заново интерпретировать SQL.
 
 Целевое recommended направление:
 
+- `sql/schema.sql` как SQL source of truth для column types;
 - raw SQL в `sql/queries/*.sql`;
 - generated typed query classes;
 - тонкий executor;

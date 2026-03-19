@@ -10,5 +10,6 @@ final readonly class GeneratorConfig
         public string $inputDir,
         public string $outputDir,
         public string $namespace,
+        public string $schemaPath,
     ) {}
 }

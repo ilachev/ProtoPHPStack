@@ -24,6 +24,11 @@ final readonly class FindSessionByIdQuery implements ExecutableQuery
         return QueryResultKind::from('one');
     }
 
+    public function rowClass(): string
+    {
+        return 'App\Generated\Sql\Session\FindSessionByIdRow';
+    }
+
     public function sql(): string
     {
         return <<<'SQL'

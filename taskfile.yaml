@@ -126,7 +126,7 @@ tasks:
 
   sql:gen:
     desc: Generate typed PHP query classes from SQL source files
-    deps: [ tools:sql:setup ]
+    deps: [ tools:sql:runtime:setup ]
     cmds:
       - mkdir -p sql/queries
       - rm -rf gen/Generated/Sql
@@ -135,6 +135,7 @@ tasks:
         --input-dir=sql/queries
         --output-dir=gen/Generated/Sql
         --namespace=App\\Generated\\Sql
+        --schema=sql/schema.sql
 
   tools:proto:setup:
     desc: Setup protoc-php-gen plugin
@@ -168,17 +169,28 @@ tasks:
     cmds:
       - cd tools/protoc-php-gen && {{.COMPOSER}} check
 
-  tools:sql:setup:
-    desc: Setup sql-gen tool
+  tools:sql:runtime:setup:
+    desc: Setup sql-gen runtime dependencies
+    status:
+      - test -f tools/sql-gen/vendor/autoload.php
     cmds:
       - cd tools/sql-gen && {{.COMPOSER}} install --no-dev --no-progress
       - chmod +x tools/sql-gen/bin/sql-gen.php
       - echo "SQL generator setup complete"
 
-  tools:sql:check:
-    desc: Run all code quality checks on the sql-gen library
+  tools:sql:setup:
+    desc: Setup full sql-gen development environment
+    status:
+      - test -f tools/sql-gen/vendor/bin/phpunit
     cmds:
       - cd tools/sql-gen && {{.COMPOSER}} install --no-progress
+      - chmod +x tools/sql-gen/bin/sql-gen.php
+      - echo "SQL generator development setup complete"
+
+  tools:sql:check:
+    desc: Run all code quality checks on the sql-gen library
+    deps: [ tools:sql:setup ]
+    cmds:
       - cd tools/sql-gen && {{.COMPOSER}} check
 
   # Performance tasks

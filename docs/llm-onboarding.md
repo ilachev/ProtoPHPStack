@@ -65,7 +65,7 @@ Reusable blocks:
 - `protos/gen/*` — основной protobuf SDK и metadata
 - `gen/Generated/Endpoint/*` — generated endpoint contracts и handlers
 - `gen/Generated/OperationManifest/*` — generated operation registry classes for each RPC group
-- целевой SQL source of truth должен жить в `sql/queries/*`, а generated SQL artifacts — в `gen/Generated/Sql/*`
+- SQL source of truth должен жить в `sql/schema.sql` и `sql/queries/*`, а generated SQL artifacts — в `gen/Generated/Sql/*`
 - legacy `gen/Infrastructure/Hydrator/*` больше не является валидным generated output
 
 ## Что важно считать инвариантами

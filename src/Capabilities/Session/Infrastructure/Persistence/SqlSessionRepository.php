@@ -7,8 +7,11 @@ namespace App\Capabilities\Session\Infrastructure\Persistence;
 use App\Capabilities\Session\Domain\Session;
 use App\Capabilities\Session\Domain\SessionRepository;
 use App\Generated\Sql\Session\DeleteExpiredSessionsParams;
+use App\Generated\Sql\Session\FindAllSessionsRow;
 use App\Generated\Sql\Session\FindSessionByIdParams;
+use App\Generated\Sql\Session\FindSessionByIdRow;
 use App\Generated\Sql\Session\FindSessionsByUserIdParams;
+use App\Generated\Sql\Session\FindSessionsByUserIdRow;
 use App\Generated\Sql\Session\SessionQueries;
 use App\Platform\Hydration\Hydrator;
 use App\Platform\Storage\Query\QueryFactory;
@@ -40,7 +43,9 @@ final class SqlSessionRepository extends AbstractRepository implements SessionRe
             return null;
         }
 
-        return $this->createEntity(Session::class, $row);
+        return $this->createSessionFromRow(
+            FindSessionByIdRow::fromDatabaseRow($row),
+        );
     }
 
     public function findByUserId(int $userId): array
@@ -50,7 +55,9 @@ final class SqlSessionRepository extends AbstractRepository implements SessionRe
         );
 
         return array_map(
-            fn(array $row): Session => $this->createEntity(Session::class, $row),
+            fn(array $row): Session => $this->createSessionFromRow(
+                FindSessionsByUserIdRow::fromDatabaseRow($row),
+            ),
             $rows,
         );
     }
@@ -62,7 +69,9 @@ final class SqlSessionRepository extends AbstractRepository implements SessionRe
         );
 
         return array_map(
-            fn(array $row): Session => $this->createEntity(Session::class, $row),
+            fn(array $row): Session => $this->createSessionFromRow(
+                FindAllSessionsRow::fromDatabaseRow($row),
+            ),
             $rows,
         );
     }
@@ -83,6 +92,19 @@ final class SqlSessionRepository extends AbstractRepository implements SessionRe
             $this->sessionQueries->deleteExpiredSessions(
                 new DeleteExpiredSessionsParams(time()),
             ),
+        );
+    }
+
+    private function createSessionFromRow(
+        FindSessionByIdRow|FindSessionsByUserIdRow|FindAllSessionsRow $row,
+    ): Session {
+        return new Session(
+            id: $row->id,
+            userId: $row->userId,
+            payload: $row->payload,
+            expiresAt: $row->expiresAt,
+            createdAt: $row->createdAt,
+            updatedAt: $row->updatedAt,
         );
     }
 }

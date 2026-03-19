@@ -24,6 +24,11 @@ final readonly class FindAllSessionsQuery implements ExecutableQuery
         return QueryResultKind::from('many');
     }
 
+    public function rowClass(): string
+    {
+        return 'App\Generated\Sql\Session\FindAllSessionsRow';
+    }
+
     public function sql(): string
     {
         return <<<'SQL'

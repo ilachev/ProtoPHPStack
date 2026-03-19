@@ -26,6 +26,11 @@ final readonly class SqlStatement
         return $this->name . 'Query';
     }
 
+    public function getRowClassName(): string
+    {
+        return $this->name . 'Row';
+    }
+
     public function getFactoryMethodName(): string
     {
         return lcfirst($this->name);

@@ -1,0 +1,33 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Generated\Sql\Session;
+
+final readonly class FindSessionsByUserIdRow
+{
+    public function __construct(
+        public string $id,
+        public ?int $userId,
+        public string $payload,
+        public int $expiresAt,
+        public int $createdAt,
+        public int $updatedAt,
+    ) {
+    }
+
+    /**
+     * @param array<string, scalar|null> $row
+     */
+    public static function fromDatabaseRow(array $row): self
+    {
+        return new self(
+            id: array_key_exists('id', $row) && $row['id'] !== null ? (string) $row['id'] : throw new \InvalidArgumentException('Missing required column id.'),
+            userId: array_key_exists('user_id', $row) && $row['user_id'] !== null ? (int) $row['user_id'] : null,
+            payload: array_key_exists('payload', $row) && $row['payload'] !== null ? (string) $row['payload'] : throw new \InvalidArgumentException('Missing required column payload.'),
+            expiresAt: array_key_exists('expires_at', $row) && $row['expires_at'] !== null ? (int) $row['expires_at'] : throw new \InvalidArgumentException('Missing required column expires_at.'),
+            createdAt: array_key_exists('created_at', $row) && $row['created_at'] !== null ? (int) $row['created_at'] : throw new \InvalidArgumentException('Missing required column created_at.'),
+            updatedAt: array_key_exists('updated_at', $row) && $row['updated_at'] !== null ? (int) $row['updated_at'] : throw new \InvalidArgumentException('Missing required column updated_at.'),
+        );
+    }
+}
