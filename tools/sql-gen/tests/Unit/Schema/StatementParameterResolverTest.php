@@ -144,4 +144,44 @@ final class StatementParameterResolverTest extends TestCase
         self::assertFalse($resolved[0]->nullable);
         self::assertFalse($resolved[1]->nullable);
     }
+
+    public function testResolvesJoinedComparisonParameters(): void
+    {
+        $resolver = new StatementParameterResolver();
+        $schema = new DatabaseSchema([
+            'sessions' => new SchemaTable('sessions', [
+                'id' => new SchemaColumn('id', 'TEXT', 'string', false),
+                'user_id' => new SchemaColumn('user_id', 'BIGINT', 'int', true),
+            ]),
+            'users' => new SchemaTable('users', [
+                'id' => new SchemaColumn('id', 'BIGSERIAL', 'int', false),
+                'email' => new SchemaColumn('email', 'TEXT', 'string', false),
+            ]),
+        ]);
+
+        $resolved = $resolver->resolve(
+            new SqlStatement(
+                name: 'FindSessionOwners',
+                resultKind: SqlResultKind::Many,
+                sql: <<<'SQL'
+                    SELECT s.id, u.email
+                    FROM sessions AS s
+                    INNER JOIN users AS u ON u.id = s.user_id
+                    WHERE u.email = :email AND s.user_id = :user_id;
+                    SQL,
+                parameters: [
+                    new SqlParameter('email'),
+                    new SqlParameter('user_id'),
+                ],
+            ),
+            $schema,
+        );
+
+        self::assertCount(2, $resolved);
+        self::assertSame('email', $resolved[0]->name);
+        self::assertSame('string', $resolved[0]->phpType);
+        self::assertSame('user_id', $resolved[1]->name);
+        self::assertSame('int', $resolved[1]->phpType);
+        self::assertTrue($resolved[1]->nullable);
+    }
 }

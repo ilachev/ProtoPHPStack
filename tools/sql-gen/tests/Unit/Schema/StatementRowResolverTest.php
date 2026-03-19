@@ -134,4 +134,72 @@ final class StatementRowResolverTest extends TestCase
         self::assertSame('id', $fields[0]->resultColumnName);
         self::assertSame('email', $fields[1]->resultColumnName);
     }
+
+    public function testResolvesJoinedSelectedColumnsAcrossMultipleTables(): void
+    {
+        $resolver = new StatementRowResolver();
+        $schema = new DatabaseSchema([
+            'sessions' => new SchemaTable('sessions', [
+                'id' => new SchemaColumn('id', 'TEXT', 'string', false),
+                'user_id' => new SchemaColumn('user_id', 'BIGINT', 'int', true),
+            ]),
+            'users' => new SchemaTable('users', [
+                'id' => new SchemaColumn('id', 'BIGSERIAL', 'int', false),
+                'email' => new SchemaColumn('email', 'TEXT', 'string', false),
+            ]),
+        ]);
+
+        $fields = $resolver->resolve(
+            new SqlStatement(
+                name: 'FindSessionOwners',
+                resultKind: SqlResultKind::Many,
+                sql: <<<'SQL'
+                    SELECT s.id AS session_id, u.email AS owner_email
+                    FROM sessions AS s
+                    INNER JOIN users AS u ON u.id = s.user_id;
+                    SQL,
+                parameters: [],
+            ),
+            $schema,
+        );
+
+        self::assertCount(2, $fields);
+        self::assertSame('id', $fields[0]->sourceColumnName);
+        self::assertSame('session_id', $fields[0]->resultColumnName);
+        self::assertSame('sessionId', $fields[0]->propertyName);
+        self::assertSame('email', $fields[1]->sourceColumnName);
+        self::assertSame('owner_email', $fields[1]->resultColumnName);
+        self::assertSame('ownerEmail', $fields[1]->propertyName);
+        self::assertFalse($fields[1]->nullable);
+    }
+
+    public function testRejectsAmbiguousUnqualifiedJoinColumn(): void
+    {
+        $resolver = new StatementRowResolver();
+        $schema = new DatabaseSchema([
+            'sessions' => new SchemaTable('sessions', [
+                'id' => new SchemaColumn('id', 'TEXT', 'string', false),
+            ]),
+            'users' => new SchemaTable('users', [
+                'id' => new SchemaColumn('id', 'BIGSERIAL', 'int', false),
+            ]),
+        ]);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Column id is ambiguous');
+
+        $resolver->resolve(
+            new SqlStatement(
+                name: 'FindSomething',
+                resultKind: SqlResultKind::Many,
+                sql: <<<'SQL'
+                    SELECT id
+                    FROM sessions AS s
+                    INNER JOIN users AS u ON u.id = s.id;
+                    SQL,
+                parameters: [],
+            ),
+            $schema,
+        );
+    }
 }

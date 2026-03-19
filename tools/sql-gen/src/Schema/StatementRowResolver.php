@@ -6,12 +6,18 @@ namespace SqlGen\Schema;
 
 use SqlGen\Model\DatabaseSchema;
 use SqlGen\Model\RowField;
-use SqlGen\Model\SchemaTable;
 use SqlGen\Model\SqlResultKind;
 use SqlGen\Model\SqlStatement;
 
 final class StatementRowResolver
 {
+    private StatementTableMapResolver $tableMapResolver;
+
+    public function __construct()
+    {
+        $this->tableMapResolver = new StatementTableMapResolver();
+    }
+
     /**
      * @return list<RowField>
      */
@@ -21,57 +27,38 @@ final class StatementRowResolver
             return [];
         }
 
-        $table = $this->resolveTable($statement, $schema);
-        $columns = $this->resolveSelectedColumns($statement, $table);
+        $tableMap = $this->tableMapResolver->resolve($statement, $schema);
+        $columns = $this->resolveSelectedColumns($statement, $tableMap);
 
         $fields = [];
+        $seenResultColumns = [];
 
         foreach ($columns as $column) {
-            $schemaColumn = $table->getColumn($column['source']);
-            if ($schemaColumn === null) {
+            if (isset($seenResultColumns[$column['result']])) {
                 throw new \RuntimeException(
-                    "Column {$column['source']} was not found in schema table {$table->name} for query {$statement->name}",
+                    "Duplicate result column {$column['result']} in query {$statement->name}",
                 );
             }
+
+            $seenResultColumns[$column['result']] = true;
+            $resolvedColumn = $tableMap->resolveColumn($column['qualifier'], $column['source']);
 
             $fields[] = new RowField(
                 sourceColumnName: $column['source'],
                 resultColumnName: $column['result'],
                 propertyName: $this->snakeToCamel($column['result']),
-                phpType: $schemaColumn->phpType,
-                nullable: $schemaColumn->nullable,
+                phpType: $resolvedColumn->column->phpType,
+                nullable: $resolvedColumn->column->nullable,
             );
         }
 
         return $fields;
     }
 
-    private function resolveTable(SqlStatement $statement, DatabaseSchema $schema): SchemaTable
-    {
-        if (preg_match('/\bINSERT\s+INTO\s+(?<table>[a-zA-Z_][a-zA-Z0-9_]*)\b/i', $statement->sql, $matches)) {
-            $tableName = $matches['table'];
-        } elseif (preg_match('/\bDELETE\s+FROM\s+(?<table>[a-zA-Z_][a-zA-Z0-9_]*)\b/i', $statement->sql, $matches)) {
-            $tableName = $matches['table'];
-        } elseif (preg_match('/\bUPDATE\s+(?<table>[a-zA-Z_][a-zA-Z0-9_]*)\b/i', $statement->sql, $matches)) {
-            $tableName = $matches['table'];
-        } elseif (preg_match('/\bFROM\s+(?<table>[a-zA-Z_][a-zA-Z0-9_]*)\b/i', $statement->sql, $matches)) {
-            $tableName = $matches['table'];
-        } else {
-            throw new \RuntimeException("Unable to resolve table name for query {$statement->name}");
-        }
-
-        $table = $schema->getTable($tableName);
-        if ($table === null) {
-            throw new \RuntimeException("Table {$tableName} was not found in schema for query {$statement->name}");
-        }
-
-        return $table;
-    }
-
     /**
-     * @return list<array{source: string, result: string}>
+     * @return list<array{qualifier: string|null, source: string, result: string}>
      */
-    private function resolveSelectedColumns(SqlStatement $statement, SchemaTable $table): array
+    private function resolveSelectedColumns(SqlStatement $statement, StatementTableMap $tableMap): array
     {
         if (preg_match('/\bSELECT\s+(?<columns>.*?)\s+FROM\b/is', $statement->sql, $matches)) {
             $columnsExpression = trim($matches['columns']);
@@ -82,13 +69,7 @@ final class StatementRowResolver
         }
 
         if ($columnsExpression === '*') {
-            return array_map(
-                static fn(string $columnName): array => [
-                    'source' => $columnName,
-                    'result' => $columnName,
-                ],
-                array_keys($table->columns),
-            );
+            return $this->expandWildcardColumns($tableMap, null);
         }
 
         $parts = preg_split('/\s*,\s*/', $columnsExpression);
@@ -104,12 +85,19 @@ final class StatementRowResolver
                 continue;
             }
 
+            if (preg_match('/^(?<table>[a-zA-Z_][a-zA-Z0-9_]*)\.\*$/i', $column, $wildcard)) {
+                array_push($columns, ...$this->expandWildcardColumns($tableMap, strtolower($wildcard['table'])));
+                continue;
+            }
+
             if (preg_match('/^(?:(?<table>[a-zA-Z_][a-zA-Z0-9_]*)\.)?(?<column>[a-zA-Z_][a-zA-Z0-9_]*)(?:\s+AS\s+(?<alias>[a-zA-Z_][a-zA-Z0-9_]*))?$/i', $column, $named)) {
+                $qualifier = $named['table'] !== '' ? strtolower($named['table']) : null;
                 $sourceColumn = $named['column'];
                 $alias = $named['alias'] ?? null;
                 $resultColumn = is_string($alias) ? $alias : $sourceColumn;
 
                 $columns[] = [
+                    'qualifier' => $qualifier,
                     'source' => $sourceColumn,
                     'result' => $resultColumn,
                 ];
@@ -117,6 +105,24 @@ final class StatementRowResolver
             }
 
             throw new \RuntimeException("Unsupported selected column expression '{$column}' in query {$statement->name}");
+        }
+
+        return $columns;
+    }
+
+    /**
+     * @return list<array{qualifier: string|null, source: string, result: string}>
+     */
+    private function expandWildcardColumns(StatementTableMap $tableMap, ?string $qualifier): array
+    {
+        $columns = [];
+
+        foreach ($tableMap->expandWildcard($qualifier) as $column) {
+            $columns[] = [
+                'qualifier' => $qualifier,
+                'source' => $column->name,
+                'result' => $column->name,
+            ];
         }
 
         return $columns;

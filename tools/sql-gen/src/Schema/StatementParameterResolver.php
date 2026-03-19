@@ -6,50 +6,46 @@ namespace SqlGen\Schema;
 
 use SqlGen\Model\DatabaseSchema;
 use SqlGen\Model\ResolvedSqlParameter;
-use SqlGen\Model\SchemaTable;
 use SqlGen\Model\SqlStatement;
 
 final class StatementParameterResolver
 {
+    private StatementTableMapResolver $tableMapResolver;
+
+    public function __construct()
+    {
+        $this->tableMapResolver = new StatementTableMapResolver();
+    }
+
     /**
      * @return list<ResolvedSqlParameter>
      */
     public function resolve(SqlStatement $statement, DatabaseSchema $schema): array
     {
-        $table = $this->resolveTable($statement, $schema);
+        $tableMap = $this->tableMapResolver->resolve($statement, $schema);
         $resolvedByName = [];
 
         foreach ($this->extractColumnComparisons($statement->sql) as $comparison) {
-            $column = $table->getColumn($comparison['column']);
-            if ($column === null) {
-                throw new \RuntimeException(
-                    "Column {$comparison['column']} was not found in schema table {$table->name} for query {$statement->name}",
-                );
-            }
+            $resolvedColumn = $tableMap->resolveColumn($comparison['qualifier'], $comparison['column']);
 
             $resolvedByName[$comparison['param']] = new ResolvedSqlParameter(
                 name: $comparison['param'],
                 propertyName: $this->snakeToCamel($comparison['param']),
-                sqlType: $column->sqlType,
-                phpType: $column->phpType,
-                nullable: $column->nullable,
+                sqlType: $resolvedColumn->column->sqlType,
+                phpType: $resolvedColumn->column->phpType,
+                nullable: $resolvedColumn->column->nullable,
             );
         }
 
         foreach ($this->extractInsertValueMappings($statement->sql) as $mapping) {
-            $column = $table->getColumn($mapping['column']);
-            if ($column === null) {
-                throw new \RuntimeException(
-                    "Column {$mapping['column']} was not found in schema table {$table->name} for query {$statement->name}",
-                );
-            }
+            $resolvedColumn = $tableMap->resolveColumn($mapping['qualifier'], $mapping['column']);
 
             $resolvedByName[$mapping['param']] ??= new ResolvedSqlParameter(
                 name: $mapping['param'],
                 propertyName: $this->snakeToCamel($mapping['param']),
-                sqlType: $column->sqlType,
-                phpType: $column->phpType,
-                nullable: $column->nullable,
+                sqlType: $resolvedColumn->column->sqlType,
+                phpType: $resolvedColumn->column->phpType,
+                nullable: $resolvedColumn->column->nullable,
             );
         }
 
@@ -69,28 +65,8 @@ final class StatementParameterResolver
         return $parameters;
     }
 
-    private function resolveTable(SqlStatement $statement, DatabaseSchema $schema): SchemaTable
-    {
-        if (preg_match('/\bINSERT\s+INTO\s+(?<table>[a-zA-Z_][a-zA-Z0-9_]*)\b/i', $statement->sql, $matches)) {
-            $tableName = $matches['table'];
-        } elseif (preg_match('/\bFROM\s+(?<table>[a-zA-Z_][a-zA-Z0-9_]*)\b/i', $statement->sql, $matches)) {
-            $tableName = $matches['table'];
-        } elseif (preg_match('/\bUPDATE\s+(?<table>[a-zA-Z_][a-zA-Z0-9_]*)\b/i', $statement->sql, $matches)) {
-            $tableName = $matches['table'];
-        } else {
-            throw new \RuntimeException("Unable to resolve table name for query {$statement->name}");
-        }
-
-        $table = $schema->getTable($tableName);
-        if ($table === null) {
-            throw new \RuntimeException("Table {$tableName} was not found in schema for query {$statement->name}");
-        }
-
-        return $table;
-    }
-
     /**
-     * @return list<array{column: string, param: string}>
+     * @return list<array{qualifier: string|null, column: string, param: string}>
      */
     private function extractColumnComparisons(string $sql): array
     {
@@ -106,12 +82,20 @@ final class StatementParameterResolver
         foreach ($matches as $match) {
             $column = $match['left_column'] ?? $match['right_column'] ?? null;
             $param = $match['right_param'] ?? $match['left_param'] ?? null;
+            $qualifier = null;
+
+            if (array_key_exists('left_table', $match)) {
+                $qualifier = strtolower($match['left_table']);
+            } elseif (array_key_exists('right_table', $match)) {
+                $qualifier = strtolower($match['right_table']);
+            }
 
             if ($column === null || $param === null) {
                 continue;
             }
 
             $comparisons[] = [
+                'qualifier' => $qualifier,
                 'column' => $column,
                 'param' => $param,
             ];
@@ -121,12 +105,12 @@ final class StatementParameterResolver
     }
 
     /**
-     * @return list<array{column: string, param: string}>
+     * @return list<array{qualifier: string|null, column: string, param: string}>
      */
     private function extractInsertValueMappings(string $sql): array
     {
         if (!preg_match(
-            '/\bINSERT\s+INTO\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\((?<columns>.*?)\)\s*VALUES\s*\((?<values>.*?)\)/is',
+            '/\bINSERT\s+INTO\s+(?<table>[a-zA-Z_][a-zA-Z0-9_]*)\s*\((?<columns>.*?)\)\s*VALUES\s*\((?<values>.*?)\)/is',
             $sql,
             $matches,
         )) {
@@ -158,6 +142,7 @@ final class StatementParameterResolver
             }
 
             $mappings[] = [
+                'qualifier' => strtolower($matches['table']),
                 'column' => $columnMatches['column'],
                 'param' => $valueMatches['param'],
             ];
