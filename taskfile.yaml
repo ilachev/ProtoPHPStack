@@ -171,8 +171,11 @@ tasks:
 
   tools:sql:runtime:setup:
     desc: Setup sql-gen runtime dependencies
-    status:
-      - test -f tools/sql-gen/vendor/autoload.php
+    sources:
+      - tools/sql-gen/composer.json
+      - tools/sql-gen/composer.lock
+    generates:
+      - tools/sql-gen/vendor/autoload.php
     cmds:
       - cd tools/sql-gen && {{.COMPOSER}} install --no-dev --no-progress
       - chmod +x tools/sql-gen/bin/sql-gen.php
@@ -180,8 +183,11 @@ tasks:
 
   tools:sql:setup:
     desc: Setup full sql-gen development environment
-    status:
-      - test -f tools/sql-gen/vendor/bin/phpunit
+    sources:
+      - tools/sql-gen/composer.json
+      - tools/sql-gen/composer.lock
+    generates:
+      - tools/sql-gen/vendor/bin/phpunit
     cmds:
       - cd tools/sql-gen && {{.COMPOSER}} install --no-progress
       - chmod +x tools/sql-gen/bin/sql-gen.php
