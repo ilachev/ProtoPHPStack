@@ -97,3 +97,9 @@ Project-specific profile integration:
 - уменьшает ручной endpoint boilerplate;
 - не тащит protobuf глубже, чем это нужно endpoint-слою;
 - не создаёт вторую архитектуру внутри генератора.
+
+Отдельное правило для type helper libraries:
+
+- они допустимы только как внутренний helper layer генератора;
+- они не должны протекать в runtime-код проекта;
+- их стоит использовать только там, где они реально убирают ручной type/docblock rendering.

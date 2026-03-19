@@ -67,6 +67,7 @@ Reusable blocks:
 - `gen/Generated/OperationManifest/*` — generated operation registry classes for each RPC group
 - SQL source of truth должен жить в `sql/schema.sql` и `sql/queries/*`, а generated SQL artifacts — в `gen/Generated/Sql/*`
 - legacy `gen/Infrastructure/Hydrator/*` больше не является валидным generated output
+- `typhoon/type` допустим только как internal helper внутри codegen tooling, но не как runtime dependency основного проекта
 
 ## Что важно считать инвариантами
 
@@ -78,6 +79,7 @@ Reusable blocks:
 - default `task verify` не должен требовать поднятых внешних сервисов
 - проект живёт в long-running процессе RoadRunner, значит надо следить за памятью и накоплением состояния
 - persistence должен двигаться в сторону explicit SQL + typed generation, а не в сторону усложняющегося ORM-like слоя
+- type-system libraries допустимы только внутри generators и только там, где они реально заменяют ручной type rendering
 
 ## Команды
 
