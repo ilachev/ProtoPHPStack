@@ -9,6 +9,7 @@ use Nette\PhpGenerator\PsrPrinter;
 use ProtoPhpGen\Descriptor\ProtoFileDescriptor;
 use ProtoPhpGen\Plugin\PluginOptions;
 use ProtoPhpGen\Profile\EndpointProfile;
+use ProtoPhpGen\Type\PhpDocTypeRenderer;
 use ProtoPhpGen\Type\TypeResolver;
 
 final readonly class OperationManifestGenerator implements CodeGeneratorModule
@@ -17,11 +18,14 @@ final readonly class OperationManifestGenerator implements CodeGeneratorModule
 
     private PsrPrinter $printer;
 
+    private PhpDocTypeRenderer $phpDocTypeRenderer;
+
     public function __construct(
         private PluginOptions $options,
         private EndpointProfile $endpointProfile,
     ) {
         $this->printer = new PsrPrinter();
+        $this->phpDocTypeRenderer = new PhpDocTypeRenderer();
     }
 
     public function getName(): string
@@ -178,7 +182,7 @@ final readonly class OperationManifestGenerator implements CodeGeneratorModule
 
         $method = $class->addMethod('getOperations');
         $method->setReturnType('array');
-        $method->addComment('@return list<OperationDefinition>');
+        $method->addComment(\sprintf('@return %s', $this->phpDocTypeRenderer->renderListOfObject('OperationDefinition')));
         $method->setBody("return [\n" . $this->renderOperationList($operations) . "\n];");
 
         return $this->printGeneratedFile($file, $sourceName);
@@ -282,7 +286,7 @@ final readonly class OperationManifestGenerator implements CodeGeneratorModule
             return $content;
         }
 
-        return $this->renderGeneratedHeader($sourceName) . ltrim(substr($content, strlen('<?php')));
+        return $this->renderGeneratedHeader($sourceName) . ltrim(substr($content, \strlen('<?php')));
     }
 
     private function renderGeneratedHeader(string $sourceName): string

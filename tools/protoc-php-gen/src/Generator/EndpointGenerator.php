@@ -9,6 +9,7 @@ use Nette\PhpGenerator\PsrPrinter;
 use ProtoPhpGen\Descriptor\ProtoFileDescriptor;
 use ProtoPhpGen\Plugin\PluginOptions;
 use ProtoPhpGen\Profile\EndpointProfile;
+use ProtoPhpGen\Type\PhpDocTypeRenderer;
 use ProtoPhpGen\Type\TypeResolver;
 
 final readonly class EndpointGenerator implements CodeGeneratorModule
@@ -17,11 +18,14 @@ final readonly class EndpointGenerator implements CodeGeneratorModule
 
     private PsrPrinter $printer;
 
+    private PhpDocTypeRenderer $phpDocTypeRenderer;
+
     public function __construct(
         private PluginOptions $options,
         private EndpointProfile $endpointProfile,
     ) {
         $this->printer = new PsrPrinter();
+        $this->phpDocTypeRenderer = new PhpDocTypeRenderer();
     }
 
     public function getName(): string
@@ -178,7 +182,7 @@ final readonly class EndpointGenerator implements CodeGeneratorModule
             . 'if (!$message instanceof ' . $inputShortName . ") {\n"
             . '    return $this->' . $this->endpointProfile->getInvalidRequestResponseMethodName() . "();\n"
             . "}\n\n"
-            . '/** @var ' . $outputShortName . " \$response */\n"
+            . '/** @var ' . $this->phpDocTypeRenderer->renderNamedObject($outputShortName) . " \$response */\n"
             . '$response = $this->endpoint->handle($message, $request);' . "\n\n"
             . 'return $this->' . $this->endpointProfile->getSuccessResponseMethodName() . '($response);',
         );
@@ -218,7 +222,7 @@ final readonly class EndpointGenerator implements CodeGeneratorModule
             return $content;
         }
 
-        return $this->renderGeneratedHeader($sourceName) . ltrim(substr($content, strlen('<?php')));
+        return $this->renderGeneratedHeader($sourceName) . ltrim(substr($content, \strlen('<?php')));
     }
 
     private function renderGeneratedHeader(string $sourceName): string
