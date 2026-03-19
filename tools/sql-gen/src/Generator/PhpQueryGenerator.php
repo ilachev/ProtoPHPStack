@@ -43,12 +43,6 @@ final readonly class PhpQueryGenerator
             $rowFields = $this->rowResolver->resolve($statement, $this->schema);
             $rowClassName = $rowClassNames[$statement->name] ?? null;
 
-            if ($statement->parameters !== []) {
-                $files[] = new GeneratedFile(
-                    path: $outputDir . '/' . $statement->getParamsClassName() . '.php',
-                    content: $this->renderParamsClass($namespace, $statement, $sqlFile->sourcePath),
-                );
-            }
             if ($rowFields !== [] && is_string($rowClassName) && !isset($generatedRowClasses[$rowClassName])) {
                 $files[] = new GeneratedFile(
                     path: $outputDir . '/' . $rowClassName . '.php',
@@ -63,28 +57,6 @@ final readonly class PhpQueryGenerator
         }
 
         return $files;
-    }
-
-    private function renderParamsClass(string $namespaceName, SqlStatement $statement, string $sourcePath): string
-    {
-        $file = new PhpFile();
-        $file->setStrictTypes();
-
-        $namespace = $file->addNamespace($namespaceName);
-        $class = $namespace->addClass($statement->getParamsClassName());
-        $class->setFinal(true);
-        $class->setReadOnly(true);
-
-        $constructor = $class->addMethod('__construct');
-
-        foreach ($statement->parameters as $parameter) {
-            $constructor
-                ->addPromotedParameter($parameter->name)
-                ->setPublic()
-                ->setType(self::PARAM_TYPE);
-        }
-
-        return $this->printGeneratedFile($file, $sourcePath);
     }
 
     /**
@@ -150,13 +122,12 @@ final readonly class PhpQueryGenerator
             $class->addComment("@implements RowReturningQuery<{$rowClassName}>");
         }
 
-        if ($statement->parameters !== []) {
-            $paramsClass = $namespaceName . '\\' . $statement->getParamsClassName();
-            $constructor = $class->addMethod('__construct');
+        $constructor = $class->addMethod('__construct');
+        foreach ($statement->parameters as $parameter) {
             $constructor
-                ->addPromotedParameter('params')
+                ->addPromotedParameter($this->toPropertyName($parameter->name))
                 ->setPrivate()
-                ->setType($paramsClass);
+                ->setType(self::PARAM_TYPE);
         }
 
         $factory = $class->addMethod('create');
@@ -171,16 +142,14 @@ final readonly class PhpQueryGenerator
             $arguments = implode(
                 ",\n",
                 array_map(
-                    fn($parameter): string => "            {$parameter->name}: \$" . $this->toPropertyName($parameter->name),
+                    fn($parameter): string => "            {$this->toPropertyName($parameter->name)}: \$" . $this->toPropertyName($parameter->name),
                     $statement->parameters,
                 ),
             );
 
             $factory->setBody(
                 "return new self(\n"
-                . "    new {$statement->getParamsClassName()}(\n"
                 . "{$arguments}\n"
-                . "    ),\n"
                 . ');',
             );
         } else {
@@ -232,7 +201,7 @@ final readonly class PhpQueryGenerator
         $lines = ['return ['];
 
         foreach ($statement->parameters as $parameter) {
-            $lines[] = "    '{$parameter->name}' => \$this->params->{$parameter->name},";
+            $lines[] = "    '{$parameter->name}' => \$this->{$this->toPropertyName($parameter->name)},";
         }
 
         $lines[] = '];';

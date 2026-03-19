@@ -17,6 +17,10 @@ use App\Platform\Storage\Sql\RowReturningQuery;
  */
 final readonly class FindAllSessionsQuery implements RowReturningQuery
 {
+    public function __construct()
+    {
+    }
+
     public static function create(): self
     {
         return new self();

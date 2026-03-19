@@ -18,16 +18,14 @@ use App\Platform\Storage\Sql\RowReturningQuery;
 final readonly class FindSessionsByUserIdQuery implements RowReturningQuery
 {
     public function __construct(
-        private FindSessionsByUserIdParams $params,
+        private string|int|float|bool|null $userId,
     ) {
     }
 
     public static function create(string|int|float|bool|null $userId): self
     {
         return new self(
-            new FindSessionsByUserIdParams(
-                    user_id: $userId
-            ),
+                    userId: $userId
         );
     }
 
@@ -55,7 +53,7 @@ final readonly class FindSessionsByUserIdQuery implements RowReturningQuery
     public function params(): array
     {
         return [
-            'user_id' => $this->params->user_id,
+            'user_id' => $this->userId,
         ];
     }
 }

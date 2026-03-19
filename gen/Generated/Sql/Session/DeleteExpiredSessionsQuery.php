@@ -14,16 +14,14 @@ use App\Platform\Storage\Sql\ExecutableQuery;
 final readonly class DeleteExpiredSessionsQuery implements ExecutableQuery
 {
     public function __construct(
-        private DeleteExpiredSessionsParams $params,
+        private string|int|float|bool|null $now,
     ) {
     }
 
     public static function create(string|int|float|bool|null $now): self
     {
         return new self(
-            new DeleteExpiredSessionsParams(
                     now: $now
-            ),
         );
     }
 
@@ -41,7 +39,7 @@ final readonly class DeleteExpiredSessionsQuery implements ExecutableQuery
     public function params(): array
     {
         return [
-            'now' => $this->params->now,
+            'now' => $this->now,
         ];
     }
 }
