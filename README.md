@@ -36,6 +36,12 @@ task proto:gen:all
 # Run unit tests
 task test
 
+# Check generated SQL artifacts against SQL sources
+task sql:check
+
+# Validate SQL queries against live PostgreSQL
+task sql:check:pg
+
 # Run integration tests against PostgreSQL
 task test:integration
 
@@ -67,8 +73,10 @@ task services:stop
 
 - `task test` runs unit tests only and requires no external services
 - `task verify` is the default local gate: lint, static analysis and unit tests
+- `task sql:check` verifies generated SQL artifacts against `sql/schema.sql` and `sql/queries/*`
+- `task sql:check:pg` validates SQL queries against live PostgreSQL
 - `task test:integration` runs the PostgreSQL integration profile
-- `task verify:full` runs both the default gate and integration verification
+- `task verify:full` runs the default gate, PostgreSQL SQL validation and integration verification
 
 Use `task services:start` before integration runs or local runtime checks when you need a PostgreSQL instance.
 

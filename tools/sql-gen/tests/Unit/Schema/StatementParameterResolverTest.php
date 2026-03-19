@@ -39,6 +39,7 @@ final class StatementParameterResolverTest extends TestCase
         self::assertCount(1, $resolved);
         self::assertSame('now', $resolved[0]->name);
         self::assertSame('now', $resolved[0]->propertyName);
+        self::assertSame('BIGINT', $resolved[0]->sqlType);
         self::assertSame('int', $resolved[0]->phpType);
     }
 
@@ -63,6 +64,7 @@ final class StatementParameterResolverTest extends TestCase
 
         self::assertCount(1, $resolved);
         self::assertSame('userId', $resolved[0]->propertyName);
+        self::assertSame('INTEGER', $resolved[0]->sqlType);
         self::assertSame('int', $resolved[0]->phpType);
     }
 }

@@ -35,6 +35,7 @@
     },
     "bin": [
         "bin/sql-gen.php",
-        "bin/sql-check.php"
+        "bin/sql-check.php",
+        "bin/sql-check-pg.php"
     ]
 }

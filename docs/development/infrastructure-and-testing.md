@@ -162,6 +162,8 @@ Bootstrap в `tests/Integration/bootstrap.php`:
 task lint
 task phpstan
 task test
+task sql:check
+task sql:check:pg
 task test:integration
 task test:full
 task verify
@@ -173,9 +175,10 @@ task verify:full
 
 1. lint
 2. phpstan
-3. unit tests
+3. sql artifact consistency check
+4. unit tests
 
-`task verify:integration` запускает PostgreSQL integration profile.
+`task verify:integration` запускает PostgreSQL-backed SQL validation и integration profile.
 
 `task verify:full` объединяет оба контура.
 

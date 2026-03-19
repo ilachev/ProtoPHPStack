@@ -30,6 +30,7 @@ final class StatementParameterResolver
             $resolvedByName[$comparison['param']] = new ResolvedSqlParameter(
                 name: $comparison['param'],
                 propertyName: $this->snakeToCamel($comparison['param']),
+                sqlType: $column->sqlType,
                 phpType: $column->phpType,
             );
         }

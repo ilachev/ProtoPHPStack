@@ -144,9 +144,10 @@ Runtime не должен заново интерпретировать SQL.
 Правильная модель валидации:
 
 - `task sql:gen` — генерация PHP-кода из SQL;
-- `task sql:check` — compile-time/integration-time проверка запросов against real PostgreSQL;
+- `task sql:check` — автономная проверка синхронизации generated SQL artifacts с `sql/schema.sql` и `sql/queries/*`;
+- `task sql:check:pg` — PostgreSQL-backed проверка самих запросов через `PREPARE` against real database schema;
 - default `task verify` не обязан требовать поднятую БД;
-- более строгий full-gate может включать `sql:check`.
+- более строгий full-gate должен включать `sql:check:pg`.
 
 Это согласуется с текущим разделением между обычным локальным gate и PostgreSQL-dependent профилями.
 
