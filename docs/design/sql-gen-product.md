@@ -208,7 +208,7 @@ Runtime не должен заново интерпретировать SQL.
 
 ## Parser strategy
 
-Текущий regex-based parsing допустим только как переходный слой.
+Regex-based parsing больше не должен быть production path для query analysis.
 
 Для долгосрочного развития `sql-gen` parser-front-end должен эволюционировать в сторону собственного subset parser-а, а не в сторону бесконечного наращивания regex-эвристик.
 
@@ -219,6 +219,12 @@ Runtime не должен заново интерпретировать SQL.
 - grammar этого subset-а может быть реализована на `phplrt`;
 - parser строит внутренний AST `sql-gen`, а не тянет чужую AST-модель сквозь весь кодогенератор;
 - PostgreSQL-backed `sql:check:pg` остаётся обязательным safety net даже после перехода на AST.
+
+Текущее production состояние должно быть именно таким:
+
+- поддерживаемый subset SQL парсится через `phplrt`;
+- row resolution и parameter resolution работают поверх internal AST;
+- regex допустим только в отдельных вспомогательных местах вроде разбора named-statement headers и schema snapshot parsing, но не как анализатор query semantics.
 
 Неправильная модель:
 
