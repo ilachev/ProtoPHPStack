@@ -48,8 +48,10 @@ final class TestApiStatRepository implements ApiStatRepository
     /** @var array<ApiStat> */
     public array $stats = [];
 
-    public function save(ApiStat $stat): void
+    public function save(ApiStat $stat): ApiStat
     {
         $this->stats[] = $stat;
+
+        return $stat;
     }
 }

@@ -6,5 +6,5 @@ namespace App\Capabilities\ApiStats\Domain;
 
 interface ApiStatRepository
 {
-    public function save(ApiStat $stat): void;
+    public function save(ApiStat $stat): ApiStat;
 }

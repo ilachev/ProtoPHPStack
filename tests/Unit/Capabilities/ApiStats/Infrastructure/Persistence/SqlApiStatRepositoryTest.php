@@ -17,7 +17,7 @@ final class SqlApiStatRepositoryTest extends TestCase
         $storage = new InMemoryApiStatStorage();
         $repository = new SqlApiStatRepository(new SqlExecutor($storage));
 
-        $repository->save(
+        $savedStat = $repository->save(
             new ApiStat(
                 id: null,
                 sessionId: 'session-1',
@@ -29,8 +29,10 @@ final class SqlApiStatRepositoryTest extends TestCase
             ),
         );
 
-        self::assertCount(1, $storage->executedStatements);
-        self::assertStringContainsString('INSERT INTO api_stats', $storage->executedStatements[0]['sql']);
+        self::assertSame(42, $savedStat->id);
+        self::assertCount(1, $storage->queriedStatements);
+        self::assertStringContainsString('INSERT INTO api_stats', $storage->queriedStatements[0]['sql']);
+        self::assertStringContainsString('RETURNING id', $storage->queriedStatements[0]['sql']);
         self::assertSame([
             'session_id' => 'session-1',
             'route' => 'health.check',
@@ -38,7 +40,7 @@ final class SqlApiStatRepositoryTest extends TestCase
             'status_code' => 200,
             'execution_time' => 12.5,
             'request_time' => 1_710_000_000,
-        ], $storage->executedStatements[0]['params']);
+        ], $storage->queriedStatements[0]['params']);
     }
 }
 
@@ -47,20 +49,20 @@ final class InMemoryApiStatStorage implements Storage
     /**
      * @var list<array{sql: string, params: array<string, scalar|null>}>
      */
-    public array $executedStatements = [];
+    public array $queriedStatements = [];
 
     public function query(string $sql, array $params = []): array
     {
-        return [];
-    }
-
-    public function execute(string $sql, array $params = []): bool
-    {
-        $this->executedStatements[] = [
+        $this->queriedStatements[] = [
             'sql' => $sql,
             'params' => $params,
         ];
 
+        return [['id' => 42]];
+    }
+
+    public function execute(string $sql, array $params = []): bool
+    {
         return true;
     }
 

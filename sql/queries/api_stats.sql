@@ -1,4 +1,4 @@
--- name: InsertApiStat :exec
+-- name: InsertApiStat :one
 INSERT INTO api_stats (
     session_id,
     route,
@@ -14,4 +14,5 @@ VALUES (
     :status_code,
     :execution_time,
     :request_time
-);
+)
+RETURNING id;

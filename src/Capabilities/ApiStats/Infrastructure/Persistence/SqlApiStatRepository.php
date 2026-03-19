@@ -15,9 +15,9 @@ final readonly class SqlApiStatRepository implements ApiStatRepository
         private SqlExecutor $sqlExecutor,
     ) {}
 
-    public function save(ApiStat $stat): void
+    public function save(ApiStat $stat): ApiStat
     {
-        $this->sqlExecutor->execute(
+        $row = $this->sqlExecutor->fetchOneRow(
             InsertApiStatQuery::create(
                 sessionId: $stat->sessionId,
                 route: $stat->route,
@@ -26,6 +26,20 @@ final readonly class SqlApiStatRepository implements ApiStatRepository
                 executionTime: $stat->executionTime,
                 requestTime: $stat->requestTime,
             ),
+        );
+
+        if ($row === null) {
+            throw new \LogicException('InsertApiStatQuery must return the persisted API stat id.');
+        }
+
+        return new ApiStat(
+            id: $row->id,
+            sessionId: $stat->sessionId,
+            route: $stat->route,
+            method: $stat->method,
+            statusCode: $stat->statusCode,
+            executionTime: $stat->executionTime,
+            requestTime: $stat->requestTime,
         );
     }
 }

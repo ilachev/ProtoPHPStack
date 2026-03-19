@@ -10,8 +10,12 @@ declare(strict_types=1);
 namespace App\Generated\Sql\ApiStats;
 
 use App\Platform\Storage\Sql\ExecutableQuery;
+use App\Platform\Storage\Sql\OneRowQuery;
 
-final readonly class InsertApiStatQuery implements ExecutableQuery
+/**
+ * @implements OneRowQuery<InsertApiStatRow, array{'session_id': string, 'route': string, 'method': string, 'status_code': int, 'execution_time': float, 'request_time': int}>
+ */
+final readonly class InsertApiStatQuery implements OneRowQuery
 {
     public function __construct(
         private string $sessionId,
@@ -59,8 +63,17 @@ final readonly class InsertApiStatQuery implements ExecutableQuery
             :status_code,
             :execution_time,
             :request_time
-        );
+        )
+        RETURNING id;
         SQL;
+    }
+
+    /**
+     * @return class-string<InsertApiStatRow>
+     */
+    public function rowClass(): string
+    {
+        return InsertApiStatRow::class;
     }
 
     /**
