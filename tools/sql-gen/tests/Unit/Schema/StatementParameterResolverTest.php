@@ -13,6 +13,8 @@ use SqlGen\Model\SqlResultKind;
 use SqlGen\Model\SqlStatement;
 use SqlGen\Schema\StatementParameterResolver;
 
+use function Typhoon\Type\stringify;
+
 final class StatementParameterResolverTest extends TestCase
 {
     public function testResolvesParameterTypesFromSchemaColumns(): void
@@ -40,7 +42,7 @@ final class StatementParameterResolverTest extends TestCase
         self::assertSame('now', $resolved[0]->name);
         self::assertSame('now', $resolved[0]->propertyName);
         self::assertSame('BIGINT', $resolved[0]->sqlType);
-        self::assertSame('int', $resolved[0]->phpType);
+        self::assertSame('int', stringify($resolved[0]->phpType));
         self::assertFalse($resolved[0]->nullable);
     }
 
@@ -66,7 +68,7 @@ final class StatementParameterResolverTest extends TestCase
         self::assertCount(1, $resolved);
         self::assertSame('userId', $resolved[0]->propertyName);
         self::assertSame('INTEGER', $resolved[0]->sqlType);
-        self::assertSame('int', $resolved[0]->phpType);
+        self::assertSame('int', stringify($resolved[0]->phpType));
         self::assertTrue($resolved[0]->nullable);
     }
 
@@ -99,13 +101,13 @@ final class StatementParameterResolverTest extends TestCase
         );
 
         self::assertCount(3, $resolved);
-        self::assertSame('string', $resolved[0]->phpType);
+        self::assertSame('string', stringify($resolved[0]->phpType));
         self::assertSame('TEXT', $resolved[0]->sqlType);
         self::assertFalse($resolved[0]->nullable);
-        self::assertSame('int', $resolved[1]->phpType);
+        self::assertSame('int', stringify($resolved[1]->phpType));
         self::assertSame('INTEGER', $resolved[1]->sqlType);
         self::assertFalse($resolved[1]->nullable);
-        self::assertSame('float', $resolved[2]->phpType);
+        self::assertSame('float', stringify($resolved[2]->phpType));
         self::assertSame('REAL', $resolved[2]->sqlType);
         self::assertFalse($resolved[2]->nullable);
     }
@@ -179,9 +181,9 @@ final class StatementParameterResolverTest extends TestCase
 
         self::assertCount(2, $resolved);
         self::assertSame('email', $resolved[0]->name);
-        self::assertSame('string', $resolved[0]->phpType);
+        self::assertSame('string', stringify($resolved[0]->phpType));
         self::assertSame('user_id', $resolved[1]->name);
-        self::assertSame('int', $resolved[1]->phpType);
+        self::assertSame('int', stringify($resolved[1]->phpType));
         self::assertTrue($resolved[1]->nullable);
     }
 

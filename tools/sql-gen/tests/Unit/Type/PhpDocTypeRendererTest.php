@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use SqlGen\Model\ResolvedSqlParameter;
 use SqlGen\Model\RowField;
 use SqlGen\Type\PhpDocTypeRenderer;
+use SqlGen\Type\PhpTypeFactory;
 
 final class PhpDocTypeRendererTest extends TestCase
 {
@@ -16,8 +17,8 @@ final class PhpDocTypeRendererTest extends TestCase
         $renderer = new PhpDocTypeRenderer();
 
         $shape = $renderer->renderRowShape([
-            new RowField('id', 'id', 'id', 'string', false),
-            new RowField('user_id', 'user_id', 'userId', 'int', true),
+            new RowField('id', 'id', 'id', PhpTypeFactory::fromNativeType('string'), false),
+            new RowField('user_id', 'user_id', 'userId', PhpTypeFactory::fromNativeType('int'), true),
         ]);
 
         self::assertSame("array{'id': string, 'user_id': null|int}", $shape);
@@ -37,8 +38,8 @@ final class PhpDocTypeRendererTest extends TestCase
         $renderer = new PhpDocTypeRenderer();
 
         $shape = $renderer->renderParamsShape([
-            new ResolvedSqlParameter('user_id', 'userId', 'BIGINT', 'int', true),
-            new ResolvedSqlParameter('payload', 'payload', 'TEXT', 'string', false),
+            new ResolvedSqlParameter('user_id', 'userId', 'BIGINT', PhpTypeFactory::fromNativeType('int'), true),
+            new ResolvedSqlParameter('payload', 'payload', 'TEXT', PhpTypeFactory::fromNativeType('string'), false),
         ]);
 
         self::assertSame("array{'user_id': null|int, 'payload': string}", $shape);

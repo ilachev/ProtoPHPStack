@@ -15,7 +15,10 @@ use SqlGen\Model\SqlResultKind;
 use SqlGen\Model\SqlStatement;
 use SqlGen\Schema\StatementParameterResolver;
 use SqlGen\Schema\StatementRowResolver;
+use SqlGen\Type\NativeTypeRenderer;
 use SqlGen\Type\PhpDocTypeRenderer;
+
+use function Typhoon\Type\stringify;
 
 final readonly class PhpQueryGenerator
 {
@@ -23,6 +26,7 @@ final readonly class PhpQueryGenerator
     private StatementRowResolver $rowResolver;
     private StatementParameterResolver $parameterResolver;
     private PhpDocTypeRenderer $phpDocTypeRenderer;
+    private NativeTypeRenderer $nativeTypeRenderer;
 
     public function __construct(
         private GeneratorConfig $config,
@@ -32,6 +36,7 @@ final readonly class PhpQueryGenerator
         $this->rowResolver = new StatementRowResolver();
         $this->parameterResolver = new StatementParameterResolver();
         $this->phpDocTypeRenderer = new PhpDocTypeRenderer();
+        $this->nativeTypeRenderer = new NativeTypeRenderer();
     }
 
     /**
@@ -97,11 +102,12 @@ final readonly class PhpQueryGenerator
         $constructor = $class->addMethod('__construct');
 
         foreach ($fields as $field) {
-            $type = $field->nullable ? '?' . $field->phpType : $field->phpType;
+            $type = $this->nativeTypeRenderer->render($field->phpType);
             $constructor
                 ->addPromotedParameter($field->propertyName)
                 ->setPublic()
-                ->setType($type);
+                ->setType($type)
+                ->setNullable($field->nullable);
         }
 
         $factory = $class->addMethod('fromDatabaseRow');
@@ -162,10 +168,9 @@ final readonly class PhpQueryGenerator
             $generatedParameter = $constructor
                 ->addPromotedParameter($parameter->propertyName)
                 ->setPrivate();
-            $generatedParameter->setType($parameter->phpType);
-            if ($parameter->nullable) {
-                $generatedParameter->setNullable();
-            }
+            $generatedParameter
+                ->setType($this->nativeTypeRenderer->render($parameter->phpType))
+                ->setNullable($parameter->nullable);
         }
 
         $factory = $class->addMethod('create');
@@ -175,10 +180,9 @@ final readonly class PhpQueryGenerator
         if ($parameters !== []) {
             foreach ($parameters as $parameter) {
                 $generatedParameter = $factory->addParameter($parameter->propertyName);
-                $generatedParameter->setType($parameter->phpType);
-                if ($parameter->nullable) {
-                    $generatedParameter->setNullable();
-                }
+                $generatedParameter
+                    ->setType($this->nativeTypeRenderer->render($parameter->phpType))
+                    ->setNullable($parameter->nullable);
             }
 
             $arguments = implode(
@@ -260,7 +264,7 @@ final readonly class PhpQueryGenerator
         $hasValue = "array_key_exists('{$field->resultColumnName}', \$row) && {$source} !== null";
 
         if ($field->nullable) {
-            return match ($field->phpType) {
+            return match ($this->nativeTypeRenderer->render($field->phpType)) {
                 'int' => "{$hasValue} ? (int) {$source} : null",
                 'float' => "{$hasValue} ? (float) {$source} : null",
                 'bool' => "{$hasValue} ? (bool) {$source} : null",
@@ -268,7 +272,7 @@ final readonly class PhpQueryGenerator
             };
         }
 
-        return match ($field->phpType) {
+        return match ($this->nativeTypeRenderer->render($field->phpType)) {
             'int' => "{$hasValue} ? (int) {$source} : throw new \\InvalidArgumentException('Missing required column {$field->resultColumnName}.')",
             'float' => "{$hasValue} ? (float) {$source} : throw new \\InvalidArgumentException('Missing required column {$field->resultColumnName}.')",
             'bool' => "{$hasValue} ? (bool) {$source} : throw new \\InvalidArgumentException('Missing required column {$field->resultColumnName}.')",
@@ -384,7 +388,7 @@ final readonly class PhpQueryGenerator
                     $field->sourceColumnName,
                     $field->resultColumnName,
                     $field->propertyName,
-                    $field->phpType,
+                    stringify($field->phpType),
                     $field->nullable ? 'nullable' : 'required',
                 ]),
                 $fields,

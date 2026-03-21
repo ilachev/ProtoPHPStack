@@ -10,6 +10,7 @@ use SqlGen\Model\SchemaForeignKeyConstraint;
 use SqlGen\Model\SchemaTable;
 use SqlGen\Model\SchemaTableReference;
 use SqlGen\Model\SchemaUniqueConstraint;
+use SqlGen\Type\PhpTypeFactory;
 
 final class SqlSchemaParser implements DatabaseSchemaParser
 {
@@ -53,7 +54,7 @@ final class SqlSchemaParser implements DatabaseSchemaParser
             $columns[$columnDefinition->name] = new SchemaColumn(
                 name: $columnDefinition->name,
                 sqlType: $columnDefinition->sqlType,
-                phpType: $this->mapPhpType($columnDefinition->sqlType),
+                phpType: PhpTypeFactory::fromSqlType($columnDefinition->sqlType),
                 nullable: $columnDefinition->nullable,
                 primaryKey: in_array($columnDefinition->name, $primaryKeyColumns, true) || $columnDefinition->primaryKey,
                 unique: $columnDefinition->unique || $this->isSingleColumnUnique($columnDefinition->name, $uniqueConstraints),
@@ -206,16 +207,5 @@ final class SqlSchemaParser implements DatabaseSchemaParser
         }
 
         return null;
-    }
-
-    private function mapPhpType(string $sqlType): string
-    {
-        return match ($sqlType) {
-            'TEXT', 'JSONB' => 'string',
-            'INTEGER', 'BIGINT', 'BIGSERIAL', 'SERIAL' => 'int',
-            'REAL', 'DOUBLE', 'NUMERIC', 'DECIMAL' => 'float',
-            'BOOLEAN', 'BOOL' => 'bool',
-            default => throw new \RuntimeException("Unsupported SQL type for PHP mapping: {$sqlType}"),
-        };
     }
 }

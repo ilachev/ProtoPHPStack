@@ -6,19 +6,10 @@ namespace SqlGen\Type;
 
 use SqlGen\Model\ResolvedSqlParameter;
 use SqlGen\Model\RowField;
-use Typhoon\Type;
 
 use function Typhoon\Type\arrayShapeT;
-
-use const Typhoon\Type\boolT;
-use const Typhoon\Type\floatT;
-use const Typhoon\Type\intT;
-use const Typhoon\Type\mixedT;
-
 use function Typhoon\Type\nullOrT;
 use function Typhoon\Type\stringify;
-
-use const Typhoon\Type\stringT;
 
 final readonly class PhpDocTypeRenderer
 {
@@ -30,7 +21,7 @@ final readonly class PhpDocTypeRenderer
         $elements = [];
 
         foreach ($fields as $field) {
-            $elements[$field->resultColumnName] = $this->resolveType($field->phpType, $field->nullable);
+            $elements[$field->resultColumnName] = $field->nullable ? nullOrT($field->phpType) : $field->phpType;
         }
 
         return stringify(arrayShapeT($elements));
@@ -44,22 +35,9 @@ final readonly class PhpDocTypeRenderer
         $elements = [];
 
         foreach ($parameters as $parameter) {
-            $elements[$parameter->name] = $this->resolveType($parameter->phpType, $parameter->nullable);
+            $elements[$parameter->name] = $parameter->nullable ? nullOrT($parameter->phpType) : $parameter->phpType;
         }
 
         return stringify(arrayShapeT($elements));
-    }
-
-    private function resolveType(string $phpType, bool $nullable): Type
-    {
-        $type = match ($phpType) {
-            'int' => intT,
-            'float' => floatT,
-            'bool' => boolT,
-            'string' => stringT,
-            default => mixedT,
-        };
-
-        return $nullable ? nullOrT($type) : $type;
     }
 }
