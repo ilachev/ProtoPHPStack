@@ -11,5 +11,8 @@ final readonly class SchemaColumn
         public string $sqlType,
         public string $phpType,
         public bool $nullable,
+        public bool $primaryKey = false,
+        public bool $unique = false,
+        public ?SchemaTableReference $reference = null,
     ) {}
 }

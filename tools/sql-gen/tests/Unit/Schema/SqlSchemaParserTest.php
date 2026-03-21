@@ -34,6 +34,14 @@ final class SqlSchemaParserTest extends TestCase
                 email TEXT NOT NULL UNIQUE,
                 session_id TEXT REFERENCES sessions(id) ON DELETE CASCADE
             );
+
+            CREATE TABLE memberships (
+                user_id BIGINT NOT NULL,
+                group_id BIGINT NOT NULL,
+                CONSTRAINT memberships_pk PRIMARY KEY (user_id, group_id),
+                CONSTRAINT memberships_user_fk FOREIGN KEY (user_id) REFERENCES users(id),
+                UNIQUE (group_id, user_id)
+            );
             SQL);
 
         $schema = (new SqlSchemaParser())->parseFile($schemaPath);
@@ -43,6 +51,7 @@ final class SqlSchemaParserTest extends TestCase
         $sessionId = $sessions->getColumn('id');
         self::assertNotNull($sessionId);
         self::assertFalse($sessionId->nullable);
+        self::assertTrue($sessionId->primaryKey);
         $sessionUserId = $sessions->getColumn('user_id');
         self::assertNotNull($sessionUserId);
         self::assertTrue($sessionUserId->nullable);
@@ -60,8 +69,22 @@ final class SqlSchemaParserTest extends TestCase
         $userEmail = $users->getColumn('email');
         self::assertNotNull($userEmail);
         self::assertFalse($userEmail->nullable);
+        self::assertTrue($userEmail->unique);
         $userSessionId = $users->getColumn('session_id');
         self::assertNotNull($userSessionId);
         self::assertTrue($userSessionId->nullable);
+        self::assertNotNull($userSessionId->reference);
+        self::assertSame('sessions', $userSessionId->reference->table);
+        self::assertSame('id', $userSessionId->reference->column);
+
+        $memberships = $schema->getTable('memberships');
+        self::assertNotNull($memberships);
+        self::assertSame(['user_id', 'group_id'], $memberships->primaryKeyColumns);
+        self::assertCount(1, $memberships->uniqueConstraints);
+        self::assertSame(['group_id', 'user_id'], $memberships->uniqueConstraints[0]->columns);
+        self::assertCount(1, $memberships->foreignKeys);
+        self::assertSame(['user_id'], $memberships->foreignKeys[0]->columns);
+        self::assertSame('users', $memberships->foreignKeys[0]->referencedTable);
+        self::assertSame(['id'], $memberships->foreignKeys[0]->referencedColumns);
     }
 }

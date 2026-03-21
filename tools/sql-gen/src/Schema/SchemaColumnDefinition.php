@@ -10,5 +10,8 @@ final readonly class SchemaColumnDefinition
         public string $name,
         public string $sqlType,
         public bool $nullable,
+        public bool $primaryKey = false,
+        public bool $unique = false,
+        public ?SchemaTableReferenceDefinition $reference = null,
     ) {}
 }
