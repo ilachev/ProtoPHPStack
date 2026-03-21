@@ -87,4 +87,29 @@ final class SqlSchemaParserTest extends TestCase
         self::assertSame('users', $memberships->foreignKeys[0]->referencedTable);
         self::assertSame(['id'], $memberships->foreignKeys[0]->referencedColumns);
     }
+
+    public function testRejectsForeignKeysReferencingUnknownSchemaTargets(): void
+    {
+        $workspace = sys_get_temp_dir() . '/sql-gen-invalid-schema-' . uniqid('', true);
+        if (!mkdir($workspace, 0777, true) && !is_dir($workspace)) {
+            self::fail('Unable to create temporary schema workspace.');
+        }
+
+        $schemaPath = $workspace . '/schema.sql';
+
+        file_put_contents($schemaPath, <<<'SQL'
+            CREATE TABLE users (
+                id BIGSERIAL PRIMARY KEY
+            );
+
+            CREATE TABLE sessions (
+                user_id BIGINT NOT NULL REFERENCES users(missing_id)
+            );
+            SQL);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('references unknown column missing_id');
+
+        (new SqlSchemaParser())->parseFile($schemaPath);
+    }
 }

@@ -13,6 +13,10 @@ use SqlGen\Model\SchemaUniqueConstraint;
 
 final class SqlSchemaParser implements DatabaseSchemaParser
 {
+    public function __construct(
+        private readonly ?SchemaIntegrityValidator $integrityValidator = null,
+    ) {}
+
     public function parseFile(string $path): DatabaseSchema
     {
         $contents = file_get_contents($path);
@@ -27,7 +31,10 @@ final class SqlSchemaParser implements DatabaseSchemaParser
             $tables[$tableDefinition->name] = $this->buildTable($tableDefinition);
         }
 
-        return new DatabaseSchema($tables);
+        $schema = new DatabaseSchema($tables);
+        ($this->integrityValidator ?? new SchemaIntegrityValidator())->validate($schema);
+
+        return $schema;
     }
 
     private function buildTable(SchemaTableDefinition $definition): SchemaTable
