@@ -7,14 +7,14 @@ namespace Tests\Unit\Type;
 use PHPUnit\Framework\TestCase;
 use SqlGen\Model\ResolvedSqlParameter;
 use SqlGen\Model\RowField;
-use SqlGen\Type\PhpDocTypeRenderer;
 use SqlGen\Type\PhpTypeFactory;
+use SqlGen\Type\PhpTypeRenderer;
 
-final class PhpDocTypeRendererTest extends TestCase
+final class PhpTypeRendererTest extends TestCase
 {
     public function testRendersRowShapeViaTyphoonType(): void
     {
-        $renderer = new PhpDocTypeRenderer();
+        $renderer = new PhpTypeRenderer();
 
         $shape = $renderer->renderRowShape([
             new RowField('id', 'id', 'id', PhpTypeFactory::fromNativeType('string'), false),
@@ -26,7 +26,7 @@ final class PhpDocTypeRendererTest extends TestCase
 
     public function testRendersEmptyParamsShapeViaTyphoonType(): void
     {
-        $renderer = new PhpDocTypeRenderer();
+        $renderer = new PhpTypeRenderer();
 
         $shape = $renderer->renderParamsShape([]);
 
@@ -35,7 +35,7 @@ final class PhpDocTypeRendererTest extends TestCase
 
     public function testRendersParameterShapeViaTyphoonType(): void
     {
-        $renderer = new PhpDocTypeRenderer();
+        $renderer = new PhpTypeRenderer();
 
         $shape = $renderer->renderParamsShape([
             new ResolvedSqlParameter('user_id', 'userId', 'BIGINT', PhpTypeFactory::fromNativeType('int'), true),
@@ -43,5 +43,13 @@ final class PhpDocTypeRendererTest extends TestCase
         ]);
 
         self::assertSame("array{'user_id': null|int, 'payload': string}", $shape);
+    }
+
+    public function testRendersNativeTypeAndSignature(): void
+    {
+        $renderer = new PhpTypeRenderer();
+
+        self::assertSame('string', $renderer->renderNative(PhpTypeFactory::fromNativeType('string')));
+        self::assertSame('null|int', $renderer->renderSignature(PhpTypeFactory::fromNativeType('int'), true));
     }
 }

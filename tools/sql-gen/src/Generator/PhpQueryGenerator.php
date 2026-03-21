@@ -16,18 +16,14 @@ use SqlGen\Model\SqlStatement;
 use SqlGen\Schema\StatementParameterResolver;
 use SqlGen\Schema\StatementRowResolver;
 use SqlGen\Type\DatabaseValueExpressionRenderer;
-use SqlGen\Type\NativeTypeRenderer;
-use SqlGen\Type\PhpDocTypeRenderer;
-
-use function Typhoon\Type\stringify;
+use SqlGen\Type\PhpTypeRenderer;
 
 final readonly class PhpQueryGenerator
 {
     private PsrPrinter $printer;
     private StatementRowResolver $rowResolver;
     private StatementParameterResolver $parameterResolver;
-    private PhpDocTypeRenderer $phpDocTypeRenderer;
-    private NativeTypeRenderer $nativeTypeRenderer;
+    private PhpTypeRenderer $phpTypeRenderer;
     private DatabaseValueExpressionRenderer $databaseValueExpressionRenderer;
 
     public function __construct(
@@ -37,8 +33,7 @@ final readonly class PhpQueryGenerator
         $this->printer = new PsrPrinter();
         $this->rowResolver = new StatementRowResolver();
         $this->parameterResolver = new StatementParameterResolver();
-        $this->phpDocTypeRenderer = new PhpDocTypeRenderer();
-        $this->nativeTypeRenderer = new NativeTypeRenderer();
+        $this->phpTypeRenderer = new PhpTypeRenderer();
         $this->databaseValueExpressionRenderer = new DatabaseValueExpressionRenderer();
     }
 
@@ -100,12 +95,12 @@ final readonly class PhpQueryGenerator
         $class->setFinal(true);
         $class->setReadOnly(true);
         $class->addImplement('App\Platform\Storage\Sql\DatabaseRow');
-        $class->addComment(sprintf('@implements DatabaseRow<%s>', $this->phpDocTypeRenderer->renderRowShape($fields)));
+        $class->addComment(sprintf('@implements DatabaseRow<%s>', $this->phpTypeRenderer->renderRowShape($fields)));
 
         $constructor = $class->addMethod('__construct');
 
         foreach ($fields as $field) {
-            $type = $this->nativeTypeRenderer->render($field->phpType);
+            $type = $this->phpTypeRenderer->renderNative($field->phpType);
             $constructor
                 ->addPromotedParameter($field->propertyName)
                 ->setPublic()
@@ -117,7 +112,7 @@ final readonly class PhpQueryGenerator
         $factory->setStatic();
         $factory->setReturnType('self');
         $factory->addParameter('row')->setType('array');
-        $factory->addComment(sprintf('@param %s $row', $this->phpDocTypeRenderer->renderRowShape($fields)));
+        $factory->addComment(sprintf('@param %s $row', $this->phpTypeRenderer->renderRowShape($fields)));
         $factory->setBody($this->renderRowFactoryBody($fields));
 
         return $this->printGeneratedFile($file, $sourcePath);
@@ -161,7 +156,7 @@ final readonly class PhpQueryGenerator
                     '@implements %s<%s, %s>',
                     $interfaceName,
                     $rowClassName,
-                    $this->phpDocTypeRenderer->renderParamsShape($parameters),
+                    $this->phpTypeRenderer->renderParamsShape($parameters),
                 ),
             );
         }
@@ -172,7 +167,7 @@ final readonly class PhpQueryGenerator
                 ->addPromotedParameter($parameter->propertyName)
                 ->setPrivate();
             $generatedParameter
-                ->setType($this->nativeTypeRenderer->render($parameter->phpType))
+                ->setType($this->phpTypeRenderer->renderNative($parameter->phpType))
                 ->setNullable($parameter->nullable);
         }
 
@@ -184,7 +179,7 @@ final readonly class PhpQueryGenerator
             foreach ($parameters as $parameter) {
                 $generatedParameter = $factory->addParameter($parameter->propertyName);
                 $generatedParameter
-                    ->setType($this->nativeTypeRenderer->render($parameter->phpType))
+                    ->setType($this->phpTypeRenderer->renderNative($parameter->phpType))
                     ->setNullable($parameter->nullable);
             }
 
@@ -218,7 +213,7 @@ final readonly class PhpQueryGenerator
 
         $paramsMethod = $class->addMethod('params');
         $paramsMethod->setReturnType('array');
-        $paramsMethod->addComment(sprintf('@return %s', $this->phpDocTypeRenderer->renderParamsShape($parameters)));
+        $paramsMethod->addComment(sprintf('@return %s', $this->phpTypeRenderer->renderParamsShape($parameters)));
         $paramsMethod->setBody($this->renderParamsMethodBody($parameters));
 
         return $this->printGeneratedFile($file, $sourcePath);
@@ -375,12 +370,11 @@ final readonly class PhpQueryGenerator
         return implode(
             '|',
             array_map(
-                static fn(RowField $field): string => implode(':', [
+                fn(RowField $field): string => implode(':', [
                     $field->sourceColumnName,
                     $field->resultColumnName,
                     $field->propertyName,
-                    stringify($field->phpType),
-                    $field->nullable ? 'nullable' : 'required',
+                    $this->phpTypeRenderer->renderSignature($field->phpType, $field->nullable),
                 ]),
                 $fields,
             ),

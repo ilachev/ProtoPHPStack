@@ -8,18 +8,18 @@ use Typhoon\Type;
 
 final readonly class DatabaseValueExpressionRenderer
 {
-    private NativeTypeRenderer $nativeTypeRenderer;
+    private PhpTypeRenderer $phpTypeRenderer;
 
     public function __construct()
     {
-        $this->nativeTypeRenderer = new NativeTypeRenderer();
+        $this->phpTypeRenderer = new PhpTypeRenderer();
     }
 
     public function renderArrayValue(Type $type, string $rowVariable, string $columnName, bool $nullable): string
     {
         $source = "{$rowVariable}['{$columnName}']";
         $hasValue = "array_key_exists('{$columnName}', {$rowVariable}) && {$source} !== null";
-        $nativeType = $this->nativeTypeRenderer->render($type);
+        $nativeType = $this->phpTypeRenderer->renderNative($type);
         $cast = match ($nativeType) {
             'int' => '(int)',
             'float' => '(float)',

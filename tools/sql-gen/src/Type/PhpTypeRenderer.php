@@ -6,13 +6,32 @@ namespace SqlGen\Type;
 
 use SqlGen\Model\ResolvedSqlParameter;
 use SqlGen\Model\RowField;
+use Typhoon\Type;
 
 use function Typhoon\Type\arrayShapeT;
 use function Typhoon\Type\nullOrT;
 use function Typhoon\Type\stringify;
 
-final readonly class PhpDocTypeRenderer
+final readonly class PhpTypeRenderer
 {
+    /**
+     * @return 'string'|'int'|'float'|'bool'
+     */
+    public function renderNative(Type $type): string
+    {
+        $rendered = stringify($type);
+
+        return match ($rendered) {
+            'string', 'int', 'float', 'bool' => $rendered,
+            default => throw new \RuntimeException("Unsupported native PHP type rendering: {$rendered}"),
+        };
+    }
+
+    public function renderSignature(Type $type, bool $nullable): string
+    {
+        return stringify($nullable ? nullOrT($type) : $type);
+    }
+
     /**
      * @param list<RowField> $fields
      */
