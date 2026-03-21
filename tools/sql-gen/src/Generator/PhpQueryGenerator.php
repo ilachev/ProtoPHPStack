@@ -15,6 +15,7 @@ use SqlGen\Model\SqlResultKind;
 use SqlGen\Model\SqlStatement;
 use SqlGen\Schema\StatementParameterResolver;
 use SqlGen\Schema\StatementRowResolver;
+use SqlGen\Type\DatabaseValueExpressionRenderer;
 use SqlGen\Type\NativeTypeRenderer;
 use SqlGen\Type\PhpDocTypeRenderer;
 
@@ -27,6 +28,7 @@ final readonly class PhpQueryGenerator
     private StatementParameterResolver $parameterResolver;
     private PhpDocTypeRenderer $phpDocTypeRenderer;
     private NativeTypeRenderer $nativeTypeRenderer;
+    private DatabaseValueExpressionRenderer $databaseValueExpressionRenderer;
 
     public function __construct(
         private GeneratorConfig $config,
@@ -37,6 +39,7 @@ final readonly class PhpQueryGenerator
         $this->parameterResolver = new StatementParameterResolver();
         $this->phpDocTypeRenderer = new PhpDocTypeRenderer();
         $this->nativeTypeRenderer = new NativeTypeRenderer();
+        $this->databaseValueExpressionRenderer = new DatabaseValueExpressionRenderer();
     }
 
     /**
@@ -260,24 +263,12 @@ final readonly class PhpQueryGenerator
 
     private function renderRowFieldExpression(RowField $field): string
     {
-        $source = "\$row['{$field->resultColumnName}']";
-        $hasValue = "array_key_exists('{$field->resultColumnName}', \$row) && {$source} !== null";
-
-        if ($field->nullable) {
-            return match ($this->nativeTypeRenderer->render($field->phpType)) {
-                'int' => "{$hasValue} ? (int) {$source} : null",
-                'float' => "{$hasValue} ? (float) {$source} : null",
-                'bool' => "{$hasValue} ? (bool) {$source} : null",
-                default => "{$hasValue} ? (string) {$source} : null",
-            };
-        }
-
-        return match ($this->nativeTypeRenderer->render($field->phpType)) {
-            'int' => "{$hasValue} ? (int) {$source} : throw new \\InvalidArgumentException('Missing required column {$field->resultColumnName}.')",
-            'float' => "{$hasValue} ? (float) {$source} : throw new \\InvalidArgumentException('Missing required column {$field->resultColumnName}.')",
-            'bool' => "{$hasValue} ? (bool) {$source} : throw new \\InvalidArgumentException('Missing required column {$field->resultColumnName}.')",
-            default => "{$hasValue} ? (string) {$source} : throw new \\InvalidArgumentException('Missing required column {$field->resultColumnName}.')",
-        };
+        return $this->databaseValueExpressionRenderer->renderArrayValue(
+            $field->phpType,
+            '$row',
+            $field->resultColumnName,
+            $field->nullable,
+        );
     }
 
     private function printGeneratedFile(PhpFile $file, string $sourcePath): string

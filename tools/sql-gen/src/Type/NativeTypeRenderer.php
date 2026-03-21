@@ -10,6 +10,9 @@ use function Typhoon\Type\stringify;
 
 final readonly class NativeTypeRenderer
 {
+    /**
+     * @return 'string'|'int'|'float'|'bool'
+     */
     public function render(Type $type): string
     {
         $rendered = stringify($type);
