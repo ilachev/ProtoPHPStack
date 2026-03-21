@@ -51,6 +51,7 @@ final readonly class PostgreSqlStatementCompiler
         }
 
         $query = $this->sqlParser->parse($statement->sql);
+        $this->assertQueryMatchesSchema($query, $schema, $statement->name);
 
         return new PreparedPostgreSqlStatement(
             name: $statement->name,
@@ -60,6 +61,29 @@ final readonly class PostgreSqlStatementCompiler
                 $parameters,
             ),
         );
+    }
+
+    private function assertQueryMatchesSchema(SqlQuery $query, DatabaseSchema $schema, string $statementName): void
+    {
+        if (!$query instanceof InsertQuery || $query->conflict === null) {
+            return;
+        }
+
+        $table = $schema->getTable(strtolower($query->table));
+        if ($table === null) {
+            throw new \RuntimeException("Table {$query->table} was not found in schema for query {$statementName}");
+        }
+
+        if ($table->supportsConflictTarget($query->conflict->targetColumns)) {
+            return;
+        }
+
+        throw new \RuntimeException(sprintf(
+            'ON CONFLICT target (%s) in query %s does not match any PRIMARY KEY or UNIQUE constraint on table %s',
+            implode(', ', $query->conflict->targetColumns),
+            $statementName,
+            $table->name,
+        ));
     }
 
     /**

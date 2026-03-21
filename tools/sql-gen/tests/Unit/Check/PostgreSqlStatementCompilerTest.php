@@ -9,6 +9,7 @@ use SqlGen\Check\PostgreSqlStatementCompiler;
 use SqlGen\Model\DatabaseSchema;
 use SqlGen\Model\SchemaColumn;
 use SqlGen\Model\SchemaTable;
+use SqlGen\Model\SchemaUniqueConstraint;
 use SqlGen\Model\SqlParameter;
 use SqlGen\Model\SqlResultKind;
 use SqlGen\Model\SqlStatement;
@@ -130,5 +131,45 @@ final class PostgreSqlStatementCompilerTest extends TestCase
             $compiled->sql,
         );
         self::assertSame(['text', 'bigint'], $compiled->parameterTypes);
+    }
+
+    public function testRejectsInvalidOnConflictTargetAgainstSchemaConstraints(): void
+    {
+        $compiler = new PostgreSqlStatementCompiler();
+        $schema = new DatabaseSchema([
+            'users' => new SchemaTable(
+                name: 'users',
+                columns: [
+                    'id' => new SchemaColumn('id', 'BIGSERIAL', 'int', false, primaryKey: true),
+                    'email' => new SchemaColumn('email', 'TEXT', 'string', false, unique: true),
+                    'password_hash' => new SchemaColumn('password_hash', 'TEXT', 'string', false),
+                ],
+                primaryKeyColumns: ['id'],
+                uniqueConstraints: [
+                    new SchemaUniqueConstraint(['email']),
+                ],
+            ),
+        ]);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('ON CONFLICT target (password_hash)');
+
+        $compiler->compile(
+            new SqlStatement(
+                name: 'UpsertUser',
+                resultKind: SqlResultKind::Exec,
+                sql: <<<'SQL'
+                    INSERT INTO users (email, password_hash)
+                    VALUES (:email, :password_hash)
+                    ON CONFLICT (password_hash) DO UPDATE SET
+                        password_hash = EXCLUDED.password_hash;
+                    SQL,
+                parameters: [
+                    new SqlParameter('email'),
+                    new SqlParameter('password_hash'),
+                ],
+            ),
+            $schema,
+        );
     }
 }
