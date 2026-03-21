@@ -4,50 +4,46 @@ declare(strict_types=1);
 
 namespace SqlGen\Schema;
 
-use SqlGen\Model\SchemaTable;
-
 final readonly class StatementTableMap
 {
     /**
-     * @param array<string, SchemaTable> $references
-     * @param list<SchemaTable> $tables
+     * @param list<StatementVisibleTable> $visibleTables
      */
     public function __construct(
-        private array $references,
-        private array $tables,
-        private ?SchemaTable $primaryTable,
+        private array $visibleTables,
+        private ?StatementVisibleTable $primaryTable,
         private string $queryName,
     ) {}
 
     public function resolveColumn(?string $qualifier, string $columnName): ResolvedSchemaColumn
     {
         if (is_string($qualifier) && $qualifier !== '') {
-            $table = $this->references[$qualifier] ?? null;
+            $table = $this->resolveQualifiedTable($qualifier);
             if ($table === null) {
                 throw new \RuntimeException(
                     "Unknown table or alias {$qualifier} in query {$this->queryName}",
                 );
             }
 
-            $column = $table->getColumn($columnName);
+            $column = $table->resolveColumn($columnName);
             if ($column === null) {
                 throw new \RuntimeException(
-                    "Column {$columnName} was not found in schema table {$table->name} for query {$this->queryName}",
+                    "Column {$columnName} was not found in schema table {$table->table->name} for query {$this->queryName}",
                 );
             }
 
-            return new ResolvedSchemaColumn($table, $columnName, $column);
+            return $column;
         }
 
         $resolved = [];
 
-        foreach ($this->tables as $table) {
-            $column = $table->getColumn($columnName);
+        foreach ($this->visibleTables as $table) {
+            $column = $table->resolveColumn($columnName);
             if ($column === null) {
                 continue;
             }
 
-            $resolved[] = new ResolvedSchemaColumn($table, $columnName, $column);
+            $resolved[] = $column;
         }
 
         if ($resolved === []) {
@@ -73,7 +69,7 @@ final readonly class StatementTableMap
         $table = null;
 
         if (is_string($qualifier) && $qualifier !== '') {
-            $table = $this->references[$qualifier] ?? null;
+            $table = $this->resolveQualifiedTable($qualifier);
             if ($table === null) {
                 throw new \RuntimeException(
                     "Unknown table or alias {$qualifier} in query {$this->queryName}",
@@ -81,8 +77,8 @@ final readonly class StatementTableMap
             }
         } elseif ($this->primaryTable !== null) {
             $table = $this->primaryTable;
-        } elseif (count($this->tables) === 1) {
-            $table = $this->tables[0];
+        } elseif (count($this->visibleTables) === 1) {
+            $table = $this->visibleTables[0];
         }
 
         if ($table === null) {
@@ -91,17 +87,17 @@ final readonly class StatementTableMap
             );
         }
 
-        $columns = [];
+        return $table->expandColumns();
+    }
 
-        foreach (array_keys($table->columns) as $columnName) {
-            $column = $table->getColumn($columnName);
-            if ($column === null) {
-                continue;
+    private function resolveQualifiedTable(string $qualifier): ?StatementVisibleTable
+    {
+        foreach ($this->visibleTables as $table) {
+            if ($table->matchesQualifier($qualifier)) {
+                return $table;
             }
-
-            $columns[] = new ResolvedSchemaColumn($table, $columnName, $column);
         }
 
-        return $columns;
+        return null;
     }
 }
