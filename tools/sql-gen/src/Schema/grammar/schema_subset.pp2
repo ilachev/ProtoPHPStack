@@ -1,0 +1,37 @@
+%token T_CREATE      (?i:create)(?![a-zA-Z0-9_])
+%token T_TABLE       (?i:table)(?![a-zA-Z0-9_])
+%token T_CONSTRAINT  (?i:constraint)(?![a-zA-Z0-9_])
+%token T_PRIMARY     (?i:primary)(?![a-zA-Z0-9_])
+%token T_KEY         (?i:key)(?![a-zA-Z0-9_])
+%token T_UNIQUE      (?i:unique)(?![a-zA-Z0-9_])
+%token T_FOREIGN     (?i:foreign)(?![a-zA-Z0-9_])
+%token T_REFERENCES  (?i:references)(?![a-zA-Z0-9_])
+%token T_NOT         (?i:not)(?![a-zA-Z0-9_])
+%token T_NULL        (?i:null)(?![a-zA-Z0-9_])
+%token T_ON          (?i:on)(?![a-zA-Z0-9_])
+%token T_DELETE      (?i:delete)(?![a-zA-Z0-9_])
+%token T_UPDATE      (?i:update)(?![a-zA-Z0-9_])
+%token T_IDENT       [a-zA-Z_][a-zA-Z0-9_]*
+%token T_COMMA       ,
+%token T_LPAREN      \(
+%token T_RPAREN      \)
+%token T_SEMICOLON   ;
+%skip  T_WS          \s+
+%skip  T_LINE_COMMENT --[^\n]*
+
+#CreateTableStmt: <T_CREATE> <T_TABLE> <T_IDENT> <T_LPAREN> TableElements() <T_RPAREN> <T_SEMICOLON>?;
+#TableElements: TableElement() (<T_COMMA> TableElement())*;
+#TableElement: ColumnDef() | TableConstraint();
+#ColumnDef: <T_IDENT> <T_IDENT> ColumnConstraint()*;
+#ColumnConstraint: PrimaryKeyConstraint() | NotNullConstraint() | UniqueConstraint() | InlineReferencesConstraint();
+#PrimaryKeyConstraint: <T_PRIMARY> <T_KEY>;
+#NotNullConstraint: <T_NOT> <T_NULL>;
+#UniqueConstraint: <T_UNIQUE>;
+#InlineReferencesConstraint: <T_REFERENCES> <T_IDENT> <T_LPAREN> IdentList() <T_RPAREN> ReferenceActionClause()*;
+#ReferenceActionClause: <T_ON> (<T_DELETE> | <T_UPDATE>) <T_IDENT>;
+#TableConstraint: ConstraintNameDecl()? (TablePrimaryKeyConstraint() | TableUniqueConstraint() | TableForeignKeyConstraint());
+#ConstraintNameDecl: <T_CONSTRAINT> <T_IDENT>;
+#TablePrimaryKeyConstraint: <T_PRIMARY> <T_KEY> <T_LPAREN> IdentList() <T_RPAREN>;
+#TableUniqueConstraint: <T_UNIQUE> <T_LPAREN> IdentList() <T_RPAREN>;
+#TableForeignKeyConstraint: <T_FOREIGN> <T_KEY> <T_LPAREN> IdentList() <T_RPAREN> <T_REFERENCES> <T_IDENT> <T_LPAREN> IdentList() <T_RPAREN> ReferenceActionClause()*;
+#IdentList: <T_IDENT> (<T_COMMA> <T_IDENT>)*;
