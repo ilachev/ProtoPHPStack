@@ -12,6 +12,7 @@ use SqlGen\Model\SqlParameter;
 use SqlGen\Model\SqlResultKind;
 use SqlGen\Model\SqlStatement;
 use SqlGen\Schema\StatementParameterResolver;
+use SqlGen\Type\PhpTypeFactory;
 use SqlGen\Type\PhpTypeRenderer;
 
 final class StatementParameterResolverTest extends TestCase
@@ -28,9 +29,9 @@ final class StatementParameterResolverTest extends TestCase
         $resolver = new StatementParameterResolver();
         $schema = new DatabaseSchema([
             'sessions' => new SchemaTable('sessions', [
-                'id' => new SchemaColumn('id', 'TEXT', 'string', false),
-                'user_id' => new SchemaColumn('user_id', 'INTEGER', 'int', true),
-                'expires_at' => new SchemaColumn('expires_at', 'BIGINT', 'int', false),
+                'id' => new SchemaColumn('id', 'TEXT', PhpTypeFactory::fromNativeType('string'), false),
+                'user_id' => new SchemaColumn('user_id', 'INTEGER', PhpTypeFactory::fromNativeType('int'), true),
+                'expires_at' => new SchemaColumn('expires_at', 'BIGINT', PhpTypeFactory::fromNativeType('int'), false),
             ]),
         ]);
 
@@ -57,7 +58,7 @@ final class StatementParameterResolverTest extends TestCase
         $resolver = new StatementParameterResolver();
         $schema = new DatabaseSchema([
             'sessions' => new SchemaTable('sessions', [
-                'user_id' => new SchemaColumn('user_id', 'INTEGER', 'int', true),
+                'user_id' => new SchemaColumn('user_id', 'INTEGER', PhpTypeFactory::fromNativeType('int'), true),
             ]),
         ]);
 
@@ -83,9 +84,9 @@ final class StatementParameterResolverTest extends TestCase
         $resolver = new StatementParameterResolver();
         $schema = new DatabaseSchema([
             'api_stats' => new SchemaTable('api_stats', [
-                'session_id' => new SchemaColumn('session_id', 'TEXT', 'string', false),
-                'status_code' => new SchemaColumn('status_code', 'INTEGER', 'int', false),
-                'execution_time' => new SchemaColumn('execution_time', 'REAL', 'float', false),
+                'session_id' => new SchemaColumn('session_id', 'TEXT', PhpTypeFactory::fromNativeType('string'), false),
+                'status_code' => new SchemaColumn('status_code', 'INTEGER', PhpTypeFactory::fromNativeType('int'), false),
+                'execution_time' => new SchemaColumn('execution_time', 'REAL', PhpTypeFactory::fromNativeType('float'), false),
             ]),
         ]);
 
@@ -123,8 +124,8 @@ final class StatementParameterResolverTest extends TestCase
         $resolver = new StatementParameterResolver();
         $schema = new DatabaseSchema([
             'sessions' => new SchemaTable('sessions', [
-                'id' => new SchemaColumn('id', 'TEXT', 'string', false),
-                'payload' => new SchemaColumn('payload', 'JSONB', 'string', false),
+                'id' => new SchemaColumn('id', 'TEXT', PhpTypeFactory::fromNativeType('string'), false),
+                'payload' => new SchemaColumn('payload', 'JSONB', PhpTypeFactory::fromNativeType('string'), false),
             ]),
         ]);
 
@@ -158,12 +159,12 @@ final class StatementParameterResolverTest extends TestCase
         $resolver = new StatementParameterResolver();
         $schema = new DatabaseSchema([
             'sessions' => new SchemaTable('sessions', [
-                'id' => new SchemaColumn('id', 'TEXT', 'string', false),
-                'user_id' => new SchemaColumn('user_id', 'BIGINT', 'int', true),
+                'id' => new SchemaColumn('id', 'TEXT', PhpTypeFactory::fromNativeType('string'), false),
+                'user_id' => new SchemaColumn('user_id', 'BIGINT', PhpTypeFactory::fromNativeType('int'), true),
             ]),
             'users' => new SchemaTable('users', [
-                'id' => new SchemaColumn('id', 'BIGSERIAL', 'int', false),
-                'email' => new SchemaColumn('email', 'TEXT', 'string', false),
+                'id' => new SchemaColumn('id', 'BIGSERIAL', PhpTypeFactory::fromNativeType('int'), false),
+                'email' => new SchemaColumn('email', 'TEXT', PhpTypeFactory::fromNativeType('string'), false),
             ]),
         ]);
 

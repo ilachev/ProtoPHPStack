@@ -24,12 +24,8 @@ final readonly class PhpTypeFactory
         };
     }
 
-    public static function fromNativeType(string|Type $type): Type
+    public static function fromNativeType(string $type): Type
     {
-        if ($type instanceof Type) {
-            return $type;
-        }
-
         return match ($type) {
             'string' => stringT,
             'int' => intT,

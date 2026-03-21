@@ -11,6 +11,7 @@ use SqlGen\Model\SchemaTable;
 use SqlGen\Model\SqlResultKind;
 use SqlGen\Model\SqlStatement;
 use SqlGen\Schema\StatementTableMapResolver;
+use SqlGen\Type\PhpTypeFactory;
 
 final class StatementTableMapResolverTest extends TestCase
 {
@@ -19,12 +20,12 @@ final class StatementTableMapResolverTest extends TestCase
         $resolver = new StatementTableMapResolver();
         $schema = new DatabaseSchema([
             'sessions' => new SchemaTable('sessions', [
-                'id' => new SchemaColumn('id', 'TEXT', 'string', false),
-                'user_id' => new SchemaColumn('user_id', 'BIGINT', 'int', true),
+                'id' => new SchemaColumn('id', 'TEXT', PhpTypeFactory::fromNativeType('string'), false),
+                'user_id' => new SchemaColumn('user_id', 'BIGINT', PhpTypeFactory::fromNativeType('int'), true),
             ]),
             'users' => new SchemaTable('users', [
-                'id' => new SchemaColumn('id', 'BIGSERIAL', 'int', false),
-                'email' => new SchemaColumn('email', 'TEXT', 'string', false),
+                'id' => new SchemaColumn('id', 'BIGSERIAL', PhpTypeFactory::fromNativeType('int'), false),
+                'email' => new SchemaColumn('email', 'TEXT', PhpTypeFactory::fromNativeType('string'), false),
             ]),
         ]);
 
@@ -51,7 +52,7 @@ final class StatementTableMapResolverTest extends TestCase
         $resolver = new StatementTableMapResolver();
         $schema = new DatabaseSchema([
             'users' => new SchemaTable('users', [
-                'id' => new SchemaColumn('id', 'BIGSERIAL', 'int', false),
+                'id' => new SchemaColumn('id', 'BIGSERIAL', PhpTypeFactory::fromNativeType('int'), false),
             ]),
         ]);
 

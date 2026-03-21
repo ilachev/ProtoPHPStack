@@ -13,6 +13,7 @@ use SqlGen\Model\SchemaUniqueConstraint;
 use SqlGen\Model\SqlParameter;
 use SqlGen\Model\SqlResultKind;
 use SqlGen\Model\SqlStatement;
+use SqlGen\Type\PhpTypeFactory;
 
 final class PostgreSqlStatementCompilerTest extends TestCase
 {
@@ -21,8 +22,8 @@ final class PostgreSqlStatementCompilerTest extends TestCase
         $compiler = new PostgreSqlStatementCompiler();
         $schema = new DatabaseSchema([
             'sessions' => new SchemaTable('sessions', [
-                'id' => new SchemaColumn('id', 'TEXT', 'string', false),
-                'user_id' => new SchemaColumn('user_id', 'INTEGER', 'int', true),
+                'id' => new SchemaColumn('id', 'TEXT', PhpTypeFactory::fromNativeType('string'), false),
+                'user_id' => new SchemaColumn('user_id', 'INTEGER', PhpTypeFactory::fromNativeType('int'), true),
             ]),
         ]);
 
@@ -49,7 +50,7 @@ final class PostgreSqlStatementCompilerTest extends TestCase
         $compiler = new PostgreSqlStatementCompiler();
         $schema = new DatabaseSchema([
             'sessions' => new SchemaTable('sessions', [
-                'id' => new SchemaColumn('id', 'TEXT', 'string', false),
+                'id' => new SchemaColumn('id', 'TEXT', PhpTypeFactory::fromNativeType('string'), false),
             ]),
         ]);
 
@@ -74,8 +75,8 @@ final class PostgreSqlStatementCompilerTest extends TestCase
         $compiler = new PostgreSqlStatementCompiler();
         $schema = new DatabaseSchema([
             'sessions' => new SchemaTable('sessions', [
-                'id' => new SchemaColumn('id', 'TEXT', 'string', false),
-                'updated_at' => new SchemaColumn('updated_at', 'BIGINT', 'int', false),
+                'id' => new SchemaColumn('id', 'TEXT', PhpTypeFactory::fromNativeType('string'), false),
+                'updated_at' => new SchemaColumn('updated_at', 'BIGINT', PhpTypeFactory::fromNativeType('int'), false),
             ]),
         ]);
 
@@ -103,9 +104,9 @@ final class PostgreSqlStatementCompilerTest extends TestCase
         $compiler = new PostgreSqlStatementCompiler();
         $schema = new DatabaseSchema([
             'api_stats' => new SchemaTable('api_stats', [
-                'session_id' => new SchemaColumn('session_id', 'TEXT', 'string', false),
-                'request_time' => new SchemaColumn('request_time', 'BIGINT', 'int', false),
-                'id' => new SchemaColumn('id', 'BIGSERIAL', 'int', false),
+                'session_id' => new SchemaColumn('session_id', 'TEXT', PhpTypeFactory::fromNativeType('string'), false),
+                'request_time' => new SchemaColumn('request_time', 'BIGINT', PhpTypeFactory::fromNativeType('int'), false),
+                'id' => new SchemaColumn('id', 'BIGSERIAL', PhpTypeFactory::fromNativeType('int'), false),
             ]),
         ]);
 
@@ -140,9 +141,9 @@ final class PostgreSqlStatementCompilerTest extends TestCase
             'users' => new SchemaTable(
                 name: 'users',
                 columns: [
-                    'id' => new SchemaColumn('id', 'BIGSERIAL', 'int', false, primaryKey: true),
-                    'email' => new SchemaColumn('email', 'TEXT', 'string', false, unique: true),
-                    'password_hash' => new SchemaColumn('password_hash', 'TEXT', 'string', false),
+                    'id' => new SchemaColumn('id', 'BIGSERIAL', PhpTypeFactory::fromNativeType('int'), false, primaryKey: true),
+                    'email' => new SchemaColumn('email', 'TEXT', PhpTypeFactory::fromNativeType('string'), false, unique: true),
+                    'password_hash' => new SchemaColumn('password_hash', 'TEXT', PhpTypeFactory::fromNativeType('string'), false),
                 ],
                 primaryKeyColumns: ['id'],
                 uniqueConstraints: [

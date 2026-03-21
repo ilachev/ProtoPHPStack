@@ -14,6 +14,7 @@ use SqlGen\Model\SqlFile;
 use SqlGen\Model\SqlParameter;
 use SqlGen\Model\SqlResultKind;
 use SqlGen\Model\SqlStatement;
+use SqlGen\Type\PhpTypeFactory;
 
 final class PhpQueryGeneratorTest extends TestCase
 {
@@ -28,7 +29,7 @@ final class PhpQueryGeneratorTest extends TestCase
             ),
             new DatabaseSchema([
                 'sessions' => new SchemaTable('sessions', [
-                    'id' => new SchemaColumn('id', 'TEXT', 'string', false),
+                    'id' => new SchemaColumn('id', 'TEXT', PhpTypeFactory::fromNativeType('string'), false),
                 ]),
             ]),
         );
@@ -82,7 +83,7 @@ final class PhpQueryGeneratorTest extends TestCase
             ),
             new DatabaseSchema([
                 'sessions' => new SchemaTable('sessions', [
-                    'id' => new SchemaColumn('id', 'TEXT', 'string', false),
+                    'id' => new SchemaColumn('id', 'TEXT', PhpTypeFactory::fromNativeType('string'), false),
                 ]),
             ]),
         );
@@ -123,8 +124,8 @@ final class PhpQueryGeneratorTest extends TestCase
             ),
             new DatabaseSchema([
                 'sessions' => new SchemaTable('sessions', [
-                    'id' => new SchemaColumn('id', 'TEXT', 'string', false),
-                    'user_id' => new SchemaColumn('user_id', 'BIGINT', 'int', true),
+                    'id' => new SchemaColumn('id', 'TEXT', PhpTypeFactory::fromNativeType('string'), false),
+                    'user_id' => new SchemaColumn('user_id', 'BIGINT', PhpTypeFactory::fromNativeType('int'), true),
                 ]),
             ]),
         );
@@ -181,8 +182,8 @@ final class PhpQueryGeneratorTest extends TestCase
             ),
             new DatabaseSchema([
                 'sessions' => new SchemaTable('sessions', [
-                    'id' => new SchemaColumn('id', 'TEXT', 'string', false),
-                    'user_id' => new SchemaColumn('user_id', 'BIGINT', 'int', true),
+                    'id' => new SchemaColumn('id', 'TEXT', PhpTypeFactory::fromNativeType('string'), false),
+                    'user_id' => new SchemaColumn('user_id', 'BIGINT', PhpTypeFactory::fromNativeType('int'), true),
                 ]),
             ]),
         );
