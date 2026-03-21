@@ -80,6 +80,7 @@ Reusable blocks:
 - проект живёт в long-running процессе RoadRunner, значит надо следить за памятью и накоплением состояния
 - persistence должен двигаться в сторону explicit SQL + typed generation, а не в сторону усложняющегося ORM-like слоя
 - type-system libraries допустимы только внутри generators и только там, где они реально заменяют ручной type rendering
+- внутри `tools/sql-gen` canonical PHP type model уже должен считаться Typhoon-based, а не строковым
 
 ## Команды
 

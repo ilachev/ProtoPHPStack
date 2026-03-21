@@ -145,6 +145,7 @@ Runtime не должен заново интерпретировать SQL.
 
 - рендерить через них PHPDoc shapes и другие generated type strings;
 - уменьшать ручную сборку type-строк внутри тулзы;
+- держать `Typhoon\Type` canonical type model внутри самого `sql-gen`, а не строки вида `'int'` / `'string'`;
 - не тащить эти зависимости в runtime проекта;
 - не делать их новым source of truth поверх SQL schema.
 
@@ -224,7 +225,26 @@ Regex-based parsing больше не должен быть production path дл
 
 - поддерживаемый subset SQL парсится через `phplrt`;
 - row resolution и parameter resolution работают поверх internal AST;
-- regex допустим только в отдельных вспомогательных местах вроде разбора named-statement headers и schema snapshot parsing, но не как анализатор query semantics.
+- schema SQL тоже разбирается через `phplrt`-based parser path;
+- named SQL file format разбирается структурно, без regex-эвристик в production path;
+- regex больше не должен быть частью `sql-gen` parsing/analysis semantics.
+
+### Type model strategy
+
+Внутренний type model `sql-gen` должен быть единым.
+
+Правильная модель:
+
+- SQL schema определяет source types;
+- `SqlSchemaParser` маппит их в `Typhoon\Type`;
+- `SchemaColumn`, `RowField`, `ResolvedSqlParameter` хранят именно `Typhoon\Type`, а не строковые PHP-типы;
+- генерация native type-hints, PHPDoc shapes и value-casting идёт через единый Typhoon-backed renderer layer.
+
+Неправильная модель:
+
+- хранить canonical type как строку и потом отдельно собирать PHPDoc;
+- допускать `string|Type` как постоянный публичный контракт внутренних моделей;
+- размазывать `stringify()` и ручные `match ('int'|'string')` по generator коду.
 
 Неправильная модель:
 
