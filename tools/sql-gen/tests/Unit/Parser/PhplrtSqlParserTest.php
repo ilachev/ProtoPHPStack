@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use SqlGen\Ast\DeleteQuery;
 use SqlGen\Ast\InsertQuery;
 use SqlGen\Ast\SelectProjectionColumn;
+use SqlGen\Ast\SelectProjectionFunction;
 use SqlGen\Ast\SelectProjectionWildcard;
 use SqlGen\Ast\SelectQuery;
 use SqlGen\Parser\PhplrtSqlParser;
@@ -87,6 +88,23 @@ final class PhplrtSqlParserTest extends TestCase
         self::assertCount(1, $query->orderBy);
         self::assertSame('updated_at', $query->orderBy[0]->column->column);
         self::assertSame('desc', $query->orderBy[0]->direction);
+    }
+
+    public function testParsesCountProjectionWithAlias(): void
+    {
+        $parser = new PhplrtSqlParser();
+
+        $query = $parser->parse(
+            'select count(*) as total from sessions where user_id = :user_id',
+        );
+
+        self::assertInstanceOf(SelectQuery::class, $query);
+        self::assertCount(1, $query->projections);
+        self::assertInstanceOf(SelectProjectionFunction::class, $query->projections[0]);
+        self::assertSame('count', $query->projections[0]->function->name);
+        self::assertTrue($query->projections[0]->function->wildcard);
+        self::assertNull($query->projections[0]->function->column);
+        self::assertSame('total', $query->projections[0]->alias?->value);
     }
 
     public function testParsesInsertWithReturningAndConflictClause(): void

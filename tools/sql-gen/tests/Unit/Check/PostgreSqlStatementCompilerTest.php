@@ -99,6 +99,34 @@ final class PostgreSqlStatementCompilerTest extends TestCase
         self::assertSame(['text'], $compiled->parameterTypes);
     }
 
+    public function testCompilesCountProjection(): void
+    {
+        $compiler = new PostgreSqlStatementCompiler();
+        $schema = new DatabaseSchema([
+            'sessions' => new SchemaTable('sessions', [
+                'user_id' => new SchemaColumn('user_id', 'BIGINT', PhpTypeFactory::fromNativeType('int'), true),
+            ]),
+        ]);
+
+        $compiled = $compiler->compile(
+            new SqlStatement(
+                name: 'CountSessions',
+                resultKind: SqlResultKind::One,
+                sql: 'SELECT COUNT(*) AS total FROM sessions WHERE user_id = :user_id;',
+                parameters: [
+                    new SqlParameter('user_id'),
+                ],
+            ),
+            $schema,
+        );
+
+        self::assertSame(
+            'SELECT COUNT(*) AS total FROM sessions WHERE user_id = $1',
+            $compiled->sql,
+        );
+        self::assertSame(['bigint'], $compiled->parameterTypes);
+    }
+
     public function testCompilesInsertWithReturningWithoutRegexReplacement(): void
     {
         $compiler = new PostgreSqlStatementCompiler();

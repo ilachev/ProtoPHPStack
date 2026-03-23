@@ -10,12 +10,14 @@ use SqlGen\Ast\InsertQuery;
 use SqlGen\Ast\InsertValueMapping;
 use SqlGen\Ast\SelectColumnReference;
 use SqlGen\Ast\SelectComparison;
+use SqlGen\Ast\SelectFunctionCall;
 use SqlGen\Ast\SelectJoin;
 use SqlGen\Ast\SelectOperand;
 use SqlGen\Ast\SelectOrderByItem;
 use SqlGen\Ast\SelectPlaceholder;
 use SqlGen\Ast\SelectProjection;
 use SqlGen\Ast\SelectProjectionColumn;
+use SqlGen\Ast\SelectProjectionFunction;
 use SqlGen\Ast\SelectProjectionWildcard;
 use SqlGen\Ast\SelectQuery;
 use SqlGen\Ast\SelectTableReference;
@@ -188,17 +190,27 @@ final readonly class PostgreSqlStatementCompiler
             return $projection->table !== null ? $projection->table . '.*' : '*';
         }
 
-        if (!$projection instanceof SelectProjectionColumn) {
-            throw new \RuntimeException('Unsupported projection type in PostgreSQL statement renderer.');
+        if ($projection instanceof SelectProjectionFunction) {
+            $function = $this->renderFunctionCall($projection->function);
+
+            if ($projection->alias === null) {
+                return $function;
+            }
+
+            return $function . ' AS ' . $projection->alias->value;
         }
 
-        $column = $this->renderColumnReference($projection->reference);
+        if ($projection instanceof SelectProjectionColumn) {
+            $column = $this->renderColumnReference($projection->reference);
 
-        if ($projection->alias === null) {
-            return $column;
+            if ($projection->alias === null) {
+                return $column;
+            }
+
+            return $column . ' AS ' . $projection->alias->value;
         }
 
-        return $column . ' AS ' . $projection->alias->value;
+        throw new \RuntimeException('Unsupported projection type in PostgreSQL statement renderer.');
     }
 
     private function renderTableReference(SelectTableReference $tableReference): string
@@ -263,6 +275,11 @@ final readonly class PostgreSqlStatementCompiler
         }
 
         return $columnReference->table . '.' . $columnReference->column;
+    }
+
+    private function renderFunctionCall(SelectFunctionCall $function): string
+    {
+        return $function->toSql();
     }
 
     /**

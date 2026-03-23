@@ -14,12 +14,14 @@ use SqlGen\Ast\InsertQuery;
 use SqlGen\Ast\InsertValueMapping;
 use SqlGen\Ast\SelectColumnReference;
 use SqlGen\Ast\SelectComparison;
+use SqlGen\Ast\SelectFunctionCall;
 use SqlGen\Ast\SelectJoin;
 use SqlGen\Ast\SelectOperand;
 use SqlGen\Ast\SelectOrderByItem;
 use SqlGen\Ast\SelectPlaceholder;
 use SqlGen\Ast\SelectProjection;
 use SqlGen\Ast\SelectProjectionColumn;
+use SqlGen\Ast\SelectProjectionFunction;
 use SqlGen\Ast\SelectProjectionWildcard;
 use SqlGen\Ast\SelectQuery;
 use SqlGen\Ast\SelectTableReference;
@@ -282,9 +284,14 @@ final class PhplrtSqlParser implements SqlQueryParser
             return $this->normalizeWildcardSelection($wildcard);
         }
 
+        $function = $this->findFirstChildNode($item, 'AliasedFunction');
+        if ($function instanceof PrintableNode) {
+            return $this->normalizeFunctionProjection($function);
+        }
+
         $column = $this->findFirstChildNode($item, 'AliasedColumn');
         if (!$column instanceof PrintableNode) {
-            throw new \RuntimeException('SelectItem must contain AliasedColumn or WildcardSelection.');
+            throw new \RuntimeException('SelectItem must contain AliasedColumn, AliasedFunction or WildcardSelection.');
         }
 
         $columnRef = $this->findFirstChildNode($column, 'ColumnRef');
@@ -296,6 +303,45 @@ final class PhplrtSqlParser implements SqlQueryParser
             reference: $this->normalizeColumnRef($columnRef),
             alias: (new SelectAliasTokens($this->tokens($column)))->toAlias(),
         );
+    }
+
+    private function normalizeFunctionProjection(PrintableNode $function): SelectProjectionFunction
+    {
+        $functionCall = $this->findFirstChildNode($function, 'FunctionCall');
+        if (!$functionCall instanceof PrintableNode) {
+            throw new \RuntimeException('AliasedFunction must contain FunctionCall.');
+        }
+
+        return new SelectProjectionFunction(
+            function: $this->normalizeFunctionCall($functionCall),
+            alias: (new SelectAliasTokens($this->tokens($function)))->toAlias(),
+        );
+    }
+
+    private function normalizeFunctionCall(PrintableNode $functionCall): SelectFunctionCall
+    {
+        $functionName = $this->firstTokenValue($functionCall);
+        $column = $this->findFirstChildNode($functionCall, 'ColumnRef');
+
+        if ($column instanceof PrintableNode) {
+            return new SelectFunctionCall(
+                name: strtolower($functionName),
+                column: $this->normalizeColumnRef($column),
+                wildcard: false,
+            );
+        }
+
+        foreach ($functionCall->children as $child) {
+            if ($child instanceof TokenInterface && $child->getName() === 'T_STAR') {
+                return new SelectFunctionCall(
+                    name: strtolower($functionName),
+                    column: null,
+                    wildcard: true,
+                );
+            }
+        }
+
+        throw new \RuntimeException('FunctionCall must contain ColumnRef or wildcard argument.');
     }
 
     private function normalizeWildcardSelection(PrintableNode $wildcard): SelectProjectionWildcard

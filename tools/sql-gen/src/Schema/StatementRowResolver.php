@@ -7,6 +7,7 @@ namespace SqlGen\Schema;
 use SqlGen\Ast\InsertQuery;
 use SqlGen\Ast\SelectProjection;
 use SqlGen\Ast\SelectProjectionColumn;
+use SqlGen\Ast\SelectProjectionFunction;
 use SqlGen\Ast\SelectProjectionWildcard;
 use SqlGen\Ast\SelectQuery;
 use SqlGen\Model\DatabaseSchema;
@@ -20,13 +21,16 @@ final class StatementRowResolver
 {
     private StatementTableMapResolver $tableMapResolver;
     private SqlQueryParser $sqlParser;
+    private SelectProjectionTypeInferrer $projectionTypeInferrer;
 
     public function __construct(
         ?StatementTableMapResolver $tableMapResolver = null,
         ?SqlQueryParser $sqlParser = null,
+        ?SelectProjectionTypeInferrer $projectionTypeInferrer = null,
     ) {
         $this->tableMapResolver = $tableMapResolver ?? new StatementTableMapResolver();
         $this->sqlParser = $sqlParser ?? new PhplrtSqlParser();
+        $this->projectionTypeInferrer = $projectionTypeInferrer ?? new SelectProjectionTypeInferrer();
     }
 
     /**
@@ -39,35 +43,33 @@ final class StatementRowResolver
         }
 
         $tableMap = $this->tableMapResolver->resolve($statement, $schema);
-        $columns = $this->resolveSelectedColumns($statement, $tableMap);
-
-        $fields = [];
+        $projections = $this->resolveSelectedColumns($statement, $tableMap);
         $seenResultColumns = [];
 
-        foreach ($columns as $column) {
-            if (isset($seenResultColumns[$column->resultColumn])) {
+        foreach ($projections as $projection) {
+            if (isset($seenResultColumns[$projection->resultColumn])) {
                 throw new \RuntimeException(
-                    "Duplicate result column {$column->resultColumn} in query {$statement->name}",
+                    "Duplicate result column {$projection->resultColumn} in query {$statement->name}",
                 );
             }
 
-            $seenResultColumns[$column->resultColumn] = true;
-            $resolvedColumn = $tableMap->resolveColumn($column->qualifier, $column->sourceColumn);
-
-            $fields[] = new RowField(
-                sourceColumnName: $column->sourceColumn,
-                resultColumnName: $column->resultColumn,
-                propertyName: $this->snakeToCamel($column->resultColumn),
-                phpType: $resolvedColumn->column->phpType,
-                nullable: $resolvedColumn->column->nullable,
-            );
+            $seenResultColumns[$projection->resultColumn] = true;
         }
 
-        return $fields;
+        return array_map(
+            fn(ResolvedProjectionField $projection): RowField => new RowField(
+                sourceColumnName: $projection->sourceName,
+                resultColumnName: $projection->resultColumn,
+                propertyName: $this->snakeToCamel($projection->resultColumn),
+                phpType: $projection->phpType,
+                nullable: $projection->nullable,
+            ),
+            $projections,
+        );
     }
 
     /**
-     * @return list<ResolvedProjectionColumn>
+     * @return list<ResolvedProjectionField>
      */
     private function resolveSelectedColumns(SqlStatement $statement, StatementTableMap $tableMap): array
     {
@@ -86,23 +88,40 @@ final class StatementRowResolver
 
     /**
      * @param list<SelectProjection> $projections
-     * @return list<ResolvedProjectionColumn>
+     * @return list<ResolvedProjectionField>
      */
     private function resolveProjections(array $projections, string $queryName, StatementTableMap $tableMap): array
     {
-        $columns = [];
+        $resolved = [];
 
         foreach ($projections as $projection) {
             if ($projection instanceof SelectProjectionWildcard) {
-                array_push($columns, ...$this->expandWildcardColumns($tableMap, $projection->table));
+                array_push($resolved, ...$this->expandWildcardColumns($tableMap, $projection->table));
                 continue;
             }
 
             if ($projection instanceof SelectProjectionColumn) {
-                $columns[] = new ResolvedProjectionColumn(
-                    qualifier: $projection->reference->table !== null ? strtolower($projection->reference->table) : null,
-                    sourceColumn: $projection->reference->column,
+                $resolvedColumn = $tableMap->resolveColumn(
+                    $projection->reference->table !== null ? strtolower($projection->reference->table) : null,
+                    $projection->reference->column,
+                );
+                $resolved[] = new ResolvedProjectionField(
+                    sourceName: $projection->reference->column,
                     resultColumn: $projection->alias !== null ? $projection->alias->value : $projection->reference->column,
+                    phpType: $resolvedColumn->column->phpType,
+                    nullable: $resolvedColumn->column->nullable,
+                );
+                continue;
+            }
+
+            if ($projection instanceof SelectProjectionFunction) {
+                $resolved[] = $this->projectionTypeInferrer->inferFunctionProjection(
+                    function: $projection->function,
+                    resultColumn: $projection->alias !== null
+                        ? $projection->alias->value
+                        : strtolower($projection->function->name),
+                    tableMap: $tableMap,
+                    queryName: $queryName,
                 );
                 continue;
             }
@@ -110,25 +129,26 @@ final class StatementRowResolver
             throw new \RuntimeException("Unsupported projection type in query {$queryName}");
         }
 
-        return $columns;
+        return $resolved;
     }
 
     /**
-     * @return list<ResolvedProjectionColumn>
+     * @return list<ResolvedProjectionField>
      */
     private function expandWildcardColumns(StatementTableMap $tableMap, ?string $qualifier): array
     {
-        $columns = [];
+        $resolved = [];
 
         foreach ($tableMap->expandWildcard($qualifier) as $column) {
-            $columns[] = new ResolvedProjectionColumn(
-                qualifier: $qualifier,
-                sourceColumn: $column->name,
+            $resolved[] = new ResolvedProjectionField(
+                sourceName: $column->name,
                 resultColumn: $column->name,
+                phpType: $column->column->phpType,
+                nullable: $column->column->nullable,
             );
         }
 
-        return $columns;
+        return $resolved;
     }
 
     private function snakeToCamel(string $value): string

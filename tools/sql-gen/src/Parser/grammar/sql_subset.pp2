@@ -44,8 +44,10 @@
 #InsertStmt: <T_INSERT> <T_INTO> <T_IDENT> <T_LPAREN> IdentList() <T_RPAREN> <T_VALUES> <T_LPAREN> PlaceholderList() <T_RPAREN> ConflictClause()? ReturningClause()? <T_SEMICOLON>?;
 #DeleteStmt: <T_DELETE> <T_FROM> <T_IDENT> WhereClause() <T_SEMICOLON>?;
 #SelectList: SelectItem() (<T_COMMA> SelectItem())*;
-#SelectItem: WildcardSelection() | AliasedColumn();
+#SelectItem: WildcardSelection() | AliasedFunction() | AliasedColumn();
 #AliasedColumn: ColumnRef() ((<T_AS>)? <T_IDENT>)?;
+#AliasedFunction: FunctionCall() ((<T_AS>)? <T_IDENT>)?;
+#FunctionCall: <T_IDENT> <T_LPAREN> (ColumnRef() | <T_STAR>) <T_RPAREN>;
 #WildcardSelection: (<T_IDENT> <T_DOT>)? <T_STAR>;
 #ColumnRef: (<T_IDENT> <T_DOT>)? <T_IDENT>;
 #TableRef: <T_IDENT> ((<T_AS>)? <T_IDENT>)?;

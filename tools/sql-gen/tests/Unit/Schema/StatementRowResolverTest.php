@@ -13,6 +13,8 @@ use SqlGen\Model\SqlStatement;
 use SqlGen\Schema\StatementRowResolver;
 use SqlGen\Type\PhpTypeFactory;
 
+use function Typhoon\Type\stringify;
+
 final class StatementRowResolverTest extends TestCase
 {
     public function testResolvesSimpleSelectedColumns(): void
@@ -202,5 +204,32 @@ final class StatementRowResolverTest extends TestCase
             ),
             $schema,
         );
+    }
+
+    public function testInfersCountProjectionAsNonNullableInt(): void
+    {
+        $resolver = new StatementRowResolver();
+        $schema = new DatabaseSchema([
+            'sessions' => new SchemaTable('sessions', [
+                'user_id' => new SchemaColumn('user_id', 'BIGINT', PhpTypeFactory::fromNativeType('int'), true),
+            ]),
+        ]);
+
+        $fields = $resolver->resolve(
+            new SqlStatement(
+                name: 'CountSessions',
+                resultKind: SqlResultKind::One,
+                sql: 'SELECT COUNT(*) AS total FROM sessions WHERE user_id = :user_id;',
+                parameters: [],
+            ),
+            $schema,
+        );
+
+        self::assertCount(1, $fields);
+        self::assertSame('COUNT(*)', $fields[0]->sourceColumnName);
+        self::assertSame('total', $fields[0]->resultColumnName);
+        self::assertSame('total', $fields[0]->propertyName);
+        self::assertFalse($fields[0]->nullable);
+        self::assertSame('int', stringify($fields[0]->phpType));
     }
 }
