@@ -69,13 +69,13 @@ final class RoadRunnerCacheService implements CacheService
         return $this->available;
     }
 
-    public function set(string $key, mixed $value, ?int $ttl = null): bool
+    public function set(CacheKey|string $key, mixed $value, ?int $ttl = null): bool
     {
         if (!$this->available) {
             return false;
         }
 
-        $prefixedKey = $this->prefixKey($key);
+        $prefixedKey = $this->prefixKey($this->normalizeKey($key));
         $ttl ??= $this->config->defaultTtl;
 
         try {
@@ -89,13 +89,13 @@ final class RoadRunnerCacheService implements CacheService
         }
     }
 
-    public function get(string $key, mixed $default = null): mixed
+    public function get(CacheKey|string $key, mixed $default = null): mixed
     {
         if (!$this->available) {
             return $default;
         }
 
-        $prefixedKey = $this->prefixKey($key);
+        $prefixedKey = $this->prefixKey($this->normalizeKey($key));
 
         try {
             $value = $this->storage->get($prefixedKey);
@@ -108,13 +108,13 @@ final class RoadRunnerCacheService implements CacheService
         }
     }
 
-    public function has(string $key): bool
+    public function has(CacheKey|string $key): bool
     {
         if (!$this->available) {
             return false;
         }
 
-        $prefixedKey = $this->prefixKey($key);
+        $prefixedKey = $this->prefixKey($this->normalizeKey($key));
 
         try {
             return $this->storage->has($prefixedKey);
@@ -125,13 +125,13 @@ final class RoadRunnerCacheService implements CacheService
         }
     }
 
-    public function delete(string $key): bool
+    public function delete(CacheKey|string $key): bool
     {
         if (!$this->available) {
             return false;
         }
 
-        $prefixedKey = $this->prefixKey($key);
+        $prefixedKey = $this->prefixKey($this->normalizeKey($key));
 
         try {
             return $this->storage->delete($prefixedKey);
@@ -177,7 +177,7 @@ final class RoadRunnerCacheService implements CacheService
         }
     }
 
-    public function getOrSet(string $key, callable $callback, ?int $ttl = null): mixed
+    public function getOrSet(CacheKey|string $key, callable $callback, ?int $ttl = null): mixed
     {
         if (!$this->available) {
             return $callback();
@@ -196,6 +196,11 @@ final class RoadRunnerCacheService implements CacheService
     private function prefixKey(string $key): string
     {
         return $this->namespacePrefix() . $key;
+    }
+
+    private function normalizeKey(CacheKey|string $key): string
+    {
+        return $key instanceof CacheKey ? $key->toString() : $key;
     }
 
     private function namespacePrefix(): string

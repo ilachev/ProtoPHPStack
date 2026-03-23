@@ -6,17 +6,16 @@ namespace App\Capabilities\Session\Infrastructure\Persistence;
 
 use App\Capabilities\Session\Domain\Session;
 use App\Capabilities\Session\Domain\SessionRepository;
+use App\Platform\Cache\CacheKey;
 use App\Platform\Cache\CacheService;
 use App\Platform\Logging\Logger;
 use App\Platform\Storage\Repository\AbstractCachedRepository;
 
 final readonly class CachedSessionRepository extends AbstractCachedRepository implements SessionRepository
 {
-    private const string CACHE_KEY_PREFIX = 'session:';
-    private const string CACHE_USER_PREFIX = 'session_user:';
-
     public function __construct(
         private SessionRepository $repository,
+        private SessionCacheKeys $cacheKeys,
         CacheService $cache,
         Logger $logger,
     ) {
@@ -81,13 +80,13 @@ final readonly class CachedSessionRepository extends AbstractCachedRepository im
         $this->repository->deleteExpired();
     }
 
-    private function getSessionCacheKey(string $id): string
+    private function getSessionCacheKey(string $id): CacheKey
     {
-        return self::CACHE_KEY_PREFIX . $id;
+        return $this->cacheKeys->session($id);
     }
 
-    private function getUserSessionsCacheKey(int $userId): string
+    private function getUserSessionsCacheKey(int $userId): CacheKey
     {
-        return self::CACHE_USER_PREFIX . $userId;
+        return $this->cacheKeys->userSessions($userId);
     }
 }

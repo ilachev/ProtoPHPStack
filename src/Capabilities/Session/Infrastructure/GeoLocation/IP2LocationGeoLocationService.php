@@ -20,6 +20,7 @@ final readonly class IP2LocationGeoLocationService implements GeoLocationService
 
     public function __construct(
         private GeoLocationConfig $config,
+        private GeoLocationCacheKeys $cacheKeys,
         private CacheService $cache,
         private Logger $logger,
     ) {
@@ -47,7 +48,7 @@ final readonly class IP2LocationGeoLocationService implements GeoLocationService
         }
 
         // Reuse cached lookups to avoid repeated database reads.
-        $cacheKey = "geo_ip:{$ip}";
+        $cacheKey = $this->cacheKeys->ipAddress($ip);
         if ($this->cache->isAvailable() && $this->cache->has($cacheKey)) {
             $cachedData = $this->cache->get($cacheKey);
             if ($cachedData instanceof GeoLocationData) {

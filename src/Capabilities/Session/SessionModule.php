@@ -15,8 +15,10 @@ use App\Capabilities\Session\Domain\SessionRepository;
 use App\Capabilities\Session\Domain\SessionService;
 use App\Capabilities\Session\Infrastructure\DefaultSessionPayloadFactory;
 use App\Capabilities\Session\Infrastructure\FingerprintClientDetector;
+use App\Capabilities\Session\Infrastructure\GeoLocation\GeoLocationCacheKeys;
 use App\Capabilities\Session\Infrastructure\GeoLocation\IP2LocationGeoLocationService;
 use App\Capabilities\Session\Infrastructure\Persistence\CachedSessionRepository;
+use App\Capabilities\Session\Infrastructure\Persistence\SessionCacheKeys;
 use App\Capabilities\Session\Infrastructure\Persistence\SqlSessionRepository;
 use App\Capabilities\Session\Transport\Http\SessionMiddleware;
 use App\Platform\Cache\CacheService;
@@ -63,6 +65,8 @@ final readonly class SessionModule implements Capability
         );
 
         $container->bind(SqlSessionRepository::class, SqlSessionRepository::class);
+        $container->bind(SessionCacheKeys::class, SessionCacheKeys::class);
+        $container->bind(GeoLocationCacheKeys::class, GeoLocationCacheKeys::class);
 
         $container->set(
             SessionRepository::class,
@@ -70,13 +74,16 @@ final readonly class SessionModule implements Capability
                 /** @var SqlSessionRepository $baseRepository */
                 $baseRepository = $container->get(SqlSessionRepository::class);
 
+                /** @var SessionCacheKeys $cacheKeys */
+                $cacheKeys = $container->get(SessionCacheKeys::class);
+
                 /** @var CacheService $cacheService */
                 $cacheService = $container->get(CacheService::class);
 
                 /** @var Logger $logger */
                 $logger = $container->get(Logger::class);
 
-                return new CachedSessionRepository($baseRepository, $cacheService, $logger);
+                return new CachedSessionRepository($baseRepository, $cacheKeys, $cacheService, $logger);
             },
         );
 
@@ -100,13 +107,16 @@ final readonly class SessionModule implements Capability
                 /** @var GeoLocationConfig $config */
                 $config = $container->get(GeoLocationConfig::class);
 
+                /** @var GeoLocationCacheKeys $cacheKeys */
+                $cacheKeys = $container->get(GeoLocationCacheKeys::class);
+
                 /** @var CacheService $cache */
                 $cache = $container->get(CacheService::class);
 
                 /** @var Logger $logger */
                 $logger = $container->get(Logger::class);
 
-                return new IP2LocationGeoLocationService($config, $cache, $logger);
+                return new IP2LocationGeoLocationService($config, $cacheKeys, $cache, $logger);
             },
         );
 

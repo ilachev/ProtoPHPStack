@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Platform\Storage\Repository;
 
+use App\Platform\Cache\CacheKey;
 use App\Platform\Cache\CacheService;
 use App\Platform\Logging\Logger;
 
@@ -14,24 +15,22 @@ abstract readonly class AbstractCachedRepository
     public function __construct(
         protected CacheService $cache,
         protected Logger $logger,
-        protected string $cacheKeyPrefix = '',
     ) {}
 
-    protected function setCacheValue(string $key, mixed $value, ?int $ttl = null): void
+    protected function setCacheValue(CacheKey $key, mixed $value, ?int $ttl = null): void
     {
         if (!$this->cache->isAvailable()) {
             return;
         }
 
-        $prefixedKey = $this->buildCacheKey($key);
-        $this->cache->set($prefixedKey, $value, $ttl ?? self::CACHE_TTL);
+        $this->cache->set($key, $value, $ttl ?? self::CACHE_TTL);
         $this->logger->debug('Cache set', [
-            'key' => $key,
+            'key' => $key->toString(),
             'repository' => static::class,
         ]);
     }
 
-    protected function getCacheValue(string $key, mixed $default = null): mixed
+    protected function getCacheValue(CacheKey $key, mixed $default = null): mixed
     {
         if (!$this->cache->isAvailable()) {
             $this->logCacheMiss($key, 'cache unavailable');
@@ -39,8 +38,7 @@ abstract readonly class AbstractCachedRepository
             return $default;
         }
 
-        $prefixedKey = $this->buildCacheKey($key);
-        if (!$this->cache->has($prefixedKey)) {
+        if (!$this->cache->has($key)) {
             $this->logCacheMiss($key, 'not found');
 
             return $default;
@@ -48,7 +46,7 @@ abstract readonly class AbstractCachedRepository
 
         $this->logCacheHit($key);
 
-        return $this->cache->get($prefixedKey, $default);
+        return $this->cache->get($key, $default);
     }
 
     /**
@@ -56,7 +54,7 @@ abstract readonly class AbstractCachedRepository
      * @param callable():T $callback
      * @return T
      */
-    protected function getOrSetCacheValue(string $key, callable $callback, ?int $ttl = null): mixed
+    protected function getOrSetCacheValue(CacheKey $key, callable $callback, ?int $ttl = null): mixed
     {
         if (!$this->cache->isAvailable()) {
             $result = $callback();
@@ -65,57 +63,50 @@ abstract readonly class AbstractCachedRepository
             return $result;
         }
 
-        $prefixedKey = $this->buildCacheKey($key);
-        if ($this->cache->has($prefixedKey)) {
+        if ($this->cache->has($key)) {
             $this->logCacheHit($key);
 
-            return $this->cache->get($prefixedKey);
+            return $this->cache->get($key);
         }
 
         $result = $callback();
         $this->logCacheMiss($key, 'not found');
-        $this->cache->set($prefixedKey, $result, $ttl ?? self::CACHE_TTL);
+        $this->cache->set($key, $result, $ttl ?? self::CACHE_TTL);
 
         return $result;
     }
 
-    protected function logCacheHit(string $key): void
+    protected function logCacheHit(CacheKey $key): void
     {
         $this->logger->debug('Cache hit', [
-            'key' => $key,
+            'key' => $key->toString(),
             'repository' => static::class,
         ]);
     }
 
-    protected function logCacheMiss(string $key, string $reason): void
+    protected function logCacheMiss(CacheKey $key, string $reason): void
     {
         $this->logger->debug('Cache miss', [
-            'key' => $key,
+            'key' => $key->toString(),
             'reason' => $reason,
             'repository' => static::class,
         ]);
     }
 
-    protected function buildCacheKey(string $key): string
-    {
-        return $this->cacheKeyPrefix . $key;
-    }
-
-    protected function deleteCacheValue(string $key): void
+    protected function deleteCacheValue(CacheKey $key): void
     {
         if (!$this->cache->isAvailable()) {
             return;
         }
 
-        $prefixedKey = $this->buildCacheKey($key);
-        $this->cache->delete($prefixedKey);
+        $this->cache->delete($key);
         $this->logger->debug('Cache delete', [
-            'key' => $key,
+            'key' => $key->toString(),
             'repository' => static::class,
         ]);
     }
 
-    protected function hasCacheValue(string $key): bool
+    protected function hasCacheValue(CacheKey $key): bool
     {
         if (!$this->cache->isAvailable()) {
             $this->logCacheMiss($key, 'cache unavailable');
@@ -123,8 +114,7 @@ abstract readonly class AbstractCachedRepository
             return false;
         }
 
-        $prefixedKey = $this->buildCacheKey($key);
-        $exists = $this->cache->has($prefixedKey);
+        $exists = $this->cache->has($key);
 
         if ($exists) {
             $this->logCacheHit($key);

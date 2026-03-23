@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Platform\Cache;
 
 use App\Platform\Cache\CacheConfig;
+use App\Platform\Cache\CacheScope;
 use App\Platform\Cache\CacheService;
 use App\Platform\Cache\RoadRunnerCacheService;
 use App\Platform\Logging\Logger;
@@ -67,6 +68,16 @@ final class RoadRunnerCacheServiceTest extends TestCase
         self::assertTrue($this->cacheService->set('namespaced-key', 'value'));
 
         self::assertTrue($this->mockStorage->has('test:deploy-42:1:namespaced-key'));
+    }
+
+    public function testAcceptsTypedCacheKeys(): void
+    {
+        $cacheKey = (new CacheScope('typed'))->key('identifier');
+
+        self::assertTrue($this->cacheService->set($cacheKey, 'typed-value'));
+        self::assertTrue($this->cacheService->has($cacheKey));
+        self::assertSame('typed-value', $this->cacheService->get($cacheKey));
+        self::assertTrue($this->mockStorage->has('test:deploy-42:1:typed:identifier'));
     }
 
     public function testGetNonExistentKey(): void

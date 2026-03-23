@@ -7,6 +7,7 @@ namespace Tests\Unit\Capabilities\Session\Infrastructure\Persistence;
 use App\Capabilities\Session\Domain\Session;
 use App\Capabilities\Session\Domain\SessionRepository;
 use App\Capabilities\Session\Infrastructure\Persistence\CachedSessionRepository;
+use App\Capabilities\Session\Infrastructure\Persistence\SessionCacheKeys;
 use App\Platform\Cache\CacheConfig;
 use App\Platform\Cache\CacheService;
 use App\Platform\Cache\RoadRunnerCacheService;
@@ -28,6 +29,8 @@ final class CachedSessionRepositoryTest extends TestCase
 
     private MockStorage $storage;
 
+    private SessionCacheKeys $cacheKeys;
+
     protected function setUp(): void
     {
         // Mock the inner repository.
@@ -38,6 +41,7 @@ final class CachedSessionRepositoryTest extends TestCase
 
         // Use in-memory storage instead of the RoadRunner backend.
         $this->storage = new MockStorage();
+        $this->cacheKeys = new SessionCacheKeys();
 
         $cacheConfig = new CacheConfig(
             engine: 'mock',
@@ -61,6 +65,7 @@ final class CachedSessionRepositoryTest extends TestCase
         // Create repository under test.
         $this->repository = new CachedSessionRepository(
             $this->innerRepository,
+            $this->cacheKeys,
             $this->cacheService,
             $logger,
         );
@@ -135,7 +140,7 @@ final class CachedSessionRepositoryTest extends TestCase
         self::assertTrue($this->storage->has($this->storageKey('session:' . self::SESSION_ID)));
         self::assertSame($session, $savedSession);
 
-        $cachedSession = $this->cacheService->get('session:' . self::SESSION_ID);
+        $cachedSession = $this->cacheService->get($this->cacheKeys->session(self::SESSION_ID));
         self::assertSame($session, $cachedSession);
     }
 
@@ -154,8 +159,8 @@ final class CachedSessionRepositoryTest extends TestCase
             ->method('delete')
             ->with(self::SESSION_ID);
 
-        $this->cacheService->set('session:' . self::SESSION_ID, $session);
-        $this->cacheService->set('session_user:' . self::USER_ID, [$session]);
+        $this->cacheService->set($this->cacheKeys->session(self::SESSION_ID), $session);
+        $this->cacheService->set($this->cacheKeys->userSessions(self::USER_ID), [$session]);
 
         $this->repository->delete(self::SESSION_ID);
 
@@ -167,7 +172,7 @@ final class CachedSessionRepositoryTest extends TestCase
     {
         $session = $this->createSession();
 
-        $this->cacheService->set('session:' . self::SESSION_ID, $session);
+        $this->cacheService->set($this->cacheKeys->session(self::SESSION_ID), $session);
 
         $this->innerRepository
             ->expects(self::once())
