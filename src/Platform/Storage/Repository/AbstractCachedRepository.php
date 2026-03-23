@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace App\Platform\Storage\Repository;
 
-use App\Platform\Cache\CacheKey;
-use App\Platform\Cache\CacheService;
+use App\Platform\Cache\ScopedCache;
 use App\Platform\Logging\Logger;
 
 abstract readonly class AbstractCachedRepository
@@ -13,40 +12,29 @@ abstract readonly class AbstractCachedRepository
     private const int CACHE_TTL = 3600;
 
     public function __construct(
-        protected CacheService $cache,
         protected Logger $logger,
     ) {}
 
-    protected function setCacheValue(CacheKey $key, mixed $value, ?int $ttl = null): void
+    protected function setCacheValue(ScopedCache $cache, string|int $identifier, mixed $value, ?int $ttl = null): void
     {
-        if (!$this->cache->isAvailable()) {
-            return;
-        }
-
-        $this->cache->set($key, $value, $ttl ?? self::CACHE_TTL);
+        $cache->set($identifier, $value, $ttl ?? self::CACHE_TTL);
         $this->logger->debug('Cache set', [
-            'key' => $key->toString(),
+            'key' => $cache->key($identifier)->toString(),
             'repository' => static::class,
         ]);
     }
 
-    protected function getCacheValue(CacheKey $key, mixed $default = null): mixed
+    protected function getCacheValue(ScopedCache $cache, string|int $identifier, mixed $default = null): mixed
     {
-        if (!$this->cache->isAvailable()) {
-            $this->logCacheMiss($key, 'cache unavailable');
+        if (!$cache->has($identifier)) {
+            $this->logCacheMiss($cache, $identifier, 'not found');
 
             return $default;
         }
 
-        if (!$this->cache->has($key)) {
-            $this->logCacheMiss($key, 'not found');
+        $this->logCacheHit($cache, $identifier);
 
-            return $default;
-        }
-
-        $this->logCacheHit($key);
-
-        return $this->cache->get($key, $default);
+        return $cache->get($identifier, $default);
     }
 
     /**
@@ -54,72 +42,55 @@ abstract readonly class AbstractCachedRepository
      * @param callable():T $callback
      * @return T
      */
-    protected function getOrSetCacheValue(CacheKey $key, callable $callback, ?int $ttl = null): mixed
+    protected function getOrSetCacheValue(ScopedCache $cache, string|int $identifier, callable $callback, ?int $ttl = null): mixed
     {
-        if (!$this->cache->isAvailable()) {
-            $result = $callback();
-            $this->logCacheMiss($key, 'cache unavailable');
+        if ($cache->has($identifier)) {
+            $this->logCacheHit($cache, $identifier);
 
-            return $result;
-        }
-
-        if ($this->cache->has($key)) {
-            $this->logCacheHit($key);
-
-            return $this->cache->get($key);
+            return $cache->get($identifier);
         }
 
         $result = $callback();
-        $this->logCacheMiss($key, 'not found');
-        $this->cache->set($key, $result, $ttl ?? self::CACHE_TTL);
+        $this->logCacheMiss($cache, $identifier, 'not found');
+        $cache->set($identifier, $result, $ttl ?? self::CACHE_TTL);
 
         return $result;
     }
 
-    protected function logCacheHit(CacheKey $key): void
+    protected function logCacheHit(ScopedCache $cache, string|int $identifier): void
     {
         $this->logger->debug('Cache hit', [
-            'key' => $key->toString(),
+            'key' => $cache->key($identifier)->toString(),
             'repository' => static::class,
         ]);
     }
 
-    protected function logCacheMiss(CacheKey $key, string $reason): void
+    protected function logCacheMiss(ScopedCache $cache, string|int $identifier, string $reason): void
     {
         $this->logger->debug('Cache miss', [
-            'key' => $key->toString(),
+            'key' => $cache->key($identifier)->toString(),
             'reason' => $reason,
             'repository' => static::class,
         ]);
     }
 
-    protected function deleteCacheValue(CacheKey $key): void
+    protected function deleteCacheValue(ScopedCache $cache, string|int $identifier): void
     {
-        if (!$this->cache->isAvailable()) {
-            return;
-        }
-
-        $this->cache->delete($key);
+        $cache->delete($identifier);
         $this->logger->debug('Cache delete', [
-            'key' => $key->toString(),
+            'key' => $cache->key($identifier)->toString(),
             'repository' => static::class,
         ]);
     }
 
-    protected function hasCacheValue(CacheKey $key): bool
+    protected function hasCacheValue(ScopedCache $cache, string|int $identifier): bool
     {
-        if (!$this->cache->isAvailable()) {
-            $this->logCacheMiss($key, 'cache unavailable');
-
-            return false;
-        }
-
-        $exists = $this->cache->has($key);
+        $exists = $cache->has($identifier);
 
         if ($exists) {
-            $this->logCacheHit($key);
+            $this->logCacheHit($cache, $identifier);
         } else {
-            $this->logCacheMiss($key, 'not found');
+            $this->logCacheMiss($cache, $identifier, 'not found');
         }
 
         return $exists;

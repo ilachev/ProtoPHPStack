@@ -7,7 +7,8 @@ namespace App\Capabilities\Session\Infrastructure\GeoLocation;
 use App\Capabilities\Session\Application\GeoLocationConfig;
 use App\Capabilities\Session\Application\GeoLocationData;
 use App\Capabilities\Session\Application\GeoLocationService;
-use App\Platform\Cache\CacheService;
+use App\Platform\Cache\ScopedCache;
+use App\Platform\Cache\ScopedCacheFactory;
 use App\Platform\Logging\Logger;
 use IP2Location\Database;
 
@@ -18,13 +19,15 @@ final readonly class IP2LocationGeoLocationService implements GeoLocationService
 {
     private Database $db;
 
+    private ScopedCache $ipAddressCache;
+
     public function __construct(
         private GeoLocationConfig $config,
-        private GeoLocationCacheKeys $cacheKeys,
-        private CacheService $cache,
+        ScopedCacheFactory $scopedCacheFactory,
         private Logger $logger,
     ) {
         $this->db = new Database($this->config->dbPath, Database::FILE_IO);
+        $this->ipAddressCache = $scopedCacheFactory->scope('geo_ip');
     }
 
     /**
@@ -48,9 +51,8 @@ final readonly class IP2LocationGeoLocationService implements GeoLocationService
         }
 
         // Reuse cached lookups to avoid repeated database reads.
-        $cacheKey = $this->cacheKeys->ipAddress($ip);
-        if ($this->cache->isAvailable() && $this->cache->has($cacheKey)) {
-            $cachedData = $this->cache->get($cacheKey);
+        if ($this->ipAddressCache->has($ip)) {
+            $cachedData = $this->ipAddressCache->get($ip);
             if ($cachedData instanceof GeoLocationData) {
                 return $cachedData;
             }
@@ -73,9 +75,7 @@ final readonly class IP2LocationGeoLocationService implements GeoLocationService
                 $geoData = $normalizedRecord->toGeoLocationData();
 
                 // Cache successful lookups for subsequent requests.
-                if ($this->cache->isAvailable()) {
-                    $this->cache->set($cacheKey, $geoData, $this->config->cacheTtl);
-                }
+                $this->ipAddressCache->set($ip, $geoData, $this->config->cacheTtl);
 
                 return $geoData;
             } catch (\Throwable $e) {

@@ -6,39 +6,40 @@ namespace App\Capabilities\Session\Infrastructure\Persistence;
 
 use App\Capabilities\Session\Domain\Session;
 use App\Capabilities\Session\Domain\SessionRepository;
-use App\Platform\Cache\CacheKey;
-use App\Platform\Cache\CacheService;
+use App\Platform\Cache\ScopedCache;
+use App\Platform\Cache\ScopedCacheFactory;
 use App\Platform\Logging\Logger;
 use App\Platform\Storage\Repository\AbstractCachedRepository;
 
 final readonly class CachedSessionRepository extends AbstractCachedRepository implements SessionRepository
 {
+    private ScopedCache $sessionCache;
+
+    private ScopedCache $userSessionsCache;
+
     public function __construct(
         private SessionRepository $repository,
-        private SessionCacheKeys $cacheKeys,
-        CacheService $cache,
+        ScopedCacheFactory $scopedCacheFactory,
         Logger $logger,
     ) {
         parent::__construct(
-            cache: $cache,
             logger: $logger,
         );
+
+        $this->sessionCache = $scopedCacheFactory->scope('session');
+        $this->userSessionsCache = $scopedCacheFactory->scope('session_user');
     }
 
     public function findById(string $id): ?Session
     {
-        $cacheKey = $this->getSessionCacheKey($id);
-
         /** @var ?Session */
-        return $this->getOrSetCacheValue($cacheKey, fn() => $this->repository->findById($id));
+        return $this->getOrSetCacheValue($this->sessionCache, $id, fn() => $this->repository->findById($id));
     }
 
     public function findByUserId(int $userId): array
     {
-        $cacheKey = $this->getUserSessionsCacheKey($userId);
-
         /** @var array<Session> */
-        return $this->getOrSetCacheValue($cacheKey, fn() => $this->repository->findByUserId($userId));
+        return $this->getOrSetCacheValue($this->userSessionsCache, $userId, fn() => $this->repository->findByUserId($userId));
     }
 
     public function findAll(): array
@@ -50,12 +51,10 @@ final readonly class CachedSessionRepository extends AbstractCachedRepository im
     {
         $persistedSession = $this->repository->save($session);
 
-        $sessionCacheKey = $this->getSessionCacheKey($persistedSession->id);
-        $this->setCacheValue($sessionCacheKey, $persistedSession);
+        $this->setCacheValue($this->sessionCache, $persistedSession->id, $persistedSession);
 
         if ($persistedSession->userId !== null) {
-            $userCacheKey = $this->getUserSessionsCacheKey($persistedSession->userId);
-            $this->deleteCacheValue($userCacheKey);
+            $this->deleteCacheValue($this->userSessionsCache, $persistedSession->userId);
         }
 
         return $persistedSession;
@@ -66,27 +65,15 @@ final readonly class CachedSessionRepository extends AbstractCachedRepository im
         $session = $this->repository->findById($id);
         $this->repository->delete($id);
 
-        $sessionCacheKey = $this->getSessionCacheKey($id);
-        $this->deleteCacheValue($sessionCacheKey);
+        $this->deleteCacheValue($this->sessionCache, $id);
 
         if ($session !== null && $session->userId !== null) {
-            $userCacheKey = $this->getUserSessionsCacheKey($session->userId);
-            $this->deleteCacheValue($userCacheKey);
+            $this->deleteCacheValue($this->userSessionsCache, $session->userId);
         }
     }
 
     public function deleteExpired(): void
     {
         $this->repository->deleteExpired();
-    }
-
-    private function getSessionCacheKey(string $id): CacheKey
-    {
-        return $this->cacheKeys->session($id);
-    }
-
-    private function getUserSessionsCacheKey(int $userId): CacheKey
-    {
-        return $this->cacheKeys->userSessions($userId);
     }
 }
