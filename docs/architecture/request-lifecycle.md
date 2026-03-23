@@ -38,10 +38,10 @@ server:
 3. регистрирует сервисы через service providers;
 4. получает `PSR7Worker`;
 5. собирает middleware pipeline из platform middleware и capability middleware.
+ 
+Кеш при старте worker-а больше не очищается глобально.
 
-При старте приложения также вызывается полная очистка кеша через `CacheService`.
-
-Это поведение влияет на bootstrap semantics и должно быть отдельно пересмотрено при реструктуризации: полная очистка кеша при запуске может быть приемлема для template/demo режима, но не всегда подходит для production-like сценария.
+Deployment-aware invalidation теперь идёт через `namespace_seed` в cache config, а runtime invalidation внутри приложения должна опираться на namespace/scope rotation, а не на полный wipe shared backend-а.
 
 ## 3. Получение запроса
 

@@ -83,6 +83,7 @@ Reusable blocks:
 - внутри `tools/sql-gen` canonical PHP type model уже должен считаться Typhoon-based, а не строковым
 - `sql-gen` должен восприниматься как generic engine с внешним project profile из `codegen/Sql`, а не как тулза со встроенным знанием этого шаблона
 - roadmap `sql-gen` сейчас идёт в richer expression typing и relation-aware schema semantics, а не в ORM-like abstractions или “полную поддержку PostgreSQL”
+- cache layer должен восприниматься как reusable library: capability code должно идти через `ScopedCacheFactory` / `ScopedCache`, а не напрямую через общий `CacheService` с ручной склейкой keys и invalidation logic
 
 ## Команды
 

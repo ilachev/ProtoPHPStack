@@ -57,8 +57,10 @@
 
 - Роль: cache abstraction и runtime backend integration.
 - Обязательность: optional reusable block.
-- Что здесь считается core: единый cache contract и fallback-safe runtime behavior.
+- Что здесь считается core: единый cache contract, scoped cache views, scope-aware invalidation и fallback-safe runtime behavior.
 - Optional-часть: конкретный backend вроде RoadRunner KV.
+- Канонический consumer path: capability code должен получать `ScopedCacheFactory` и работать через `ScopedCache`, а не склеивать cache keys вручную поверх общего `CacheService`.
+- `CacheService` должен оставаться backend-level abstraction для platform/runtime слоя, а не превращаться в точку, куда capability code напрямую тащит свою key/invalidation policy.
 
 ### `Platform/Logging`
 
