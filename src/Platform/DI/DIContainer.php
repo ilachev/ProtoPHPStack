@@ -28,6 +28,16 @@ final class DIContainer implements Container
     private array $aliases = [];
 
     /**
+     * @var array<class-string, class-string>
+     */
+    private array $concretes = [];
+
+    /**
+     * @var array<class-string, AutowirePlan>
+     */
+    private array $autowirePlans = [];
+
+    /**
      * @var array<class-string, bool>
      */
     private array $resolving = [];
@@ -47,6 +57,7 @@ final class DIContainer implements Container
     public function set(string $id, callable $definition): void
     {
         $this->definitions[$id] = $definition;
+        unset($this->instances[$id], $this->autowirePlans[$id]);
     }
 
     /**
@@ -57,6 +68,7 @@ final class DIContainer implements Container
     public function bind(string $interface, string $concrete): void
     {
         $this->aliases[$interface] = $concrete;
+        $this->concretes[$interface] = $concrete;
 
         // Clear cached instance of this interface when binding changes
         if (isset($this->instances[$interface])) {
@@ -78,8 +90,8 @@ final class DIContainer implements Container
             return $this->instances[$id];
         }
 
-        // Get concrete implementation if this is an interface with binding
-        $concrete = $this->aliases[$id] ?? $id;
+        /** @var class-string $concrete */
+        $concrete = $this->resolveConcreteId($id);
 
         // Check if concrete instance is already resolved
         if (isset($this->instances[$concrete]) && $id !== $concrete) {
@@ -101,9 +113,8 @@ final class DIContainer implements Container
                 // If we have a factory for this concrete class, use it
                 $instance = ($this->definitions[$concrete])($this);
             } else {
-                // Otherwise resolve all dependencies recursively
                 /** @var class-string<U> $concrete */
-                $instance = $this->resolve($concrete);
+                $instance = $this->instantiate($concrete);
             }
 
             // Cache instance under both interface and concrete name
@@ -126,50 +137,78 @@ final class DIContainer implements Container
             return true;
         }
 
-        if (interface_exists($id) && $this->endpointImplementationResolver->resolve($id) !== null) {
-            return true;
+        if (interface_exists($id)) {
+            $concrete = $this->concretes[$id] ?? $this->endpointImplementationResolver->resolve($id);
+            if ($concrete !== null) {
+                $this->concretes[$id] = $concrete;
+
+                return true;
+            }
         }
 
         // Check if we have the concrete implementation
-        $concrete = $this->aliases[$id] ?? $id;
+        $concrete = $this->concretes[$id] ?? $this->aliases[$id] ?? $id;
 
         return isset($this->instances[$concrete])
             || isset($this->definitions[$concrete]);
     }
 
     /**
+     * @param class-string $id
+     * @return class-string
+     */
+    private function resolveConcreteId(string $id): string
+    {
+        if (isset($this->concretes[$id])) {
+            return $this->concretes[$id];
+        }
+
+        if (isset($this->aliases[$id])) {
+            return $this->concretes[$id] = $this->aliases[$id];
+        }
+
+        if (interface_exists($id)) {
+            $resolved = $this->endpointImplementationResolver->resolve($id);
+            if ($resolved === null) {
+                throw new ContainerException("No binding found for interface {$id}");
+            }
+
+            return $this->concretes[$id] = $resolved;
+        }
+
+        if (!class_exists($id)) {
+            throw new ContainerException("Class or interface {$id} does not exist");
+        }
+
+        return $this->concretes[$id] = $id;
+    }
+
+    /**
      * @template U of object
      * @param class-string<U> $concrete
-     * @throws ContainerException
+     * @return U
      */
-    private function resolve(string $concrete): object
+    private function instantiate(string $concrete): object
     {
-        if (!interface_exists($concrete) && !class_exists($concrete)) {
-            throw new ContainerException("Class or interface {$concrete} does not exist");
+        $plan = $this->autowirePlans[$concrete] ??= $this->buildAutowirePlan($concrete);
+
+        try {
+            /** @var U */
+            return $plan->instantiate($this);
+        } catch (ContainerException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            throw new ContainerException("Cannot instantiate {$concrete}", 0, $e);
         }
+    }
 
-        // Handle interface resolution
-        if (interface_exists($concrete)) {
-            $resolvedInterface = $this->aliases[$concrete] ?? $this->endpointImplementationResolver->resolve($concrete);
-            if ($resolvedInterface === null) {
-                throw new ContainerException("No binding found for interface {$concrete}");
-            }
-
-            // Get the concrete implementation for this interface
-            /** @var class-string<U> $aliasConcrete */
-            $aliasConcrete = $resolvedInterface;
-
-            // Check if we already have the concrete class instance
-            if (isset($this->instances[$aliasConcrete])) {
-                return $this->instances[$aliasConcrete];
-            }
-
-            // Resolve the concrete class, not the interface
-            return $this->resolve($aliasConcrete);
-        }
-
+    /**
+     * @template U of object
+     * @param class-string<U> $concrete
+     */
+    private function buildAutowirePlan(string $concrete): AutowirePlan
+    {
         $reflection = new \ReflectionClass($concrete);
-
         if (!$reflection->isInstantiable()) {
             throw new ContainerException("Class {$concrete} is not instantiable");
         }
@@ -177,36 +216,30 @@ final class DIContainer implements Container
         $constructor = $reflection->getConstructor();
 
         if ($constructor === null) {
-            /** @var U */
-            return new $concrete();
+            return new AutowirePlan($concrete, []);
         }
 
-        $parameters = $constructor->getParameters();
-        $dependencies = $this->resolveDependencies($parameters);
-
-        try {
-            /** @var U */
-            return new $concrete(...$dependencies);
-        } catch (\Throwable $e) {
-            throw new ContainerException("Cannot instantiate {$concrete}", 0, $e);
-        }
+        return new AutowirePlan(
+            $concrete,
+            $this->buildArguments($constructor->getParameters()),
+        );
     }
 
     /**
      * @param \ReflectionParameter[] $parameters
-     * @return array<int, mixed>
+     * @return list<AutowireArgument>
      * @throws ContainerException
      */
-    private function resolveDependencies(array $parameters): array
+    private function buildArguments(array $parameters): array
     {
-        $dependencies = [];
+        $arguments = [];
 
         foreach ($parameters as $parameter) {
             $dependency = $parameter->getType();
 
             if ($dependency === null) {
                 if ($parameter->isDefaultValueAvailable()) {
-                    $dependencies[] = $parameter->getDefaultValue();
+                    $arguments[] = new DefaultValueArgument($parameter->getDefaultValue());
 
                     continue;
                 }
@@ -224,7 +257,7 @@ final class DIContainer implements Container
 
             if ($dependency->isBuiltin()) {
                 if ($parameter->isDefaultValueAvailable()) {
-                    $dependencies[] = $parameter->getDefaultValue();
+                    $arguments[] = new DefaultValueArgument($parameter->getDefaultValue());
 
                     continue;
                 }
@@ -236,9 +269,9 @@ final class DIContainer implements Container
 
             /** @var class-string $dependencyName */
             $dependencyName = $dependency->getName();
-            $dependencies[] = $this->get($dependencyName);
+            $arguments[] = new ServiceReferenceArgument($dependencyName);
         }
 
-        return $dependencies;
+        return $arguments;
     }
 }
