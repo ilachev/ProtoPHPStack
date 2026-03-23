@@ -9,7 +9,7 @@ use SqlGen\Config\GeneratorConfig;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-$options = getopt('', ['input-dir:', 'output-dir:', 'namespace:', 'schema:']);
+$options = getopt('', ['input-dir:', 'output-dir:', 'namespace:', 'schema:', 'runtime-namespace::']);
 
 if (!is_array($options)) {
     fwrite(STDERR, "Failed to read options.\n");
@@ -20,11 +20,12 @@ $inputDir = $options['input-dir'] ?? null;
 $outputDir = $options['output-dir'] ?? null;
 $namespace = $options['namespace'] ?? null;
 $schemaPath = $options['schema'] ?? null;
+$runtimeNamespace = $options['runtime-namespace'] ?? 'App\\Platform\\Storage\\Sql';
 
-if (!is_string($inputDir) || !is_string($outputDir) || !is_string($namespace) || !is_string($schemaPath)) {
+if (!is_string($inputDir) || !is_string($outputDir) || !is_string($namespace) || !is_string($schemaPath) || !is_string($runtimeNamespace)) {
     fwrite(
         STDERR,
-        "Usage: sql-check.php --input-dir=sql/queries --output-dir=gen/Generated/Sql --namespace=App\\\\Generated\\\\Sql --schema=sql/schema.sql\n",
+        "Usage: sql-check.php --input-dir=sql/queries --output-dir=gen/Generated/Sql --namespace=App\\\\Generated\\\\Sql --schema=sql/schema.sql [--runtime-namespace=App\\\\Platform\\\\Storage\\\\Sql]\n",
     );
     exit(1);
 }
@@ -34,6 +35,7 @@ $config = new GeneratorConfig(
     outputDir: $outputDir,
     namespace: $namespace,
     schemaPath: $schemaPath,
+    runtimeContracts: \SqlGen\Config\SqlRuntimeContracts::fromNamespace($runtimeNamespace),
 );
 
 try {

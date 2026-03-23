@@ -90,12 +90,18 @@ final readonly class PhpQueryGenerator
         $file->setStrictTypes();
 
         $namespace = $file->addNamespace($namespaceName);
-        $namespace->addUse('App\Platform\Storage\Sql\DatabaseRow');
+        $namespace->addUse($this->config->runtimeContracts->databaseRow);
         $class = $namespace->addClass($rowClassName);
         $class->setFinal(true);
         $class->setReadOnly(true);
-        $class->addImplement('App\Platform\Storage\Sql\DatabaseRow');
-        $class->addComment(sprintf('@implements DatabaseRow<%s>', $this->phpTypeRenderer->renderRowShape($fields)));
+        $class->addImplement($this->config->runtimeContracts->databaseRow);
+        $class->addComment(
+            sprintf(
+                '@implements %s<%s>',
+                $this->config->runtimeContracts->shortName($this->config->runtimeContracts->databaseRow),
+                $this->phpTypeRenderer->renderRowShape($fields),
+            ),
+        );
 
         $constructor = $class->addMethod('__construct');
 
@@ -131,12 +137,12 @@ final readonly class PhpQueryGenerator
         $file->setStrictTypes();
 
         $namespace = $file->addNamespace($namespaceName);
-        $namespace->addUse('App\Platform\Storage\Sql\ExecutableQuery');
+        $namespace->addUse($this->config->runtimeContracts->executableQuery);
         if ($rowFields !== [] && is_string($rowClassName)) {
             $namespace->addUse(match ($statement->resultKind) {
-                SqlResultKind::One => 'App\Platform\Storage\Sql\OneRowQuery',
-                SqlResultKind::Many => 'App\Platform\Storage\Sql\ManyRowsQuery',
-                SqlResultKind::Exec => 'App\Platform\Storage\Sql\RowReturningQuery',
+                SqlResultKind::One => $this->config->runtimeContracts->oneRowQuery,
+                SqlResultKind::Many => $this->config->runtimeContracts->manyRowsQuery,
+                SqlResultKind::Exec => $this->config->runtimeContracts->rowReturningQuery,
             });
         }
 
@@ -147,9 +153,9 @@ final readonly class PhpQueryGenerator
         $class->addImplement($implementedInterface);
         if ($rowFields !== [] && is_string($rowClassName)) {
             $interfaceName = match ($statement->resultKind) {
-                SqlResultKind::One => 'OneRowQuery',
-                SqlResultKind::Many => 'ManyRowsQuery',
-                SqlResultKind::Exec => 'RowReturningQuery',
+                SqlResultKind::One => $this->config->runtimeContracts->shortName($this->config->runtimeContracts->oneRowQuery),
+                SqlResultKind::Many => $this->config->runtimeContracts->shortName($this->config->runtimeContracts->manyRowsQuery),
+                SqlResultKind::Exec => $this->config->runtimeContracts->shortName($this->config->runtimeContracts->rowReturningQuery),
             };
             $class->addComment(
                 sprintf(
@@ -280,13 +286,13 @@ final readonly class PhpQueryGenerator
     private function resolveQueryInterface(SqlStatement $statement, bool $returnsRows): string
     {
         if (!$returnsRows) {
-            return 'App\Platform\Storage\Sql\ExecutableQuery';
+            return $this->config->runtimeContracts->executableQuery;
         }
 
         return match ($statement->resultKind) {
-            SqlResultKind::One => 'App\Platform\Storage\Sql\OneRowQuery',
-            SqlResultKind::Many => 'App\Platform\Storage\Sql\ManyRowsQuery',
-            SqlResultKind::Exec => 'App\Platform\Storage\Sql\ExecutableQuery',
+            SqlResultKind::One => $this->config->runtimeContracts->oneRowQuery,
+            SqlResultKind::Many => $this->config->runtimeContracts->manyRowsQuery,
+            SqlResultKind::Exec => $this->config->runtimeContracts->executableQuery,
         };
     }
 

@@ -137,6 +137,19 @@ Runtime должен оставаться тонким.
 Runtime не должен заново интерпретировать SQL.
 Он должен только исполнять generated query classes.
 
+При этом `sql-gen` не должен быть жёстко пришит к одному runtime namespace.
+
+Правильная модель:
+
+- generated namespace настраивается через config/CLI;
+- runtime contract FQCN (`DatabaseRow`, `ExecutableQuery`, `OneRowQuery`, `ManyRowsQuery`, `RowReturningQuery`) идут через typed runtime-contract layer;
+- CLI должен позволять менять runtime namespace без патча генератора.
+
+Неправильная модель:
+
+- держать `App\Platform\Storage\Sql\...` хардкоженным прямо в генераторе;
+- считать runtime namespace “по сути фиксированным”, даже если generated namespace уже конфигурируется.
+
 ## Как использовать type libraries
 
 В `sql-gen` допустимы небольшие type-system библиотеки вроде `typhoon/type`, но только как внутренний слой генератора.

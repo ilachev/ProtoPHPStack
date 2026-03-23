@@ -6,6 +6,7 @@ namespace Tests\Unit\Generator;
 
 use PHPUnit\Framework\TestCase;
 use SqlGen\Config\GeneratorConfig;
+use SqlGen\Config\SqlRuntimeContracts;
 use SqlGen\Generator\PhpQueryGenerator;
 use SqlGen\Model\DatabaseSchema;
 use SqlGen\Model\SchemaColumn;
@@ -209,5 +210,44 @@ final class PhpQueryGeneratorTest extends TestCase
         self::assertStringContainsString('public ?int $ownerId', $files[0]->content);
         self::assertStringContainsString("\$row['session_id']", $files[0]->content);
         self::assertStringContainsString("\$row['owner_id']", $files[0]->content);
+    }
+
+    public function testGeneratesQueriesAgainstCustomRuntimeNamespace(): void
+    {
+        $generator = new PhpQueryGenerator(
+            new GeneratorConfig(
+                inputDir: 'sql/queries',
+                outputDir: 'gen/Generated/Sql',
+                namespace: 'Vendor\\Custom\\Sql',
+                schemaPath: 'sql/schema.sql',
+                runtimeContracts: SqlRuntimeContracts::fromNamespace('Vendor\\Runtime\\Sql'),
+            ),
+            new DatabaseSchema([
+                'sessions' => new SchemaTable('sessions', [
+                    'id' => new SchemaColumn('id', 'TEXT', PhpTypeFactory::fromNativeType('string'), false),
+                ]),
+            ]),
+        );
+
+        $files = $generator->generateForSqlFile(
+            new SqlFile(
+                sourcePath: 'sql/queries/session.sql',
+                moduleName: 'Session',
+                statements: [
+                    new SqlStatement(
+                        name: 'FindSessionById',
+                        resultKind: SqlResultKind::One,
+                        sql: 'SELECT id FROM sessions WHERE id = :id;',
+                        parameters: [new SqlParameter('id')],
+                    ),
+                ],
+            ),
+        );
+
+        self::assertStringContainsString('use Vendor\\Runtime\\Sql\\DatabaseRow;', $files[0]->content);
+        self::assertStringContainsString('implements DatabaseRow', $files[0]->content);
+        self::assertStringContainsString('use Vendor\\Runtime\\Sql\\ExecutableQuery;', $files[1]->content);
+        self::assertStringContainsString('use Vendor\\Runtime\\Sql\\OneRowQuery;', $files[1]->content);
+        self::assertStringContainsString('implements OneRowQuery', $files[1]->content);
     }
 }
