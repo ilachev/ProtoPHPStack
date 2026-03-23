@@ -43,6 +43,7 @@ final class CachedSessionRepositoryTest extends TestCase
             engine: 'mock',
             address: 'tcp://127.0.0.1:6001',
             defaultPrefix: 'test:',
+            namespaceSeed: '',
             defaultTtl: 3600,
         );
 

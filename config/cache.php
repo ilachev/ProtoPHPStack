@@ -12,6 +12,9 @@ return [
     // Key prefix - helps avoid conflicts when using shared Redis
     'default_prefix' => 'app:',
 
+    // Optional deployment namespace seed for rolling cache invalidation without global clear
+    'namespace_seed' => $_SERVER['CACHE_NAMESPACE_SEED'] ?? '',
+
     // Default cache TTL in seconds (1 hour)
     'default_ttl' => 3600,
 

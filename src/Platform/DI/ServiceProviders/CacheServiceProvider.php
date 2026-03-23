@@ -26,8 +26,12 @@ final readonly class CacheServiceProvider implements ServiceProvider
                  *     engine: string,
                  *     address: string,
                  *     default_prefix: string,
+                 *     namespace_seed?: string,
                  *     default_ttl: int,
-                 *     serializer: int,
+                 *     compression?: bool,
+                 *     compression_threshold?: int,
+                 *     max_ttl?: int,
+                 *     fallback_max_entries?: int,
                  * } $cacheConfig
                  */
                 $cacheConfig = require ProjectPath::getConfigPath('cache.php');

@@ -6,7 +6,6 @@ namespace App\Platform\Runtime;
 
 use App\Capabilities\ApiStats\Transport\Http\ApiStatsMiddleware;
 use App\Capabilities\Session\Transport\Http\SessionMiddleware;
-use App\Platform\Cache\CacheService;
 use App\Platform\DI\Container;
 use App\Platform\DI\DIContainer;
 use App\Platform\Http\Middleware\{
@@ -17,7 +16,6 @@ use App\Platform\Http\Middleware\{
     RoutingMiddleware
 };
 use App\Platform\Http\RouteHandlerResolver;
-use App\Platform\Logging\Logger;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Spiral\RoadRunner\Http\PSR7Worker;
@@ -59,9 +57,6 @@ final readonly class App
 
     public function run(): void
     {
-        // Clear cache once on startup to avoid carrying stale state between deployments.
-        $this->clearAllCache();
-
         while (true) {
             $request = $this->worker->waitRequest();
             if ($request === null) {
@@ -70,30 +65,6 @@ final readonly class App
 
             $response = $this->handleRequest($request);
             $this->worker->respond($response);
-        }
-    }
-
-    /**
-     * Clears all cache storage on startup.
-     */
-    private function clearAllCache(): void
-    {
-        $cacheService = $this->container->get(CacheService::class);
-        $logger = $this->container->get(Logger::class);
-
-        try {
-            $success = $cacheService->clear();
-
-            if ($success) {
-                $logger->info('Cache fully cleared on application startup');
-            } else {
-                $logger->warning('Cache clearing reported failure on startup without exception');
-            }
-        } catch (\Throwable $e) {
-            $logger->error('Failed to clear cache on startup', [
-                'error' => $e->getMessage(),
-                'exception' => $e,
-            ]);
         }
     }
 

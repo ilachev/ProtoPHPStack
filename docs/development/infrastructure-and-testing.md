@@ -44,6 +44,9 @@
 - `.rr.yaml`
 - `config/cache.php`
 
+Для deployment-aware cache invalidation используется `namespace_seed` в `config/cache.php` или `CACHE_NAMESPACE_SEED` из окружения.
+Это позволяет менять namespace кеша между релизами без глобального `clear()` shared backend-а на старте воркеров.
+
 ## Docker services
 
 `docker-compose.yml` поднимает:

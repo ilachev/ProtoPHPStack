@@ -28,6 +28,7 @@ final class RoadRunnerCacheServiceTest extends TestCase
             engine: 'memory',
             address: 'tcp://localhost:6001',
             defaultPrefix: 'test:',
+            namespaceSeed: 'deploy-42',
             defaultTtl: 60,
         );
 
@@ -59,6 +60,13 @@ final class RoadRunnerCacheServiceTest extends TestCase
         // Read value.
         $retrieved = $this->cacheService->get($key);
         self::assertSame($value, $retrieved);
+    }
+
+    public function testUsesDeploymentNamespaceSeedInPrefixedKeys(): void
+    {
+        self::assertTrue($this->cacheService->set('namespaced-key', 'value'));
+
+        self::assertTrue($this->mockStorage->has('test:deploy-42:namespaced-key'));
     }
 
     public function testGetNonExistentKey(): void

@@ -209,7 +209,9 @@ final class RoadRunnerCacheService implements CacheService
 
     private function prefixKey(string $key): string
     {
-        return $this->config->defaultPrefix . $key;
+        $namespaceSeed = $this->config->namespaceSeed !== '' ? $this->config->namespaceSeed . ':' : '';
+
+        return $this->config->defaultPrefix . $namespaceSeed . $key;
     }
 
     private function activateFallbackStorage(string $reason, ?\Throwable $exception = null): void
