@@ -150,6 +150,22 @@ Runtime не должен заново интерпретировать SQL.
 - держать `App\Platform\Storage\Sql\...` хардкоженным прямо в генераторе;
 - считать runtime namespace “по сути фиксированным”, даже если generated namespace уже конфигурируется.
 
+## Profile model
+
+`sql-gen` должен развиваться как generic engine с внешним project profile.
+
+Правильная модель:
+
+- внутри `tools/sql-gen` живут только generic contracts, default profile и profile resolver;
+- project-specific SQL generation profile живёт снаружи тулзы;
+- CLI поддерживает `bootstrap + profile-class`;
+- основной проект подключает свой profile adapter через `codegen/`, а не через встроенное знание тулзы.
+
+Неправильная модель:
+
+- держать `base-api-template` SQL profile внутри самой тулзы;
+- зашивать project naming/runtime conventions в generic `sql-gen` core.
+
 ## Как использовать type libraries
 
 В `sql-gen` допустимы небольшие type-system библиотеки вроде `typhoon/type`, но только как внутренний слой генератора.

@@ -139,6 +139,8 @@ tasks:
         --output-dir=gen/Generated/Sql
         --namespace=App\\Generated\\Sql
         --schema=sql/schema.sql
+        --bootstrap=codegen/sql-gen-bootstrap.php
+        --profile-class=ProjectCodegen\\Sql\\BaseApiTemplateSqlGenerationProfile
 
   sql:check:
     desc: Validate SQL sources and ensure generated SQL artifacts are synchronized
@@ -151,6 +153,8 @@ tasks:
         --output-dir=gen/Generated/Sql
         --namespace=App\\Generated\\Sql
         --schema=sql/schema.sql
+        --bootstrap=codegen/sql-gen-bootstrap.php
+        --profile-class=ProjectCodegen\\Sql\\BaseApiTemplateSqlGenerationProfile
 
   sql:check:pg:
     desc: Validate SQL queries against a live PostgreSQL database

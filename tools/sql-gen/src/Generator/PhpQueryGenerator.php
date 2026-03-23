@@ -43,8 +43,9 @@ final readonly class PhpQueryGenerator
     public function generateForSqlFile(SqlFile $sqlFile): array
     {
         $files = [];
-        $namespace = $this->config->profile->artifactNaming->moduleNamespace($this->config->namespace, $sqlFile->moduleName);
-        $outputDir = $this->config->profile->artifactNaming->moduleOutputDirectory($this->config->outputDir, $sqlFile->moduleName);
+        $artifactNaming = $this->config->profile->artifactNaming();
+        $namespace = $artifactNaming->moduleNamespace($this->config->namespace, $sqlFile->moduleName);
+        $outputDir = $artifactNaming->moduleOutputDirectory($this->config->outputDir, $sqlFile->moduleName);
         $rowClassNames = $this->resolveRowClassNames($sqlFile);
         $generatedRowClasses = [];
 
@@ -61,7 +62,7 @@ final readonly class PhpQueryGenerator
                     $generatedRowClasses[$rowClassName] = true;
                 }
                 $files[] = new GeneratedFile(
-                    path: $outputDir . '/' . $this->config->profile->artifactNaming->queryClassName($statement->name) . '.php',
+                    path: $outputDir . '/' . $artifactNaming->queryClassName($statement->name) . '.php',
                     content: $this->renderQueryClass($namespace, $statement, $rowClassName, $sqlFile->sourcePath),
                 );
             } catch (\Throwable $exception) {
@@ -89,16 +90,17 @@ final readonly class PhpQueryGenerator
         $file = new PhpFile();
         $file->setStrictTypes();
 
+        $runtimeContracts = $this->config->profile->runtimeContracts();
         $namespace = $file->addNamespace($namespaceName);
-        $namespace->addUse($this->config->profile->runtimeContracts->databaseRow);
+        $namespace->addUse($runtimeContracts->databaseRow);
         $class = $namespace->addClass($rowClassName);
         $class->setFinal(true);
         $class->setReadOnly(true);
-        $class->addImplement($this->config->profile->runtimeContracts->databaseRow);
+        $class->addImplement($runtimeContracts->databaseRow);
         $class->addComment(
             sprintf(
                 '@implements %s<%s>',
-                $this->config->profile->runtimeContracts->shortName($this->config->profile->runtimeContracts->databaseRow),
+                $runtimeContracts->shortName($runtimeContracts->databaseRow),
                 $this->phpTypeRenderer->renderRowShape($fields),
             ),
         );
@@ -132,30 +134,32 @@ final readonly class PhpQueryGenerator
     ): string {
         $rowFields = $this->rowResolver->resolve($statement, $this->schema);
         $parameters = $this->parameterResolver->resolve($statement, $this->schema);
+        $runtimeContracts = $this->config->profile->runtimeContracts();
+        $artifactNaming = $this->config->profile->artifactNaming();
 
         $file = new PhpFile();
         $file->setStrictTypes();
 
         $namespace = $file->addNamespace($namespaceName);
-        $namespace->addUse($this->config->profile->runtimeContracts->executableQuery);
+        $namespace->addUse($runtimeContracts->executableQuery);
         if ($rowFields !== [] && is_string($rowClassName)) {
             $namespace->addUse(match ($statement->resultKind) {
-                SqlResultKind::One => $this->config->profile->runtimeContracts->oneRowQuery,
-                SqlResultKind::Many => $this->config->profile->runtimeContracts->manyRowsQuery,
-                SqlResultKind::Exec => $this->config->profile->runtimeContracts->rowReturningQuery,
+                SqlResultKind::One => $runtimeContracts->oneRowQuery,
+                SqlResultKind::Many => $runtimeContracts->manyRowsQuery,
+                SqlResultKind::Exec => $runtimeContracts->rowReturningQuery,
             });
         }
 
-        $class = $namespace->addClass($this->config->profile->artifactNaming->queryClassName($statement->name));
+        $class = $namespace->addClass($artifactNaming->queryClassName($statement->name));
         $class->setFinal(true);
         $class->setReadOnly(true);
         $implementedInterface = $this->resolveQueryInterface($statement, $rowFields !== [] && is_string($rowClassName));
         $class->addImplement($implementedInterface);
         if ($rowFields !== [] && is_string($rowClassName)) {
             $interfaceName = match ($statement->resultKind) {
-                SqlResultKind::One => $this->config->profile->runtimeContracts->shortName($this->config->profile->runtimeContracts->oneRowQuery),
-                SqlResultKind::Many => $this->config->profile->runtimeContracts->shortName($this->config->profile->runtimeContracts->manyRowsQuery),
-                SqlResultKind::Exec => $this->config->profile->runtimeContracts->shortName($this->config->profile->runtimeContracts->rowReturningQuery),
+                SqlResultKind::One => $runtimeContracts->shortName($runtimeContracts->oneRowQuery),
+                SqlResultKind::Many => $runtimeContracts->shortName($runtimeContracts->manyRowsQuery),
+                SqlResultKind::Exec => $runtimeContracts->shortName($runtimeContracts->rowReturningQuery),
             };
             $class->addComment(
                 sprintf(
@@ -286,13 +290,13 @@ final readonly class PhpQueryGenerator
     private function resolveQueryInterface(SqlStatement $statement, bool $returnsRows): string
     {
         if (!$returnsRows) {
-            return $this->config->profile->runtimeContracts->executableQuery;
+            return $this->config->profile->runtimeContracts()->executableQuery;
         }
 
         return match ($statement->resultKind) {
-            SqlResultKind::One => $this->config->profile->runtimeContracts->oneRowQuery,
-            SqlResultKind::Many => $this->config->profile->runtimeContracts->manyRowsQuery,
-            SqlResultKind::Exec => $this->config->profile->runtimeContracts->executableQuery,
+            SqlResultKind::One => $this->config->profile->runtimeContracts()->oneRowQuery,
+            SqlResultKind::Many => $this->config->profile->runtimeContracts()->manyRowsQuery,
+            SqlResultKind::Exec => $this->config->profile->runtimeContracts()->executableQuery,
         };
     }
 
@@ -351,12 +355,12 @@ final readonly class PhpQueryGenerator
         foreach ($groups as $statements) {
             if (count($statements) === 1) {
                 $statement = $statements[0];
-                $rowClassNames[$statement->name] = $this->config->profile->artifactNaming->rowClassName($statement->name);
+                $rowClassNames[$statement->name] = $this->config->profile->artifactNaming()->rowClassName($statement->name);
                 continue;
             }
 
             $sharedGroupIndex++;
-            $sharedClassName = $this->config->profile->artifactNaming->sharedRowClassName($sqlFile->moduleName, $sharedGroupIndex);
+            $sharedClassName = $this->config->profile->artifactNaming()->sharedRowClassName($sqlFile->moduleName, $sharedGroupIndex);
 
             foreach ($statements as $statement) {
                 $rowClassNames[$statement->name] = $sharedClassName;

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Generator;
 
 use PHPUnit\Framework\TestCase;
+use SqlGen\Config\DefaultSqlGenerationProfile;
 use SqlGen\Config\GeneratorConfig;
 use SqlGen\Generator\PhpQueryGenerator;
 use SqlGen\Model\DatabaseSchema;
@@ -219,7 +220,7 @@ final class PhpQueryGeneratorTest extends TestCase
                 outputDir: 'gen/Generated/Sql',
                 namespace: 'Vendor\\Custom\\Sql',
                 schemaPath: 'sql/schema.sql',
-                profile: \SqlGen\Config\SqlGenerationProfile::withRuntimeNamespace('Vendor\\Runtime\\Sql'),
+                profile: DefaultSqlGenerationProfile::withRuntimeNamespace('Vendor\\Runtime\\Sql'),
             ),
             new DatabaseSchema([
                 'sessions' => new SchemaTable('sessions', [

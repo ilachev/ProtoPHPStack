@@ -15,6 +15,6 @@ final readonly class GeneratorConfig
         public string $schemaPath,
         ?SqlGenerationProfile $profile = null,
     ) {
-        $this->profile = $profile ?? new SqlGenerationProfile();
+        $this->profile = $profile ?? new DefaultSqlGenerationProfile();
     }
 }
