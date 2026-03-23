@@ -75,6 +75,8 @@ Pipeline в проекте рекурсивный. Каждый middleware по�
 - `requestId`
 - inherited `Deadline`
 
+Если клиент уже прислал `X-Request-ID`, runtime сохраняет его. Иначе request ID генерируется внутри `Platform/Runtime/RequestContextFactory`.
+
 Этот context живёт в request attributes и должен считаться канонической точкой привязки для downstream timeout-budget propagation.
 
 ## 5. `SessionMiddleware`

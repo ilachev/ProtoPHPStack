@@ -12,6 +12,9 @@ use App\Platform\Http\Handler\HandlerFactoryInterface;
 use App\Platform\Logging\Logger;
 use App\Platform\Logging\ReadableOutputLogger;
 use App\Platform\Logging\RoadRunnerLogger;
+use App\Platform\Runtime\RandomRequestIdGenerator;
+use App\Platform\Runtime\RequestContextFactory;
+use App\Platform\Runtime\RequestIdGenerator;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\Http\Message\ServerRequestFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
@@ -38,6 +41,8 @@ final readonly class CoreServiceProvider implements ServiceProvider
         // Logger
         $container->bind(ReadableOutputLogger::class, ReadableOutputLogger::class);
         $container->bind(Logger::class, RoadRunnerLogger::class);
+        $container->bind(RequestIdGenerator::class, RandomRequestIdGenerator::class);
+        $container->bind(RequestContextFactory::class, RequestContextFactory::class);
 
         // Handler factory
         $container->bind(HandlerFactoryInterface::class, ContainerHandlerFactory::class);

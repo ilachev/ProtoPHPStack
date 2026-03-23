@@ -10,6 +10,8 @@ use App\Platform\Http\Middleware\RequestContextMiddleware;
 use App\Platform\Http\RequestContextAttributes;
 use App\Platform\Http\RequestHandler;
 use App\Platform\Runtime\RequestContext;
+use App\Platform\Runtime\RequestContextFactory;
+use App\Platform\Runtime\RequestIdGenerator;
 use Nyholm\Psr7\Response;
 use Nyholm\Psr7\ServerRequest;
 use PHPUnit\Framework\TestCase;
@@ -24,6 +26,7 @@ final class RequestContextMiddlewareTest extends TestCase
         $middleware = new RequestContextMiddleware(
             new TestLogger(),
             new HttpRuntimeConfig(requestTimeoutSeconds: 5.0),
+            new RequestContextFactory(new TestRequestIdGenerator('generated-request-id')),
         );
         $handler = new class implements RequestHandler {
             public ?RequestContext $capturedContext = null;
@@ -54,6 +57,7 @@ final class RequestContextMiddlewareTest extends TestCase
         $middleware = new RequestContextMiddleware(
             new TestLogger(),
             new HttpRuntimeConfig(requestTimeoutSeconds: 5.0),
+            new RequestContextFactory(new TestRequestIdGenerator('generated-request-id')),
         );
         $handler = new class implements RequestHandler {
             public ?HttpRequestOptions $resolvedOptions = null;
@@ -73,5 +77,43 @@ final class RequestContextMiddlewareTest extends TestCase
 
         self::assertInstanceOf(HttpRequestOptions::class, $handler->resolvedOptions);
         self::assertNotNull($handler->resolvedOptions->deadline);
+    }
+
+    public function testKeepsIncomingRequestIdWhenPresent(): void
+    {
+        $middleware = new RequestContextMiddleware(
+            new TestLogger(),
+            new HttpRuntimeConfig(requestTimeoutSeconds: 5.0),
+            new RequestContextFactory(new TestRequestIdGenerator('generated-request-id')),
+        );
+        $handler = new class implements RequestHandler {
+            public ?RequestContext $capturedContext = null;
+
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                $this->capturedContext = RequestContextAttributes::get($request);
+
+                return new Response(200);
+            }
+        };
+        $response = $middleware->process(
+            new ServerRequest('GET', '/test', ['X-Request-ID' => 'incoming-request-id']),
+            $handler,
+        );
+
+        self::assertSame('incoming-request-id', $handler->capturedContext?->requestId);
+        self::assertSame('incoming-request-id', $response->getHeaderLine('X-Request-ID'));
+    }
+}
+
+final readonly class TestRequestIdGenerator implements RequestIdGenerator
+{
+    public function __construct(
+        private string $requestId,
+    ) {}
+
+    public function generate(): string
+    {
+        return $this->requestId;
     }
 }

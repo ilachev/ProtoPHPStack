@@ -10,8 +10,7 @@ use App\Platform\Http\RequestContextAttributes;
 use App\Platform\Http\RequestHandler;
 use App\Platform\Logging\Logger;
 use App\Platform\Logging\RoadRunnerLogger;
-use App\Platform\Runtime\Deadline;
-use App\Platform\Runtime\RequestContext;
+use App\Platform\Runtime\RequestContextFactory;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -20,6 +19,7 @@ final readonly class RequestContextMiddleware implements Middleware
     public function __construct(
         private Logger $logger,
         private HttpRuntimeConfig $config,
+        private RequestContextFactory $requestContextFactory,
     ) {}
 
     public function process(
@@ -27,9 +27,9 @@ final readonly class RequestContextMiddleware implements Middleware
         RequestHandler $handler,
     ): ResponseInterface {
         $startTime = hrtime(true);
-        $context = new RequestContext(
-            requestId: bin2hex(random_bytes(8)),
-            deadline: Deadline::fromSeconds($this->config->requestTimeoutSeconds),
+        $context = $this->requestContextFactory->create(
+            timeoutSeconds: $this->config->requestTimeoutSeconds,
+            requestId: $request->getHeaderLine('X-Request-ID'),
         );
 
         if ($this->logger instanceof RoadRunnerLogger) {
