@@ -82,6 +82,7 @@ Reusable blocks:
 - type-system libraries допустимы только внутри generators и только там, где они реально заменяют ручной type rendering
 - внутри `tools/sql-gen` canonical PHP type model уже должен считаться Typhoon-based, а не строковым
 - `sql-gen` должен восприниматься как generic engine с внешним project profile из `codegen/Sql`, а не как тулза со встроенным знанием этого шаблона
+- roadmap `sql-gen` сейчас идёт в richer expression typing и relation-aware schema semantics, а не в ORM-like abstractions или “полную поддержку PostgreSQL”
 
 ## Команды
 

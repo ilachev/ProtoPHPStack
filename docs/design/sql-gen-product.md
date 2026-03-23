@@ -318,3 +318,57 @@ SQL text
 ```
 
 То есть `phplrt` нужен не как “готовый SQL parser”, а как основа для нашего subset parser-а.
+
+## Roadmap
+
+Ниже зафиксирован предпочтительный порядок развития `sql-gen`.
+
+### Что уже считается устойчивым ядром
+
+- `sql-gen` работает как generic engine с внешним project profile;
+- query SQL и schema SQL разбираются через `phplrt`-based AST path, а не через regex-эвристики;
+- canonical PHP type model внутри тулзы уже Typhoon-based;
+- runtime contracts и artifact naming вынесены в typed profile;
+- `sql:check` и `sql:check:pg` считаются обязательной частью quality model;
+- `Session` и `ApiStats` уже подтверждают жизнеспособность SQL-first persistence path на реальных consumers.
+
+### Ближайшие шаги
+
+1. Усиливать expression typing поверх AST.
+
+- продолжать расширять typed inference для `SELECT`/`RETURNING` expressions;
+- после `COUNT`, `MIN`, `MAX`, `COALESCE`, `CASE` идти в более богатую совместимость типов, а не в string-based special cases;
+- учить inference понимать placeholder-driven expressions и mixed-nullability более точно.
+
+2. Усиливать relation-aware schema semantics.
+
+- развивать validation `JOIN` не только для одиночных foreign key columns, но и для составных ключей;
+- аккуратно усиливать проверки вокруг relation metadata, не превращая их в ложноположительные жёсткие запреты там, где схема ничего не говорит.
+
+3. Расширять поддерживаемый SQL subset по реальным кейсам.
+
+- добавлять новые конструкции только когда они нужны реальным query files проекта;
+- предпочитать small, explicit AST nodes вместо “универсального expression kitchen sink”;
+- каждое расширение должно проходить через parser, semantic inference и PostgreSQL-backed validation, а не только через generator rendering.
+
+4. Улучшать diagnostics как product feature.
+
+- source-aware ошибки должны включать query name, file path и понятный semantic context;
+- ошибки parser-а, schema resolution и type inference должны оставаться короткими, но достаточно точными, чтобы по ним было легко чинить SQL source.
+
+### Что делать не нужно
+
+- не пытаться превратить `sql-gen` в ORM;
+- не пытаться поддержать “почти весь PostgreSQL” заранее;
+- не плодить отдельные metadata files рядом с SQL;
+- не дублировать schema truth в PHP-классы или атрибуты;
+- не заменять typed inference ручными string rules, если задачу можно решить через AST + Typhoon model.
+
+### Критерий хорошего следующего шага
+
+Новый шаг в развитии `sql-gen` считается хорошим, если он одновременно:
+
+- расширяет поддерживаемый SQL-first workflow на реальный кейс;
+- усиливает AST + semantic inference model, а не размывает её;
+- не требует возвращаться к regex или stringly-typed contracts;
+- сохраняет PostgreSQL как реальный target, а не абстрактный диалект.
