@@ -127,6 +127,32 @@ final class PostgreSqlStatementCompilerTest extends TestCase
         self::assertSame(['bigint'], $compiled->parameterTypes);
     }
 
+    public function testCompilesMaxProjection(): void
+    {
+        $compiler = new PostgreSqlStatementCompiler();
+        $schema = new DatabaseSchema([
+            'sessions' => new SchemaTable('sessions', [
+                'updated_at' => new SchemaColumn('updated_at', 'BIGINT', PhpTypeFactory::fromNativeType('int'), false),
+            ]),
+        ]);
+
+        $compiled = $compiler->compile(
+            new SqlStatement(
+                name: 'FindLatestUpdate',
+                resultKind: SqlResultKind::One,
+                sql: 'SELECT MAX(updated_at) AS latest_update FROM sessions;',
+                parameters: [],
+            ),
+            $schema,
+        );
+
+        self::assertSame(
+            'SELECT MAX(updated_at) AS latest_update FROM sessions',
+            $compiled->sql,
+        );
+        self::assertSame([], $compiled->parameterTypes);
+    }
+
     public function testCompilesInsertWithReturningWithoutRegexReplacement(): void
     {
         $compiler = new PostgreSqlStatementCompiler();

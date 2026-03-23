@@ -232,4 +232,31 @@ final class StatementRowResolverTest extends TestCase
         self::assertFalse($fields[0]->nullable);
         self::assertSame('int', stringify($fields[0]->phpType));
     }
+
+    public function testInfersMaxProjectionFromColumnType(): void
+    {
+        $resolver = new StatementRowResolver();
+        $schema = new DatabaseSchema([
+            'sessions' => new SchemaTable('sessions', [
+                'updated_at' => new SchemaColumn('updated_at', 'BIGINT', PhpTypeFactory::fromNativeType('int'), false),
+            ]),
+        ]);
+
+        $fields = $resolver->resolve(
+            new SqlStatement(
+                name: 'FindLatestUpdate',
+                resultKind: SqlResultKind::One,
+                sql: 'SELECT MAX(updated_at) AS latest_update FROM sessions;',
+                parameters: [],
+            ),
+            $schema,
+        );
+
+        self::assertCount(1, $fields);
+        self::assertSame('MAX(updated_at)', $fields[0]->sourceColumnName);
+        self::assertSame('latest_update', $fields[0]->resultColumnName);
+        self::assertSame('latestUpdate', $fields[0]->propertyName);
+        self::assertTrue($fields[0]->nullable);
+        self::assertSame('int', stringify($fields[0]->phpType));
+    }
 }

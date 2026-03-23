@@ -16,21 +16,40 @@ final readonly class SelectProjectionTypeInferrer
         StatementTableMap $tableMap,
         string $queryName,
     ): ResolvedProjectionField {
-        if (strtolower($function->name) !== 'count') {
-            throw new \RuntimeException(
-                "Unsupported SQL function {$function->name} in query {$queryName}",
+        $functionName = strtolower($function->name);
+
+        if ($functionName === 'count') {
+            if ($function->column !== null) {
+                $tableMap->resolveColumn($function->column->table, $function->column->column);
+            }
+
+            return new ResolvedProjectionField(
+                sourceName: $function->toSql(),
+                resultColumn: $resultColumn,
+                phpType: intT,
+                nullable: false,
             );
         }
 
-        if ($function->column !== null) {
-            $tableMap->resolveColumn($function->column->table, $function->column->column);
+        if (in_array($functionName, ['max', 'min'], true)) {
+            if ($function->wildcard || $function->column === null) {
+                throw new \RuntimeException(
+                    "SQL function {$function->name} requires a column argument in query {$queryName}",
+                );
+            }
+
+            $resolvedColumn = $tableMap->resolveColumn($function->column->table, $function->column->column);
+
+            return new ResolvedProjectionField(
+                sourceName: $function->toSql(),
+                resultColumn: $resultColumn,
+                phpType: $resolvedColumn->column->phpType,
+                nullable: true,
+            );
         }
 
-        return new ResolvedProjectionField(
-            sourceName: $function->toSql(),
-            resultColumn: $resultColumn,
-            phpType: intT,
-            nullable: false,
+        throw new \RuntimeException(
+            "Unsupported SQL function {$function->name} in query {$queryName}",
         );
     }
 }

@@ -107,6 +107,25 @@ final class PhplrtSqlParserTest extends TestCase
         self::assertSame('total', $query->projections[0]->alias?->value);
     }
 
+    public function testParsesMaxProjectionWithQualifiedColumn(): void
+    {
+        $parser = new PhplrtSqlParser();
+
+        $query = $parser->parse(
+            'select max(s.updated_at) as latest_update from sessions as s',
+        );
+
+        self::assertInstanceOf(SelectQuery::class, $query);
+        self::assertCount(1, $query->projections);
+        self::assertInstanceOf(SelectProjectionFunction::class, $query->projections[0]);
+        self::assertSame('max', $query->projections[0]->function->name);
+        self::assertFalse($query->projections[0]->function->wildcard);
+        self::assertNotNull($query->projections[0]->function->column);
+        self::assertSame('s', $query->projections[0]->function->column->table);
+        self::assertSame('updated_at', $query->projections[0]->function->column->column);
+        self::assertSame('latest_update', $query->projections[0]->alias?->value);
+    }
+
     public function testParsesInsertWithReturningAndConflictClause(): void
     {
         $parser = new PhplrtSqlParser();
