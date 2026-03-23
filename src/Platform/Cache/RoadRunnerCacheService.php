@@ -15,63 +15,49 @@ final class RoadRunnerCacheService implements CacheService
 
     private bool $available = false;
 
+    private bool $degraded = false;
+
+    /**
+     * Flag indicating that cache clear operation is in progress.
+     */
+    private bool $clearInProgress = false;
+
     public function __construct(
         private readonly CacheConfig $config,
         private readonly Logger $logger,
     ) {
         try {
-            // Check if we're in a testing environment
             if ($this->isTestingEnvironment()) {
-                // In test environment use a fallback storage
-                $this->storage = new FallbackStorage();
-                $this->available = true;
+                $this->activateFallbackStorage('test environment');
 
                 return;
             }
 
-            // Create RPC connection
-            $address = !empty($this->config->address) ? $this->config->address : 'tcp://127.0.0.1:6001';
+            $address = $this->config->address !== '' ? $this->config->address : 'tcp://127.0.0.1:6001';
             $rpc = RPC::create($address);
-
-            // Create factory and get storage
             $factory = new Factory($rpc);
-            $engine = $this->config->engine === '' ? 'local-memory' : $this->config->engine;
+            $engine = $this->config->engine !== '' ? $this->config->engine : 'local-memory';
 
             try {
-                // Get storage
                 $storage = $factory->select($engine);
+                $storage->has('cache_test_key');
 
-                // Check storage availability with a simple has operation
-                $testKey = 'cache_test_key';
-                $storage->has($testKey);
-
-                // If operation succeeds, save storage and mark as available
                 $this->storage = $storage;
                 $this->available = true;
                 $this->logger->info('KV storage is available');
             } catch (\Throwable $e) {
-                $this->logger->error('KV storage is not available: ' . $e->getMessage());
-                $this->storage = new FallbackStorage();
-                $this->available = false;
+                $this->activateFallbackStorage('KV storage is not available', $e);
             }
         } catch (\Throwable $e) {
             $this->logger->error('Failed to initialize cache service: ' . $e->getMessage(), [
                 'exception' => $e,
             ]);
-
-            // Create a dummy storage that doesn't store anything
-            // This allows the application to work even if cache is unavailable
-            $this->storage = new FallbackStorage();
-            $this->available = false;
+            $this->activateFallbackStorage('cache service initialization failed', $e);
         }
     }
 
-    /**
-     * Checks if we're in a testing environment.
-     */
     private function isTestingEnvironment(): bool
     {
-        // Check for PHPUnit in the environment
         return \defined('PHPUNIT_COMPOSER_INSTALL') || \defined('__PHPUNIT_PHAR__')
             || isset($_SERVER['ENVIRONMENT']) && $_SERVER['ENVIRONMENT'] === 'testing';
     }
@@ -84,7 +70,7 @@ final class RoadRunnerCacheService implements CacheService
     public function set(string $key, mixed $value, ?int $ttl = null): bool
     {
         if (!$this->available) {
-            return true; // Pretend everything is okay
+            return false;
         }
 
         $prefixedKey = $this->prefixKey($key);
@@ -95,13 +81,7 @@ final class RoadRunnerCacheService implements CacheService
 
             return true;
         } catch (\Throwable $e) {
-            $this->logger->error('Cache set error: ' . $e->getMessage(), [
-                'key' => $prefixedKey,
-                'exception' => $e,
-            ]);
-
-            // Mark cache as unavailable after error
-            $this->available = false;
+            $this->switchToFallback($e, 'Cache set error', ['key' => $prefixedKey]);
 
             return false;
         }
@@ -118,19 +98,9 @@ final class RoadRunnerCacheService implements CacheService
         try {
             $value = $this->storage->get($prefixedKey);
 
-            if ($value === null) {
-                return $default;
-            }
-
-            return $value;
+            return $value ?? $default;
         } catch (\Throwable $e) {
-            $this->logger->error('Cache get error: ' . $e->getMessage(), [
-                'key' => $prefixedKey,
-                'exception' => $e,
-            ]);
-
-            // Mark cache as unavailable after error
-            $this->available = false;
+            $this->switchToFallback($e, 'Cache get error', ['key' => $prefixedKey]);
 
             return $default;
         }
@@ -147,13 +117,7 @@ final class RoadRunnerCacheService implements CacheService
         try {
             return $this->storage->has($prefixedKey);
         } catch (\Throwable $e) {
-            $this->logger->error('Cache has error: ' . $e->getMessage(), [
-                'key' => $prefixedKey,
-                'exception' => $e,
-            ]);
-
-            // Mark cache as unavailable after error
-            $this->available = false;
+            $this->switchToFallback($e, 'Cache has error', ['key' => $prefixedKey]);
 
             return false;
         }
@@ -162,7 +126,7 @@ final class RoadRunnerCacheService implements CacheService
     public function delete(string $key): bool
     {
         if (!$this->available) {
-            return true; // Pretend everything is okay
+            return false;
         }
 
         $prefixedKey = $this->prefixKey($key);
@@ -170,42 +134,25 @@ final class RoadRunnerCacheService implements CacheService
         try {
             return $this->storage->delete($prefixedKey);
         } catch (\Throwable $e) {
-            $this->logger->error('Cache delete error: ' . $e->getMessage(), [
-                'key' => $prefixedKey,
-                'exception' => $e,
-            ]);
-
-            // Mark cache as unavailable after error
-            $this->available = false;
+            $this->switchToFallback($e, 'Cache delete error', ['key' => $prefixedKey]);
 
             return false;
         }
     }
 
-    /**
-     * Flag indicating that cache clear operation is in progress.
-     */
-    private bool $clearInProgress = false;
-
-    /**
-     * Clears the entire cache with protection against concurrent calls.
-     */
     public function clear(): bool
     {
-        // If cache is unavailable or clearing is already in progress, simply return success
         if (!$this->available || $this->clearInProgress) {
             $this->logger->debug('Cache clear skipped', [
                 'reason' => !$this->available ? 'cache unavailable' : 'already in progress',
             ]);
 
-            return true; // Pretend everything is okay
+            return false;
         }
 
-        // Set flag that clearing is in progress
         $this->clearInProgress = true;
 
         try {
-            // Try to clear cache with retries
             $maxRetries = 3;
             $retryCount = 0;
             $success = false;
@@ -217,37 +164,29 @@ final class RoadRunnerCacheService implements CacheService
                 } catch (\Throwable $e) {
                     ++$retryCount;
                     if ($retryCount >= $maxRetries) {
-                        throw $e; // Throw exception after exhausting attempts
+                        throw $e;
                     }
 
-                    // Log error and delay before next attempt
                     $this->logger->warning('Cache clear retry', [
                         'attempt' => $retryCount,
                         'error' => $e->getMessage(),
                     ]);
 
-                    // Wait before retrying (50ms, 100ms, 200ms)
                     usleep($retryCount * 50000);
                 }
             }
 
             $this->logger->info('Cache cleared successfully', [
                 'attempts' => $retryCount + 1,
+                'degraded' => $this->degraded,
             ]);
 
             return true;
         } catch (\Throwable $e) {
-            $this->logger->error('Cache clear error', [
-                'error' => $e->getMessage(),
-                'exception' => $e,
-            ]);
-
-            // Mark cache as unavailable after error
-            $this->available = false;
+            $this->switchToFallback($e, 'Cache clear error');
 
             return false;
         } finally {
-            // In any case reset the clearing flag
             $this->clearInProgress = false;
         }
     }
@@ -255,13 +194,11 @@ final class RoadRunnerCacheService implements CacheService
     public function getOrSet(string $key, callable $callback, ?int $ttl = null): mixed
     {
         if (!$this->available) {
-            return $callback(); // Just call the function without caching
+            return $callback();
         }
 
-        $value = $this->get($key);
-
-        if ($value !== null) {
-            return $value;
+        if ($this->has($key)) {
+            return $this->get($key);
         }
 
         $value = $callback();
@@ -270,11 +207,42 @@ final class RoadRunnerCacheService implements CacheService
         return $value;
     }
 
-    /**
-     * Adds a prefix to the cache key.
-     */
     private function prefixKey(string $key): string
     {
         return $this->config->defaultPrefix . $key;
+    }
+
+    private function activateFallbackStorage(string $reason, ?\Throwable $exception = null): void
+    {
+        $this->storage = new FallbackStorage($this->config->fallbackMaxEntries);
+        $this->available = true;
+        $this->degraded = true;
+
+        $context = ['reason' => $reason];
+        if ($exception !== null) {
+            $context['error'] = $exception->getMessage();
+            $context['exception'] = $exception;
+        }
+
+        $this->logger->warning('Cache switched to in-memory fallback', $context);
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private function switchToFallback(\Throwable $exception, string $message, array $context = []): void
+    {
+        $this->logger->error($message . ': ' . $exception->getMessage(), $context + [
+            'exception' => $exception,
+            'degraded' => $this->degraded,
+        ]);
+
+        if ($this->degraded) {
+            $this->available = false;
+
+            return;
+        }
+
+        $this->activateFallbackStorage($message, $exception);
     }
 }

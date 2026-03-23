@@ -137,4 +137,23 @@ final class RoadRunnerCacheServiceTest extends TestCase
         // The callback must not run again once the value is cached.
         self::assertSame(1, $computeCount, 'Callback must not be called again');
     }
+
+    public function testGetOrSetCachesNullValues(): void
+    {
+        $key = 'nullable-value';
+        $computeCount = 0;
+
+        $callback = static function () use (&$computeCount) {
+            ++$computeCount;
+
+            return null;
+        };
+
+        $this->cacheService->getOrSet($key, $callback);
+        $this->cacheService->getOrSet($key, $callback);
+
+        self::assertTrue($this->cacheService->has($key));
+        self::assertNull($this->cacheService->get($key));
+        self::assertSame(1, $computeCount, 'Null values must be cached as a real hit');
+    }
 }

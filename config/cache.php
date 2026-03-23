@@ -23,4 +23,7 @@ return [
 
     // Maximum key storage time (7 days) - Redis limitation
     'max_ttl' => 604800,
+
+    // Maximum number of entries in the in-memory fallback cache
+    'fallback_max_entries' => 1000,
 ];

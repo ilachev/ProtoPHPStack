@@ -69,21 +69,17 @@ final class CachedSessionRepositoryTest extends TestCase
     {
         $session = $this->createSession();
 
-        // Настраиваем поведение внутреннего репозитория
         $this->innerRepository
-            ->expects(self::once()) // Должен быть вызван только один раз
+            ->expects(self::once())
             ->method('findById')
             ->with(self::SESSION_ID)
             ->willReturn($session);
 
-        // Первый вызов - данных в кеше нет, должен быть запрос к репозиторию
         $result1 = $this->repository->findById(self::SESSION_ID);
         self::assertSame($session, $result1);
 
-        // Проверяем наличие в кеше
         self::assertTrue($this->storage->has('test:session:' . self::SESSION_ID));
 
-        // Второй вызов - данные должны быть взяты из кеша
         $result2 = $this->repository->findById(self::SESSION_ID);
         self::assertSame($session, $result2);
     }
@@ -92,21 +88,17 @@ final class CachedSessionRepositoryTest extends TestCase
     {
         $sessions = [$this->createSession()];
 
-        // Настраиваем поведение внутреннего репозитория
         $this->innerRepository
-            ->expects(self::once()) // Должен быть вызван только один раз
+            ->expects(self::once())
             ->method('findByUserId')
             ->with(self::USER_ID)
             ->willReturn($sessions);
 
-        // Первый вызов - данных в кеше нет, должен быть запрос к репозиторию
         $result1 = $this->repository->findByUserId(self::USER_ID);
         self::assertSame($sessions, $result1);
 
-        // Проверяем наличие в кеше
         self::assertTrue($this->storage->has('test:session_user:' . self::USER_ID));
 
-        // Второй вызов - данные должны быть взяты из кеша
         $result2 = $this->repository->findByUserId(self::USER_ID);
         self::assertSame($sessions, $result2);
     }
@@ -115,7 +107,6 @@ final class CachedSessionRepositoryTest extends TestCase
     {
         $sessions = [$this->createSession()];
 
-        // Репозиторий должен быть вызван при каждом запросе
         $this->innerRepository
             ->expects(self::exactly(2))
             ->method('findAll')
@@ -140,11 +131,9 @@ final class CachedSessionRepositoryTest extends TestCase
 
         $savedSession = $this->repository->save($session);
 
-        // Проверяем, что сессия попала в кеш
         self::assertTrue($this->storage->has('test:session:' . self::SESSION_ID));
         self::assertSame($session, $savedSession);
 
-        // И что значение в кеше соответствует сессии
         $cachedSession = $this->cacheService->get('session:' . self::SESSION_ID);
         self::assertSame($session, $cachedSession);
     }
@@ -153,27 +142,22 @@ final class CachedSessionRepositoryTest extends TestCase
     {
         $session = $this->createSession();
 
-        // Настраиваем мок для поиска сессии
         $this->innerRepository
             ->expects(self::once())
             ->method('findById')
             ->with(self::SESSION_ID)
             ->willReturn($session);
 
-        // Настраиваем мок для удаления
         $this->innerRepository
             ->expects(self::once())
             ->method('delete')
             ->with(self::SESSION_ID);
 
-        // Сначала поместим сессию в кеш
         $this->cacheService->set('session:' . self::SESSION_ID, $session);
         $this->cacheService->set('session_user:' . self::USER_ID, [$session]);
 
-        // Удаляем сессию через репозиторий
         $this->repository->delete(self::SESSION_ID);
 
-        // Проверяем, что кеш был инвалидирован
         self::assertFalse($this->storage->has('test:session:' . self::SESSION_ID));
         self::assertFalse($this->storage->has('test:session_user:' . self::USER_ID));
     }
@@ -182,19 +166,28 @@ final class CachedSessionRepositoryTest extends TestCase
     {
         $session = $this->createSession();
 
-        // Помещаем сессию в кеш
         $this->cacheService->set('session:' . self::SESSION_ID, $session);
 
-        // Настраиваем мок для удаления истекших сессий
         $this->innerRepository
             ->expects(self::once())
             ->method('deleteExpired');
 
-        // Вызываем метод удаления истекших сессий
         $this->repository->deleteExpired();
 
-        // Проверяем, что кеш не был инвалидирован
         self::assertTrue($this->storage->has('test:session:' . self::SESSION_ID));
+    }
+
+    public function testFindByIdCachesNullResult(): void
+    {
+        $this->innerRepository
+            ->expects(self::once())
+            ->method('findById')
+            ->with(self::SESSION_ID)
+            ->willReturn(null);
+
+        self::assertNull($this->repository->findById(self::SESSION_ID));
+        self::assertTrue($this->storage->has('test:session:' . self::SESSION_ID));
+        self::assertNull($this->repository->findById(self::SESSION_ID));
     }
 
     private function createSession(string $payload = '{"foo":"bar"}'): Session

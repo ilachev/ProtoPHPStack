@@ -11,20 +11,15 @@ abstract readonly class AbstractCachedRepository
 {
     private const int CACHE_TTL = 3600;
 
-    private bool $cacheAvailable;
-
     public function __construct(
         protected CacheService $cache,
         protected Logger $logger,
         protected string $cacheKeyPrefix = '',
-    ) {
-        // Проверяем доступность кеша при инициализации
-        $this->cacheAvailable = $this->cache->isAvailable();
-    }
+    ) {}
 
     protected function setCacheValue(string $key, mixed $value, ?int $ttl = null): void
     {
-        if (!$this->cacheAvailable) {
+        if (!$this->cache->isAvailable()) {
             return;
         }
 
@@ -38,22 +33,22 @@ abstract readonly class AbstractCachedRepository
 
     protected function getCacheValue(string $key, mixed $default = null): mixed
     {
-        if (!$this->cacheAvailable) {
+        if (!$this->cache->isAvailable()) {
             $this->logCacheMiss($key, 'cache unavailable');
 
             return $default;
         }
 
         $prefixedKey = $this->buildCacheKey($key);
-        $value = $this->cache->get($prefixedKey, $default);
-
-        if ($value === $default) {
+        if (!$this->cache->has($prefixedKey)) {
             $this->logCacheMiss($key, 'not found');
-        } else {
-            $this->logCacheHit($key);
+
+            return $default;
         }
 
-        return $value;
+        $this->logCacheHit($key);
+
+        return $this->cache->get($prefixedKey, $default);
     }
 
     /**
@@ -63,7 +58,7 @@ abstract readonly class AbstractCachedRepository
      */
     protected function getOrSetCacheValue(string $key, callable $callback, ?int $ttl = null): mixed
     {
-        if (!$this->cacheAvailable) {
+        if (!$this->cache->isAvailable()) {
             $result = $callback();
             $this->logCacheMiss($key, 'cache unavailable');
 
@@ -71,28 +66,19 @@ abstract readonly class AbstractCachedRepository
         }
 
         $prefixedKey = $this->buildCacheKey($key);
-
-        // Проверяем наличие в кеше сначала
-        $cachedValue = $this->cache->get($prefixedKey);
-
-        if ($cachedValue !== null) {
+        if ($this->cache->has($prefixedKey)) {
             $this->logCacheHit($key);
 
-            return $cachedValue;
+            return $this->cache->get($prefixedKey);
         }
 
-        // Если в кеше нет, вычисляем и сохраняем
         $result = $callback();
         $this->logCacheMiss($key, 'not found');
-
         $this->cache->set($prefixedKey, $result, $ttl ?? self::CACHE_TTL);
 
         return $result;
     }
 
-    /**
-     * Логирует успешное получение данных из кеша (cache hit).
-     */
     protected function logCacheHit(string $key): void
     {
         $this->logger->debug('Cache hit', [
@@ -101,9 +87,6 @@ abstract readonly class AbstractCachedRepository
         ]);
     }
 
-    /**
-     * Логирует промах кеша (cache miss).
-     */
     protected function logCacheMiss(string $key, string $reason): void
     {
         $this->logger->debug('Cache miss', [
@@ -113,9 +96,6 @@ abstract readonly class AbstractCachedRepository
         ]);
     }
 
-    /**
-     * Формирует полный ключ кеша с префиксом.
-     */
     protected function buildCacheKey(string $key): string
     {
         return $this->cacheKeyPrefix . $key;
@@ -123,7 +103,7 @@ abstract readonly class AbstractCachedRepository
 
     protected function deleteCacheValue(string $key): void
     {
-        if (!$this->cacheAvailable) {
+        if (!$this->cache->isAvailable()) {
             return;
         }
 
@@ -137,7 +117,7 @@ abstract readonly class AbstractCachedRepository
 
     protected function hasCacheValue(string $key): bool
     {
-        if (!$this->cacheAvailable) {
+        if (!$this->cache->isAvailable()) {
             $this->logCacheMiss($key, 'cache unavailable');
 
             return false;

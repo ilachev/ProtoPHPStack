@@ -14,6 +14,7 @@ final readonly class CacheConfig
         public bool $compression = true,
         public int $compressionThreshold = 1024,
         public int $maxTtl = 604800,
+        public int $fallbackMaxEntries = 1000,
     ) {}
 
     /**
@@ -25,6 +26,7 @@ final readonly class CacheConfig
      *     compression?: bool,
      *     compression_threshold?: int,
      *     max_ttl?: int,
+     *     fallback_max_entries?: int,
      * } $config
      */
     public static function fromArray(array $config): self
@@ -37,6 +39,7 @@ final readonly class CacheConfig
             compression: $config['compression'] ?? true,
             compressionThreshold: $config['compression_threshold'] ?? 1024,
             maxTtl: $config['max_ttl'] ?? 604800,
+            fallbackMaxEntries: $config['fallback_max_entries'] ?? 1000,
         );
     }
 }

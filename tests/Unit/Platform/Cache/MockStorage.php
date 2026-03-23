@@ -23,7 +23,7 @@ final class MockStorage implements StorageInterface, SerializerAwareInterface
 
     public function get(string $key, mixed $default = null): mixed
     {
-        return $this->data[$key] ?? $default;
+        return \array_key_exists($key, $this->data) ? $this->data[$key] : $default;
     }
 
     public function set(string $key, mixed $value, null|int|\DateInterval $ttl = null): bool
@@ -93,7 +93,7 @@ final class MockStorage implements StorageInterface, SerializerAwareInterface
 
     public function has(string $key): bool
     {
-        return isset($this->data[$key]);
+        return \array_key_exists($key, $this->data);
     }
 
     /**
