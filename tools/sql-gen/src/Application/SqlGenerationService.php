@@ -7,7 +7,6 @@ namespace SqlGen\Application;
 use SqlGen\Config\GeneratorConfig;
 use SqlGen\Generator\GeneratedFile;
 use SqlGen\Generator\PhpQueryGenerator;
-use SqlGen\Parser\NamedSqlFileParser;
 use SqlGen\Parser\SqlFileParser;
 use SqlGen\Schema\DatabaseSchemaParser;
 use SqlGen\Schema\SqlSchemaParser;
@@ -15,7 +14,6 @@ use SqlGen\Schema\SqlSchemaParser;
 final readonly class SqlGenerationService
 {
     public function __construct(
-        private NamedSqlFileParser $sqlFileParser = new SqlFileParser(),
         private DatabaseSchemaParser $sqlSchemaParser = new SqlSchemaParser(),
     ) {}
 
@@ -26,6 +24,7 @@ final readonly class SqlGenerationService
     {
         $schema = $this->sqlSchemaParser->parseFile($config->schemaPath);
         $generator = new PhpQueryGenerator($config, $schema);
+        $sqlFileParser = new SqlFileParser($config->artifactNaming);
         $files = glob(rtrim($config->inputDir, '/') . '/*.sql');
         if (!is_array($files)) {
             throw new \RuntimeException("Failed to list SQL files in {$config->inputDir}");
@@ -40,7 +39,7 @@ final readonly class SqlGenerationService
                 continue;
             }
 
-            $sqlFile = $this->sqlFileParser->parseFile($file);
+            $sqlFile = $sqlFileParser->parseFile($file);
 
             foreach ($generator->generateForSqlFile($sqlFile) as $generatedFile) {
                 $generatedFiles[] = $generatedFile;

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlGen\Parser;
 
+use SqlGen\Config\SqlArtifactNaming;
 use SqlGen\Model\SqlFile;
 use SqlGen\Model\SqlParameter;
 use SqlGen\Model\SqlResultKind;
@@ -11,6 +12,10 @@ use SqlGen\Model\SqlStatement;
 
 final class SqlFileParser implements NamedSqlFileParser
 {
+    public function __construct(
+        private readonly ?SqlArtifactNaming $artifactNaming = null,
+    ) {}
+
     public function parseFile(string $path): SqlFile
     {
         $contents = file_get_contents($path);
@@ -25,7 +30,7 @@ final class SqlFileParser implements NamedSqlFileParser
 
         return new SqlFile(
             sourcePath: $path,
-            moduleName: $this->buildModuleName($path),
+            moduleName: ($this->artifactNaming ?? new SqlArtifactNaming())->moduleNameFromPath($path),
             statements: $statements,
         );
     }
@@ -72,41 +77,6 @@ final class SqlFileParser implements NamedSqlFileParser
             static fn(string $name): SqlParameter => new SqlParameter($name),
             array_keys($uniqueNames),
         );
-    }
-
-    private function buildModuleName(string $path): string
-    {
-        $basename = pathinfo($path, PATHINFO_FILENAME);
-        $words = [];
-        $buffer = '';
-        $length = strlen($basename);
-
-        for ($offset = 0; $offset < $length; $offset++) {
-            $character = $basename[$offset];
-
-            if (ctype_alnum($character)) {
-                $buffer .= $character;
-                continue;
-            }
-
-            if ($buffer !== '') {
-                $words[] = $buffer;
-                $buffer = '';
-            }
-        }
-
-        if ($buffer !== '') {
-            $words[] = $buffer;
-        }
-
-        if ($words === []) {
-            throw new \RuntimeException("Unable to build SQL module name for: {$path}");
-        }
-
-        return implode('', array_map(
-            static fn(string $word): string => ucfirst(strtolower($word)),
-            $words,
-        ));
     }
 
     /**

@@ -43,8 +43,8 @@ final readonly class PhpQueryGenerator
     public function generateForSqlFile(SqlFile $sqlFile): array
     {
         $files = [];
-        $namespace = rtrim($this->config->namespace, '\\') . '\\' . $sqlFile->moduleName;
-        $outputDir = rtrim($this->config->outputDir, '/') . '/' . $sqlFile->moduleName;
+        $namespace = $this->config->artifactNaming->moduleNamespace($this->config->namespace, $sqlFile->moduleName);
+        $outputDir = $this->config->artifactNaming->moduleOutputDirectory($this->config->outputDir, $sqlFile->moduleName);
         $rowClassNames = $this->resolveRowClassNames($sqlFile);
         $generatedRowClasses = [];
 
@@ -61,7 +61,7 @@ final readonly class PhpQueryGenerator
                     $generatedRowClasses[$rowClassName] = true;
                 }
                 $files[] = new GeneratedFile(
-                    path: $outputDir . '/' . $statement->getQueryClassName() . '.php',
+                    path: $outputDir . '/' . $this->config->artifactNaming->queryClassName($statement->name) . '.php',
                     content: $this->renderQueryClass($namespace, $statement, $rowClassName, $sqlFile->sourcePath),
                 );
             } catch (\Throwable $exception) {
@@ -146,7 +146,7 @@ final readonly class PhpQueryGenerator
             });
         }
 
-        $class = $namespace->addClass($statement->getQueryClassName());
+        $class = $namespace->addClass($this->config->artifactNaming->queryClassName($statement->name));
         $class->setFinal(true);
         $class->setReadOnly(true);
         $implementedInterface = $this->resolveQueryInterface($statement, $rowFields !== [] && is_string($rowClassName));
@@ -351,14 +351,12 @@ final readonly class PhpQueryGenerator
         foreach ($groups as $statements) {
             if (count($statements) === 1) {
                 $statement = $statements[0];
-                $rowClassNames[$statement->name] = $statement->getRowClassName();
+                $rowClassNames[$statement->name] = $this->config->artifactNaming->rowClassName($statement->name);
                 continue;
             }
 
             $sharedGroupIndex++;
-            $sharedClassName = $sharedGroupIndex === 1
-                ? $sqlFile->moduleName . 'Row'
-                : $sqlFile->moduleName . 'Row' . $sharedGroupIndex;
+            $sharedClassName = $this->config->artifactNaming->sharedRowClassName($sqlFile->moduleName, $sharedGroupIndex);
 
             foreach ($statements as $statement) {
                 $rowClassNames[$statement->name] = $sharedClassName;
