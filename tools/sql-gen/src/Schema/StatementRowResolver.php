@@ -22,15 +22,18 @@ final class StatementRowResolver
     private StatementTableMapResolver $tableMapResolver;
     private SqlQueryParser $sqlParser;
     private SelectProjectionTypeInferrer $projectionTypeInferrer;
+    private StatementParameterResolver $parameterResolver;
 
     public function __construct(
         ?StatementTableMapResolver $tableMapResolver = null,
         ?SqlQueryParser $sqlParser = null,
         ?SelectProjectionTypeInferrer $projectionTypeInferrer = null,
+        ?StatementParameterResolver $parameterResolver = null,
     ) {
         $this->tableMapResolver = $tableMapResolver ?? new StatementTableMapResolver();
         $this->sqlParser = $sqlParser ?? new PhplrtSqlParser();
         $this->projectionTypeInferrer = $projectionTypeInferrer ?? new SelectProjectionTypeInferrer();
+        $this->parameterResolver = $parameterResolver ?? new StatementParameterResolver($this->tableMapResolver, $this->sqlParser);
     }
 
     /**
@@ -43,7 +46,12 @@ final class StatementRowResolver
         }
 
         $tableMap = $this->tableMapResolver->resolve($statement, $schema);
-        $projections = $this->resolveSelectedColumns($statement, $tableMap);
+        $parametersByName = [];
+        foreach ($this->parameterResolver->resolve($statement, $schema) as $parameter) {
+            $parametersByName[$parameter->name] = $parameter;
+        }
+
+        $projections = $this->resolveSelectedColumns($statement, $tableMap, $parametersByName);
         $seenResultColumns = [];
 
         foreach ($projections as $projection) {
@@ -70,27 +78,29 @@ final class StatementRowResolver
 
     /**
      * @return list<ResolvedProjectionField>
+     * @param array<string, \SqlGen\Model\ResolvedSqlParameter> $parametersByName
      */
-    private function resolveSelectedColumns(SqlStatement $statement, StatementTableMap $tableMap): array
+    private function resolveSelectedColumns(SqlStatement $statement, StatementTableMap $tableMap, array $parametersByName): array
     {
         $query = $this->sqlParser->parse($statement->sql);
 
         if ($query instanceof SelectQuery) {
-            return $this->resolveProjections($query->projections, $statement->name, $tableMap);
+            return $this->resolveProjections($query->projections, $statement->name, $tableMap, $parametersByName);
         }
 
         if (!$query instanceof InsertQuery) {
             throw new \RuntimeException("SQL statement {$statement->name} does not expose row projections.");
         }
 
-        return $this->resolveProjections($query->returning, $statement->name, $tableMap);
+        return $this->resolveProjections($query->returning, $statement->name, $tableMap, $parametersByName);
     }
 
     /**
      * @param list<SelectProjection> $projections
      * @return list<ResolvedProjectionField>
+     * @param array<string, \SqlGen\Model\ResolvedSqlParameter> $parametersByName
      */
-    private function resolveProjections(array $projections, string $queryName, StatementTableMap $tableMap): array
+    private function resolveProjections(array $projections, string $queryName, StatementTableMap $tableMap, array $parametersByName): array
     {
         $resolved = [];
 
@@ -122,6 +132,7 @@ final class StatementRowResolver
                         : strtolower($projection->function->name),
                     tableMap: $tableMap,
                     queryName: $queryName,
+                    parametersByName: $parametersByName,
                 );
                 continue;
             }

@@ -47,7 +47,8 @@
 #SelectItem: WildcardSelection() | AliasedFunction() | AliasedColumn();
 #AliasedColumn: ColumnRef() ((<T_AS>)? <T_IDENT>)?;
 #AliasedFunction: FunctionCall() ((<T_AS>)? <T_IDENT>)?;
-#FunctionCall: <T_IDENT> <T_LPAREN> (ColumnRef() | <T_STAR>) <T_RPAREN>;
+#FunctionCall: <T_IDENT> <T_LPAREN> (OperandList() | <T_STAR>) <T_RPAREN>;
+#OperandList: Operand() (<T_COMMA> Operand())*;
 #WildcardSelection: (<T_IDENT> <T_DOT>)? <T_STAR>;
 #ColumnRef: (<T_IDENT> <T_DOT>)? <T_IDENT>;
 #TableRef: <T_IDENT> ((<T_AS>)? <T_IDENT>)?;

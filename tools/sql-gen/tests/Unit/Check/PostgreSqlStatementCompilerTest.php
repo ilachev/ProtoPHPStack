@@ -153,6 +153,33 @@ final class PostgreSqlStatementCompilerTest extends TestCase
         self::assertSame([], $compiled->parameterTypes);
     }
 
+    public function testCompilesCoalesceProjection(): void
+    {
+        $compiler = new PostgreSqlStatementCompiler();
+        $schema = new DatabaseSchema([
+            'sessions' => new SchemaTable('sessions', [
+                'user_id' => new SchemaColumn('user_id', 'BIGINT', PhpTypeFactory::fromNativeType('int'), true),
+                'fallback_user_id' => new SchemaColumn('fallback_user_id', 'BIGINT', PhpTypeFactory::fromNativeType('int'), false),
+            ]),
+        ]);
+
+        $compiled = $compiler->compile(
+            new SqlStatement(
+                name: 'FindEffectiveUserId',
+                resultKind: SqlResultKind::One,
+                sql: 'SELECT COALESCE(user_id, fallback_user_id) AS effective_user_id FROM sessions;',
+                parameters: [],
+            ),
+            $schema,
+        );
+
+        self::assertSame(
+            'SELECT COALESCE(user_id, fallback_user_id) AS effective_user_id FROM sessions',
+            $compiled->sql,
+        );
+        self::assertSame([], $compiled->parameterTypes);
+    }
+
     public function testCompilesInsertWithReturningWithoutRegexReplacement(): void
     {
         $compiler = new PostgreSqlStatementCompiler();

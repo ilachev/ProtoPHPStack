@@ -114,7 +114,7 @@ final readonly class PostgreSqlStatementCompiler
     private function renderSelectQuery(SelectQuery $query, array $parameterIndexByName, string $statementName): string
     {
         $sql = 'SELECT ' . implode(', ', array_map(
-            fn(SelectProjection $projection): string => $this->renderProjection($projection),
+            fn(SelectProjection $projection): string => $this->renderProjection($projection, $parameterIndexByName, $statementName),
             $query->projections,
         ));
         $sql .= ' FROM ' . $this->renderTableReference($query->from);
@@ -166,7 +166,7 @@ final readonly class PostgreSqlStatementCompiler
 
         if ($query->returning !== []) {
             $sql .= ' RETURNING ' . implode(', ', array_map(
-                fn(SelectProjection $projection): string => $this->renderProjection($projection),
+                fn(SelectProjection $projection): string => $this->renderProjection($projection, $parameterIndexByName, $statementName),
                 $query->returning,
             ));
         }
@@ -184,14 +184,17 @@ final readonly class PostgreSqlStatementCompiler
             . $this->renderComparisons($query->where, $query->whereOperators, $parameterIndexByName, $statementName);
     }
 
-    private function renderProjection(SelectProjection $projection): string
+    /**
+     * @param array<string, int> $parameterIndexByName
+     */
+    private function renderProjection(SelectProjection $projection, array $parameterIndexByName, string $statementName): string
     {
         if ($projection instanceof SelectProjectionWildcard) {
             return $projection->table !== null ? $projection->table . '.*' : '*';
         }
 
         if ($projection instanceof SelectProjectionFunction) {
-            $function = $this->renderFunctionCall($projection->function);
+            $function = $this->renderFunctionCall($projection->function, $parameterIndexByName, $statementName);
 
             if ($projection->alias === null) {
                 return $function;
@@ -277,9 +280,19 @@ final readonly class PostgreSqlStatementCompiler
         return $columnReference->table . '.' . $columnReference->column;
     }
 
-    private function renderFunctionCall(SelectFunctionCall $function): string
+    /**
+     * @param array<string, int> $parameterIndexByName
+     */
+    private function renderFunctionCall(SelectFunctionCall $function, array $parameterIndexByName, string $statementName): string
     {
-        return $function->toSql();
+        if ($function->wildcard) {
+            return strtoupper($function->name) . '(*)';
+        }
+
+        return strtoupper($function->name) . '(' . implode(', ', array_map(
+            fn(SelectOperand $argument): string => $this->renderOperand($argument, $parameterIndexByName, $statementName),
+            $function->arguments,
+        )) . ')';
     }
 
     /**

@@ -103,7 +103,7 @@ final class PhplrtSqlParserTest extends TestCase
         self::assertInstanceOf(SelectProjectionFunction::class, $query->projections[0]);
         self::assertSame('count', $query->projections[0]->function->name);
         self::assertTrue($query->projections[0]->function->wildcard);
-        self::assertNull($query->projections[0]->function->column);
+        self::assertSame([], $query->projections[0]->function->arguments);
         self::assertSame('total', $query->projections[0]->alias?->value);
     }
 
@@ -120,10 +120,28 @@ final class PhplrtSqlParserTest extends TestCase
         self::assertInstanceOf(SelectProjectionFunction::class, $query->projections[0]);
         self::assertSame('max', $query->projections[0]->function->name);
         self::assertFalse($query->projections[0]->function->wildcard);
-        self::assertNotNull($query->projections[0]->function->column);
-        self::assertSame('s', $query->projections[0]->function->column->table);
-        self::assertSame('updated_at', $query->projections[0]->function->column->column);
+        self::assertCount(1, $query->projections[0]->function->arguments);
+        self::assertInstanceOf(\SqlGen\Ast\SelectColumnReference::class, $query->projections[0]->function->arguments[0]);
+        self::assertSame('s', $query->projections[0]->function->arguments[0]->table);
+        self::assertSame('updated_at', $query->projections[0]->function->arguments[0]->column);
         self::assertSame('latest_update', $query->projections[0]->alias?->value);
+    }
+
+    public function testParsesCoalesceProjectionWithColumnArguments(): void
+    {
+        $parser = new PhplrtSqlParser();
+
+        $query = $parser->parse(
+            'select coalesce(user_id, fallback_user_id) as effective_user_id from sessions',
+        );
+
+        self::assertInstanceOf(SelectQuery::class, $query);
+        self::assertCount(1, $query->projections);
+        self::assertInstanceOf(SelectProjectionFunction::class, $query->projections[0]);
+        self::assertSame('coalesce', $query->projections[0]->function->name);
+        self::assertFalse($query->projections[0]->function->wildcard);
+        self::assertCount(2, $query->projections[0]->function->arguments);
+        self::assertSame('effective_user_id', $query->projections[0]->alias?->value);
     }
 
     public function testParsesInsertWithReturningAndConflictClause(): void

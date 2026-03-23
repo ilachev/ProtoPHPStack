@@ -259,4 +259,32 @@ final class StatementRowResolverTest extends TestCase
         self::assertTrue($fields[0]->nullable);
         self::assertSame('int', stringify($fields[0]->phpType));
     }
+
+    public function testInfersCoalesceProjectionFromCompatibleArguments(): void
+    {
+        $resolver = new StatementRowResolver();
+        $schema = new DatabaseSchema([
+            'sessions' => new SchemaTable('sessions', [
+                'user_id' => new SchemaColumn('user_id', 'BIGINT', PhpTypeFactory::fromNativeType('int'), true),
+                'fallback_user_id' => new SchemaColumn('fallback_user_id', 'BIGINT', PhpTypeFactory::fromNativeType('int'), false),
+            ]),
+        ]);
+
+        $fields = $resolver->resolve(
+            new SqlStatement(
+                name: 'FindEffectiveUserId',
+                resultKind: SqlResultKind::One,
+                sql: 'SELECT COALESCE(user_id, fallback_user_id) AS effective_user_id FROM sessions;',
+                parameters: [],
+            ),
+            $schema,
+        );
+
+        self::assertCount(1, $fields);
+        self::assertSame('COALESCE(user_id, fallback_user_id)', $fields[0]->sourceColumnName);
+        self::assertSame('effective_user_id', $fields[0]->resultColumnName);
+        self::assertSame('effectiveUserId', $fields[0]->propertyName);
+        self::assertFalse($fields[0]->nullable);
+        self::assertSame('int', stringify($fields[0]->phpType));
+    }
 }

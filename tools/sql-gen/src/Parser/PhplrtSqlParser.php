@@ -321,12 +321,20 @@ final class PhplrtSqlParser implements SqlQueryParser
     private function normalizeFunctionCall(PrintableNode $functionCall): SelectFunctionCall
     {
         $functionName = $this->firstTokenValue($functionCall);
-        $column = $this->findFirstChildNode($functionCall, 'ColumnRef');
+        $argumentList = $this->findFirstChildNode($functionCall, 'OperandList');
 
-        if ($column instanceof PrintableNode) {
+        if ($argumentList instanceof PrintableNode) {
+            $arguments = [];
+
+            foreach ($argumentList->children as $child) {
+                if ($child instanceof PrintableNode && $child->getState() === 'Operand') {
+                    $arguments[] = $this->normalizeOperand($child);
+                }
+            }
+
             return new SelectFunctionCall(
                 name: strtolower($functionName),
-                column: $this->normalizeColumnRef($column),
+                arguments: $arguments,
                 wildcard: false,
             );
         }
@@ -335,13 +343,13 @@ final class PhplrtSqlParser implements SqlQueryParser
             if ($child instanceof TokenInterface && $child->getName() === 'T_STAR') {
                 return new SelectFunctionCall(
                     name: strtolower($functionName),
-                    column: null,
+                    arguments: [],
                     wildcard: true,
                 );
             }
         }
 
-        throw new \RuntimeException('FunctionCall must contain ColumnRef or wildcard argument.');
+        throw new \RuntimeException('FunctionCall must contain OperandList or wildcard argument.');
     }
 
     private function normalizeWildcardSelection(PrintableNode $wildcard): SelectProjectionWildcard
