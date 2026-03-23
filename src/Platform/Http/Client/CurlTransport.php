@@ -7,12 +7,15 @@ namespace App\Platform\Http\Client;
 use App\Platform\Http\Client\Exception\CurlTransportException;
 use App\Platform\Http\Client\Exception\HttpTimeoutException;
 use App\Platform\Http\Client\Exception\HttpTransportException;
+use App\Platform\Runtime\Deadline;
 
 final class CurlTransport implements HttpTransport
 {
     public function send(HttpRequest $request, Deadline $deadline, int $attempt): HttpResponse
     {
-        $deadline->assertRemaining($request, $attempt);
+        if ($deadline->isExhausted()) {
+            throw HttpTimeoutException::forBudgetExhaustion($request, $attempt);
+        }
 
         $curl = curl_init($request->uri);
         if ($curl === false) {

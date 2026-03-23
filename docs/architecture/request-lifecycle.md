@@ -62,17 +62,24 @@ Pipeline в проекте рекурсивный. Каждый middleware по�
 
 Порядок выполнения:
 
-1. `ErrorHandlerMiddleware`
-2. `RequestMetricsMiddleware`
+1. `RequestContextMiddleware`
+2. `ErrorHandlerMiddleware`
 3. `SessionMiddleware`
 4. `ApiStatsMiddleware`
 5. `RoutingMiddleware`
 6. `HttpLoggingMiddleware`
 7. конечный `RouteHandlerResolver`
 
+`RequestContextMiddleware` создаёт общий request-scoped context:
+
+- `requestId`
+- inherited `Deadline`
+
+Этот context живёт в request attributes и должен считаться канонической точкой привязки для downstream timeout-budget propagation.
+
 ## 5. `SessionMiddleware`
 
-Это ключевой этап, потому что он формирует request context.
+Это ключевой этап, потому что он формирует session context поверх уже существующего request context.
 
 Основные действия:
 
@@ -84,7 +91,10 @@ Pipeline в проекте рекурсивный. Каждый middleware по�
 - добавляет объект `session` в request attributes;
 - после успешного ответа refresh-ит TTL и выставляет `Set-Cookie`.
 
-В результате downstream код может считать, что `session` уже присутствует в request.
+В результате downstream код может считать, что:
+
+- `requestContext` уже присутствует в request;
+- `session` уже присутствует в request.
 
 ## 6. `ApiStatsMiddleware`
 

@@ -86,6 +86,7 @@ Reusable blocks:
 - roadmap `sql-gen` сейчас идёт в richer expression typing и relation-aware schema semantics, а не в ORM-like abstractions или “полную поддержку PostgreSQL”
 - cache layer должен восприниматься как reusable library: capability code должно идти через `ScopedCacheFactory` / `ScopedCache`, а не напрямую через общий `CacheService` с ручной склейкой keys и invalidation logic
 - outbound HTTP должен двигаться через `Platform/Http/Client` как reliability block с deadlines, retry policy и transport separation, а не через ad-hoc `file_get_contents()`/stream-context logic
+- общий timeout budget primitive теперь живёт в `Platform/Runtime/Deadline`, а `Platform/Runtime/RequestContext` должен восприниматься как источник inherited deadline для downstream IO
 
 ## Команды
 

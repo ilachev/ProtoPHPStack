@@ -6,6 +6,7 @@ namespace App\Platform\Http\Client;
 
 use App\Platform\Http\Client\Exception\HttpTransportException;
 use App\Platform\Logging\Logger;
+use App\Platform\Runtime\Deadline;
 
 final readonly class ResilientHttpClient implements HttpClient
 {
@@ -16,7 +17,7 @@ final readonly class ResilientHttpClient implements HttpClient
 
     public function send(HttpRequest $request): HttpResponse
     {
-        $deadline = Deadline::fromSeconds($request->options->timeoutSeconds);
+        $deadline = $this->resolveDeadline($request);
         $retryPolicy = $request->options->retryPolicy;
         $lastRetryableResponse = null;
 
@@ -59,6 +60,17 @@ final readonly class ResilientHttpClient implements HttpClient
         }
 
         throw new \LogicException('HTTP retry loop exited without a response or exception');
+    }
+
+    private function resolveDeadline(HttpRequest $request): Deadline
+    {
+        $timeoutBudget = $request->options->timeoutSeconds;
+
+        if ($request->options->deadline === null) {
+            return Deadline::fromSeconds($timeoutBudget);
+        }
+
+        return $request->options->deadline->sliceSeconds($timeoutBudget);
     }
 
     private function shouldRetryTransportError(HttpRequest $request, int $attempt): bool

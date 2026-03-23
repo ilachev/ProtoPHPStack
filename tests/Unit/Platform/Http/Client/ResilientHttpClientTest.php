@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Platform\Http\Client;
 
-use App\Platform\Http\Client\Deadline;
 use App\Platform\Http\Client\Exception\CurlTransportException;
 use App\Platform\Http\Client\Exception\HttpTransportException;
 use App\Platform\Http\Client\HttpClient;
@@ -15,6 +14,7 @@ use App\Platform\Http\Client\HttpResponse;
 use App\Platform\Http\Client\HttpTransport;
 use App\Platform\Http\Client\ResilientHttpClient;
 use App\Platform\Http\Client\RetryPolicy;
+use App\Platform\Runtime\Deadline;
 use PHPUnit\Framework\TestCase;
 use Tests\Unit\Platform\Logging\TestLogger;
 
@@ -140,6 +140,41 @@ final class ResilientHttpClientTest extends TestCase
         } finally {
             self::assertSame(1, $state->attempts);
         }
+    }
+
+    public function testRespectsInheritedDeadlineBudget(): void
+    {
+        $transport = new class implements HttpTransport {
+            public ?int $remainingMilliseconds = null;
+
+            public function send(HttpRequest $request, Deadline $deadline, int $attempt): HttpResponse
+            {
+                $this->remainingMilliseconds = $deadline->remainingMilliseconds();
+
+                return new HttpResponse(200, [], 'ok');
+            }
+        };
+        $client = $this->createClient($transport);
+
+        $response = $client->send(
+            new HttpRequest(
+                method: HttpMethod::GET,
+                uri: 'https://example.test/resource',
+                options: new HttpRequestOptions(
+                    timeoutSeconds: 5.0,
+                    deadline: Deadline::fromMilliseconds(1),
+                    retryPolicy: new RetryPolicy(
+                        maxAttempts: 1,
+                        baseDelayMilliseconds: 0,
+                        maxDelayMilliseconds: 0,
+                    ),
+                ),
+            ),
+        );
+
+        self::assertSame(200, $response->statusCode);
+        self::assertNotNull($transport->remainingMilliseconds);
+        self::assertLessThanOrEqual(1, $transport->remainingMilliseconds);
     }
 
     private function createClient(HttpTransport $transport): HttpClient

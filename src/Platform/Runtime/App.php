@@ -12,7 +12,7 @@ use App\Platform\Http\Middleware\{
     ErrorHandlerMiddleware,
     HttpLoggingMiddleware,
     Pipeline,
-    RequestMetricsMiddleware,
+    RequestContextMiddleware,
     RoutingMiddleware
 };
 use App\Platform\Http\RouteHandlerResolver;
@@ -73,8 +73,8 @@ final readonly class App
         return new Pipeline(
             $this->container->get(RouteHandlerResolver::class),
             [
+                $this->container->get(RequestContextMiddleware::class),
                 $this->container->get(ErrorHandlerMiddleware::class),
-                $this->container->get(RequestMetricsMiddleware::class),
                 $this->container->get(SessionMiddleware::class),
                 $this->container->get(ApiStatsMiddleware::class),
                 $this->container->get(RoutingMiddleware::class),

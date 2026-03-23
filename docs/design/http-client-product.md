@@ -38,7 +38,8 @@ HttpClient
 - `HttpResponse`
 - `HttpRequestOptions`
 - `RetryPolicy`
-- `Deadline`
+- `Platform/Runtime/Deadline`
+- `Platform/Runtime/RequestContext`
 - `HttpClient`
 - `HttpTransport`
 - `ResilientHttpClient`
@@ -50,7 +51,8 @@ HttpClient
 - `HttpResponse` — typed response contract без привязки к consumer logic;
 - `HttpRequestOptions` — request-scoped policy knobs;
 - `RetryPolicy` — retry/backoff policy;
-- `Deadline` — единый timeout budget для всего запроса;
+- `Platform/Runtime/Deadline` — общий timeout budget primitive для inbound и outbound path;
+- `Platform/Runtime/RequestContext` — request-scoped runtime context с `requestId` и inherited deadline;
 - `ResilientHttpClient` — orchestration layer;
 - `CurlTransport` — low-level HTTP transport adapter.
 
@@ -61,6 +63,7 @@ HttpClient
 - обычный request/response flow с полным body в памяти;
 - cURL transport;
 - request-level timeout budget;
+- inherited request budget через `Platform/Runtime/RequestContext` / `Platform/Runtime/Deadline`;
 - connect timeout;
 - idempotent retries на transport failures;
 - retries на retryable upstream statuses (`429`, `500`, `502`, `503`, `504`);
@@ -153,7 +156,8 @@ Retry/failure logs должны содержать:
    - attempt count
    - final status/failure class
    - latency budget usage
-5. bounded concurrency / per-upstream policy, только если появится реальный workload
+5. deadline propagation в будущий gRPC path через тот же `Platform/Runtime/Deadline`
+6. bounded concurrency / per-upstream policy, только если появится реальный workload
 
 ## Чего не надо делать дальше
 
