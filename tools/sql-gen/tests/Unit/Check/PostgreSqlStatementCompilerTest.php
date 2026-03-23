@@ -180,6 +180,33 @@ final class PostgreSqlStatementCompilerTest extends TestCase
         self::assertSame([], $compiled->parameterTypes);
     }
 
+    public function testCompilesCaseProjection(): void
+    {
+        $compiler = new PostgreSqlStatementCompiler();
+        $schema = new DatabaseSchema([
+            'sessions' => new SchemaTable('sessions', [
+                'user_id' => new SchemaColumn('user_id', 'BIGINT', PhpTypeFactory::fromNativeType('int'), true),
+                'fallback_user_id' => new SchemaColumn('fallback_user_id', 'BIGINT', PhpTypeFactory::fromNativeType('int'), false),
+            ]),
+        ]);
+
+        $compiled = $compiler->compile(
+            new SqlStatement(
+                name: 'FindEffectiveUserIdWithCase',
+                resultKind: SqlResultKind::One,
+                sql: 'SELECT CASE WHEN user_id = fallback_user_id THEN fallback_user_id ELSE user_id END AS effective_user_id FROM sessions;',
+                parameters: [],
+            ),
+            $schema,
+        );
+
+        self::assertSame(
+            'SELECT CASE WHEN user_id = fallback_user_id THEN fallback_user_id ELSE user_id END AS effective_user_id FROM sessions',
+            $compiled->sql,
+        );
+        self::assertSame([], $compiled->parameterTypes);
+    }
+
     public function testCompilesInsertWithReturningWithoutRegexReplacement(): void
     {
         $compiler = new PostgreSqlStatementCompiler();

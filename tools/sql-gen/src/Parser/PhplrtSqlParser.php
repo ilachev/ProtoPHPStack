@@ -12,6 +12,8 @@ use SqlGen\Ast\InsertConflictAssignment;
 use SqlGen\Ast\InsertConflictClause;
 use SqlGen\Ast\InsertQuery;
 use SqlGen\Ast\InsertValueMapping;
+use SqlGen\Ast\SelectCaseExpression;
+use SqlGen\Ast\SelectCaseWhen;
 use SqlGen\Ast\SelectColumnReference;
 use SqlGen\Ast\SelectComparison;
 use SqlGen\Ast\SelectFunctionCall;
@@ -20,6 +22,7 @@ use SqlGen\Ast\SelectOperand;
 use SqlGen\Ast\SelectOrderByItem;
 use SqlGen\Ast\SelectPlaceholder;
 use SqlGen\Ast\SelectProjection;
+use SqlGen\Ast\SelectProjectionCase;
 use SqlGen\Ast\SelectProjectionColumn;
 use SqlGen\Ast\SelectProjectionFunction;
 use SqlGen\Ast\SelectProjectionWildcard;
@@ -284,6 +287,11 @@ final class PhplrtSqlParser implements SqlQueryParser
             return $this->normalizeWildcardSelection($wildcard);
         }
 
+        $case = $this->findFirstChildNode($item, 'AliasedCase');
+        if ($case instanceof PrintableNode) {
+            return $this->normalizeCaseProjection($case);
+        }
+
         $function = $this->findFirstChildNode($item, 'AliasedFunction');
         if ($function instanceof PrintableNode) {
             return $this->normalizeFunctionProjection($function);
@@ -291,7 +299,7 @@ final class PhplrtSqlParser implements SqlQueryParser
 
         $column = $this->findFirstChildNode($item, 'AliasedColumn');
         if (!$column instanceof PrintableNode) {
-            throw new \RuntimeException('SelectItem must contain AliasedColumn, AliasedFunction or WildcardSelection.');
+            throw new \RuntimeException('SelectItem must contain AliasedColumn, AliasedCase, AliasedFunction or WildcardSelection.');
         }
 
         $columnRef = $this->findFirstChildNode($column, 'ColumnRef');
@@ -303,6 +311,65 @@ final class PhplrtSqlParser implements SqlQueryParser
             reference: $this->normalizeColumnRef($columnRef),
             alias: (new SelectAliasTokens($this->tokens($column)))->toAlias(),
         );
+    }
+
+    private function normalizeCaseProjection(PrintableNode $case): SelectProjectionCase
+    {
+        $caseExpr = $this->findFirstChildNode($case, 'CaseExpr');
+        if (!$caseExpr instanceof PrintableNode) {
+            throw new \RuntimeException('AliasedCase must contain CaseExpr.');
+        }
+
+        return new SelectProjectionCase(
+            expression: $this->normalizeCaseExpression($caseExpr),
+            alias: (new SelectAliasTokens($this->tokens($case)))->toAlias(),
+        );
+    }
+
+    private function normalizeCaseExpression(PrintableNode $caseExpr): SelectCaseExpression
+    {
+        $whenClauses = [];
+        $elseClause = $this->findFirstChildNode($caseExpr, 'ElseClause');
+
+        foreach ($caseExpr->children as $child) {
+            if ($child instanceof PrintableNode && $child->getState() === 'WhenClause') {
+                $whenClauses[] = $this->normalizeCaseWhen($child);
+            }
+        }
+
+        if ($whenClauses === [] || !$elseClause instanceof PrintableNode) {
+            throw new \RuntimeException('CaseExpr must contain at least one WhenClause and one ElseClause.');
+        }
+
+        return new SelectCaseExpression(
+            whenClauses: $whenClauses,
+            elseResult: $this->normalizeCaseElse($elseClause),
+        );
+    }
+
+    private function normalizeCaseWhen(PrintableNode $whenClause): SelectCaseWhen
+    {
+        $comparison = $this->findFirstChildNode($whenClause, 'ComparisonExpr');
+        $operand = $this->findFirstChildNode($whenClause, 'Operand');
+
+        if (!$comparison instanceof PrintableNode || !$operand instanceof PrintableNode) {
+            throw new \RuntimeException('WhenClause must contain ComparisonExpr and Operand.');
+        }
+
+        return new SelectCaseWhen(
+            condition: $this->normalizeComparison($comparison),
+            result: $this->normalizeOperand($operand),
+        );
+    }
+
+    private function normalizeCaseElse(PrintableNode $elseClause): SelectOperand
+    {
+        $operand = $this->findFirstChildNode($elseClause, 'Operand');
+        if (!$operand instanceof PrintableNode) {
+            throw new \RuntimeException('ElseClause must contain Operand.');
+        }
+
+        return $this->normalizeOperand($operand);
     }
 
     private function normalizeFunctionProjection(PrintableNode $function): SelectProjectionFunction

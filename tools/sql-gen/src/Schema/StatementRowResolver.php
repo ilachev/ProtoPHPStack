@@ -6,6 +6,7 @@ namespace SqlGen\Schema;
 
 use SqlGen\Ast\InsertQuery;
 use SqlGen\Ast\SelectProjection;
+use SqlGen\Ast\SelectProjectionCase;
 use SqlGen\Ast\SelectProjectionColumn;
 use SqlGen\Ast\SelectProjectionFunction;
 use SqlGen\Ast\SelectProjectionWildcard;
@@ -120,6 +121,17 @@ final class StatementRowResolver
                     resultColumn: $projection->alias !== null ? $projection->alias->value : $projection->reference->column,
                     phpType: $resolvedColumn->column->phpType,
                     nullable: $resolvedColumn->column->nullable,
+                );
+                continue;
+            }
+
+            if ($projection instanceof SelectProjectionCase) {
+                $resolved[] = $this->projectionTypeInferrer->inferCaseProjection(
+                    expression: $projection->expression,
+                    resultColumn: $projection->alias !== null ? $projection->alias->value : 'case',
+                    tableMap: $tableMap,
+                    queryName: $queryName,
+                    parametersByName: $parametersByName,
                 );
                 continue;
             }

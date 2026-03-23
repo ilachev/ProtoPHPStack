@@ -8,6 +8,7 @@ use SqlGen\Ast\DeleteQuery;
 use SqlGen\Ast\InsertConflictAssignment;
 use SqlGen\Ast\InsertQuery;
 use SqlGen\Ast\InsertValueMapping;
+use SqlGen\Ast\SelectCaseExpression;
 use SqlGen\Ast\SelectColumnReference;
 use SqlGen\Ast\SelectComparison;
 use SqlGen\Ast\SelectFunctionCall;
@@ -16,6 +17,7 @@ use SqlGen\Ast\SelectOperand;
 use SqlGen\Ast\SelectOrderByItem;
 use SqlGen\Ast\SelectPlaceholder;
 use SqlGen\Ast\SelectProjection;
+use SqlGen\Ast\SelectProjectionCase;
 use SqlGen\Ast\SelectProjectionColumn;
 use SqlGen\Ast\SelectProjectionFunction;
 use SqlGen\Ast\SelectProjectionWildcard;
@@ -203,6 +205,16 @@ final readonly class PostgreSqlStatementCompiler
             return $function . ' AS ' . $projection->alias->value;
         }
 
+        if ($projection instanceof SelectProjectionCase) {
+            $expression = $this->renderCaseExpression($projection->expression, $parameterIndexByName, $statementName);
+
+            if ($projection->alias === null) {
+                return $expression;
+            }
+
+            return $expression . ' AS ' . $projection->alias->value;
+        }
+
         if ($projection instanceof SelectProjectionColumn) {
             $column = $this->renderColumnReference($projection->reference);
 
@@ -293,6 +305,27 @@ final readonly class PostgreSqlStatementCompiler
             fn(SelectOperand $argument): string => $this->renderOperand($argument, $parameterIndexByName, $statementName),
             $function->arguments,
         )) . ')';
+    }
+
+    /**
+     * @param array<string, int> $parameterIndexByName
+     */
+    private function renderCaseExpression(
+        SelectCaseExpression $expression,
+        array $parameterIndexByName,
+        string $statementName,
+    ): string {
+        $parts = ['CASE'];
+
+        foreach ($expression->whenClauses as $whenClause) {
+            $parts[] = 'WHEN ' . $this->renderComparison($whenClause->condition, $parameterIndexByName, $statementName);
+            $parts[] = 'THEN ' . $this->renderOperand($whenClause->result, $parameterIndexByName, $statementName);
+        }
+
+        $parts[] = 'ELSE ' . $this->renderOperand($expression->elseResult, $parameterIndexByName, $statementName);
+        $parts[] = 'END';
+
+        return implode(' ', $parts);
     }
 
     /**

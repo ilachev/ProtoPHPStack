@@ -12,6 +12,11 @@
 %token T_AS          (?i:as)(?![a-zA-Z0-9_])
 %token T_AND         (?i:and)(?![a-zA-Z0-9_])
 %token T_OR          (?i:or)(?![a-zA-Z0-9_])
+%token T_CASE        (?i:case)(?![a-zA-Z0-9_])
+%token T_WHEN        (?i:when)(?![a-zA-Z0-9_])
+%token T_THEN        (?i:then)(?![a-zA-Z0-9_])
+%token T_ELSE        (?i:else)(?![a-zA-Z0-9_])
+%token T_END         (?i:end)(?![a-zA-Z0-9_])
 %token T_ASC         (?i:asc)(?![a-zA-Z0-9_])
 %token T_DESC        (?i:desc)(?![a-zA-Z0-9_])
 %token T_INSERT      (?i:insert)(?![a-zA-Z0-9_])
@@ -44,10 +49,14 @@
 #InsertStmt: <T_INSERT> <T_INTO> <T_IDENT> <T_LPAREN> IdentList() <T_RPAREN> <T_VALUES> <T_LPAREN> PlaceholderList() <T_RPAREN> ConflictClause()? ReturningClause()? <T_SEMICOLON>?;
 #DeleteStmt: <T_DELETE> <T_FROM> <T_IDENT> WhereClause() <T_SEMICOLON>?;
 #SelectList: SelectItem() (<T_COMMA> SelectItem())*;
-#SelectItem: WildcardSelection() | AliasedFunction() | AliasedColumn();
+#SelectItem: WildcardSelection() | AliasedCase() | AliasedFunction() | AliasedColumn();
 #AliasedColumn: ColumnRef() ((<T_AS>)? <T_IDENT>)?;
+#AliasedCase: CaseExpr() ((<T_AS>)? <T_IDENT>)?;
 #AliasedFunction: FunctionCall() ((<T_AS>)? <T_IDENT>)?;
 #FunctionCall: <T_IDENT> <T_LPAREN> (OperandList() | <T_STAR>) <T_RPAREN>;
+#CaseExpr: <T_CASE> WhenClause()+ ElseClause() <T_END>;
+#WhenClause: <T_WHEN> ComparisonExpr() <T_THEN> Operand();
+#ElseClause: <T_ELSE> Operand();
 #OperandList: Operand() (<T_COMMA> Operand())*;
 #WildcardSelection: (<T_IDENT> <T_DOT>)? <T_STAR>;
 #ColumnRef: (<T_IDENT> <T_DOT>)? <T_IDENT>;

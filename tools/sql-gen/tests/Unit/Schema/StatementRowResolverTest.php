@@ -287,4 +287,35 @@ final class StatementRowResolverTest extends TestCase
         self::assertFalse($fields[0]->nullable);
         self::assertSame('int', stringify($fields[0]->phpType));
     }
+
+    public function testInfersCaseProjectionFromCompatibleBranches(): void
+    {
+        $resolver = new StatementRowResolver();
+        $schema = new DatabaseSchema([
+            'sessions' => new SchemaTable('sessions', [
+                'user_id' => new SchemaColumn('user_id', 'BIGINT', PhpTypeFactory::fromNativeType('int'), true),
+                'fallback_user_id' => new SchemaColumn('fallback_user_id', 'BIGINT', PhpTypeFactory::fromNativeType('int'), false),
+            ]),
+        ]);
+
+        $fields = $resolver->resolve(
+            new SqlStatement(
+                name: 'FindEffectiveUserIdWithCase',
+                resultKind: SqlResultKind::One,
+                sql: 'SELECT CASE WHEN user_id = fallback_user_id THEN fallback_user_id ELSE user_id END AS effective_user_id FROM sessions;',
+                parameters: [],
+            ),
+            $schema,
+        );
+
+        self::assertCount(1, $fields);
+        self::assertSame(
+            'CASE WHEN user_id = fallback_user_id THEN fallback_user_id ELSE user_id END',
+            $fields[0]->sourceColumnName,
+        );
+        self::assertSame('effective_user_id', $fields[0]->resultColumnName);
+        self::assertSame('effectiveUserId', $fields[0]->propertyName);
+        self::assertTrue($fields[0]->nullable);
+        self::assertSame('int', stringify($fields[0]->phpType));
+    }
 }

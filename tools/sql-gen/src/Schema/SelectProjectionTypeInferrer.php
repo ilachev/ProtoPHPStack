@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlGen\Schema;
 
+use SqlGen\Ast\SelectCaseExpression;
 use SqlGen\Ast\SelectColumnReference;
 use SqlGen\Ast\SelectFunctionCall;
 use SqlGen\Ast\SelectOperand;
@@ -16,6 +17,47 @@ use function Typhoon\Type\stringify;
 
 final readonly class SelectProjectionTypeInferrer
 {
+    /**
+     * @param array<string, ResolvedSqlParameter> $parametersByName
+     */
+    public function inferCaseProjection(
+        SelectCaseExpression $expression,
+        string $resultColumn,
+        StatementTableMap $tableMap,
+        string $queryName,
+        array $parametersByName = [],
+    ): ResolvedProjectionField {
+        $resolvedResults = [];
+
+        foreach ($expression->whenClauses as $whenClause) {
+            $this->resolveArgument($whenClause->condition->left, $tableMap, $parametersByName, $queryName);
+            $this->resolveArgument($whenClause->condition->right, $tableMap, $parametersByName, $queryName);
+            $resolvedResults[] = $this->resolveArgument($whenClause->result, $tableMap, $parametersByName, $queryName);
+        }
+
+        $resolvedResults[] = $this->resolveArgument($expression->elseResult, $tableMap, $parametersByName, $queryName);
+
+        $firstType = stringify($resolvedResults[0]->phpType);
+        foreach ($resolvedResults as $resolvedResult) {
+            if (stringify($resolvedResult->phpType) !== $firstType) {
+                throw new \RuntimeException(
+                    "CASE expression requires compatible result types in query {$queryName}",
+                );
+            }
+        }
+
+        return new ResolvedProjectionField(
+            sourceName: $expression->toSql(),
+            resultColumn: $resultColumn,
+            phpType: $resolvedResults[0]->phpType,
+            nullable: array_reduce(
+                $resolvedResults,
+                static fn(bool $nullable, ResolvedProjectionField $result): bool => $nullable || $result->nullable,
+                false,
+            ),
+        );
+    }
+
     /**
      * @param array<string, ResolvedSqlParameter> $parametersByName
      */
