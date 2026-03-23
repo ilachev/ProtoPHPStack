@@ -11,6 +11,8 @@ use Spiral\RoadRunner\KeyValue\StorageInterface;
 
 final class RoadRunnerCacheService implements CacheService
 {
+    private const string DEFAULT_NAMESPACE_VERSION = '1';
+
     private StorageInterface $storage;
 
     private bool $available = false;
@@ -153,32 +155,16 @@ final class RoadRunnerCacheService implements CacheService
         $this->clearInProgress = true;
 
         try {
-            $maxRetries = 3;
-            $retryCount = 0;
-            $success = false;
-
-            while (!$success && $retryCount < $maxRetries) {
-                try {
-                    $this->storage->clear();
-                    $success = true;
-                } catch (\Throwable $e) {
-                    ++$retryCount;
-                    if ($retryCount >= $maxRetries) {
-                        throw $e;
-                    }
-
-                    $this->logger->warning('Cache clear retry', [
-                        'attempt' => $retryCount,
-                        'error' => $e->getMessage(),
-                    ]);
-
-                    usleep($retryCount * 50000);
-                }
+            if ($this->storage instanceof FallbackStorage) {
+                $this->storage->clear();
             }
 
-            $this->logger->info('Cache cleared successfully', [
-                'attempts' => $retryCount + 1,
+            $namespaceVersion = $this->generateNamespaceVersion();
+            $this->storage->set($this->namespaceVersionStorageKey(), $namespaceVersion);
+
+            $this->logger->info('Cache namespace invalidated successfully', [
                 'degraded' => $this->degraded,
+                'namespaceVersion' => $namespaceVersion,
             ]);
 
             return true;
@@ -209,9 +195,58 @@ final class RoadRunnerCacheService implements CacheService
 
     private function prefixKey(string $key): string
     {
+        return $this->namespacePrefix() . $key;
+    }
+
+    private function namespacePrefix(): string
+    {
+        return $this->namespaceBasePrefix() . $this->resolveNamespaceVersion() . ':';
+    }
+
+    private function namespaceBasePrefix(): string
+    {
         $namespaceSeed = $this->config->namespaceSeed !== '' ? $this->config->namespaceSeed . ':' : '';
 
-        return $this->config->defaultPrefix . $namespaceSeed . $key;
+        return $this->config->defaultPrefix . $namespaceSeed;
+    }
+
+    private function namespaceVersionStorageKey(): string
+    {
+        return $this->namespaceBasePrefix() . '__namespace_version';
+    }
+
+    private function resolveNamespaceVersion(): string
+    {
+        $storageKey = $this->namespaceVersionStorageKey();
+
+        try {
+            if ($this->storage->has($storageKey)) {
+                $version = $this->storage->get($storageKey);
+
+                if (\is_string($version) && $version !== '') {
+                    return $version;
+                }
+
+                if (\is_int($version) || \is_float($version)) {
+                    return (string) $version;
+                }
+            }
+
+            $this->storage->set($storageKey, self::DEFAULT_NAMESPACE_VERSION);
+
+            return self::DEFAULT_NAMESPACE_VERSION;
+        } catch (\Throwable $e) {
+            $this->switchToFallback($e, 'Cache namespace resolution error', [
+                'key' => $storageKey,
+            ]);
+
+            return self::DEFAULT_NAMESPACE_VERSION;
+        }
+    }
+
+    private function generateNamespaceVersion(): string
+    {
+        return (string) hrtime(true);
     }
 
     private function activateFallbackStorage(string $reason, ?\Throwable $exception = null): void

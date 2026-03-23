@@ -15,7 +15,7 @@ final readonly class CacheClearCommand
     ) {}
 
     /**
-     * Clears the cache backend.
+     * Invalidates the active cache namespace.
      *
      * @param bool $quiet When true, suppresses console output
      * @return bool True on success, false on failure
@@ -26,27 +26,27 @@ final readonly class CacheClearCommand
             $success = $this->cacheService->clear();
 
             if ($success) {
-                $this->logger->info('Cache cleared successfully via console command');
+                $this->logger->info('Cache namespace invalidated successfully via console command');
                 if (!$quiet) {
-                    echo "Cache cleared successfully.\n";
+                    echo "Cache namespace invalidated successfully.\n";
                 }
 
                 return true;
             }
 
-            $this->logger->warning('Cache clear reported failure without throwing exception');
+            $this->logger->warning('Cache namespace invalidation reported failure without throwing exception');
             if (!$quiet) {
-                echo "Warning: Cache clearing completed but reported failure.\n";
+                echo "Warning: Cache namespace invalidation completed but reported failure.\n";
             }
 
             return false;
         } catch (\Throwable $e) {
-            $this->logger->error('Failed to clear cache', [
+            $this->logger->error('Failed to invalidate cache namespace', [
                 'error' => $e->getMessage(),
                 'exception' => $e,
             ]);
             if (!$quiet) {
-                echo "Error: Failed to clear cache: {$e->getMessage()}\n";
+                echo "Error: Failed to invalidate cache namespace: {$e->getMessage()}\n";
             }
 
             return false;

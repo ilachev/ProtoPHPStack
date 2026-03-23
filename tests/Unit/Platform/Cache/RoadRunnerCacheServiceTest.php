@@ -66,7 +66,7 @@ final class RoadRunnerCacheServiceTest extends TestCase
     {
         self::assertTrue($this->cacheService->set('namespaced-key', 'value'));
 
-        self::assertTrue($this->mockStorage->has('test:deploy-42:namespaced-key'));
+        self::assertTrue($this->mockStorage->has('test:deploy-42:1:namespaced-key'));
     }
 
     public function testGetNonExistentKey(): void
@@ -121,6 +121,26 @@ final class RoadRunnerCacheServiceTest extends TestCase
 
         self::assertFalse($this->cacheService->has('key1'));
         self::assertFalse($this->cacheService->has('key2'));
+    }
+
+    public function testClearRotatesNamespaceInsteadOfWipingBackend(): void
+    {
+        self::assertTrue($this->cacheService->set('rotating-key', 'value-before-clear'));
+        self::assertSame('value-before-clear', $this->mockStorage->get('test:deploy-42:1:rotating-key'));
+
+        self::assertTrue($this->cacheService->clear());
+        self::assertFalse($this->cacheService->has('rotating-key'));
+        self::assertSame('value-before-clear', $this->mockStorage->get('test:deploy-42:1:rotating-key'));
+
+        $namespaceVersion = $this->mockStorage->get('test:deploy-42:__namespace_version');
+        self::assertIsString($namespaceVersion);
+        self::assertNotSame('1', $namespaceVersion);
+
+        self::assertTrue($this->cacheService->set('rotating-key', 'value-after-clear'));
+        self::assertSame(
+            'value-after-clear',
+            $this->mockStorage->get("test:deploy-42:{$namespaceVersion}:rotating-key"),
+        );
     }
 
     public function testGetOrSet(): void

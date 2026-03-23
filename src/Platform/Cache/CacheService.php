@@ -48,7 +48,7 @@ interface CacheService
     public function delete(string $key): bool;
 
     /**
-     * Clears the cache backend.
+     * Invalidates the current cache namespace.
      *
      * @return bool Operation result
      */

@@ -79,7 +79,7 @@ final class CachedSessionRepositoryTest extends TestCase
         $result1 = $this->repository->findById(self::SESSION_ID);
         self::assertSame($session, $result1);
 
-        self::assertTrue($this->storage->has('test:session:' . self::SESSION_ID));
+        self::assertTrue($this->storage->has($this->storageKey('session:' . self::SESSION_ID)));
 
         $result2 = $this->repository->findById(self::SESSION_ID);
         self::assertSame($session, $result2);
@@ -98,7 +98,7 @@ final class CachedSessionRepositoryTest extends TestCase
         $result1 = $this->repository->findByUserId(self::USER_ID);
         self::assertSame($sessions, $result1);
 
-        self::assertTrue($this->storage->has('test:session_user:' . self::USER_ID));
+        self::assertTrue($this->storage->has($this->storageKey('session_user:' . self::USER_ID)));
 
         $result2 = $this->repository->findByUserId(self::USER_ID);
         self::assertSame($sessions, $result2);
@@ -132,7 +132,7 @@ final class CachedSessionRepositoryTest extends TestCase
 
         $savedSession = $this->repository->save($session);
 
-        self::assertTrue($this->storage->has('test:session:' . self::SESSION_ID));
+        self::assertTrue($this->storage->has($this->storageKey('session:' . self::SESSION_ID)));
         self::assertSame($session, $savedSession);
 
         $cachedSession = $this->cacheService->get('session:' . self::SESSION_ID);
@@ -159,8 +159,8 @@ final class CachedSessionRepositoryTest extends TestCase
 
         $this->repository->delete(self::SESSION_ID);
 
-        self::assertFalse($this->storage->has('test:session:' . self::SESSION_ID));
-        self::assertFalse($this->storage->has('test:session_user:' . self::USER_ID));
+        self::assertFalse($this->storage->has($this->storageKey('session:' . self::SESSION_ID)));
+        self::assertFalse($this->storage->has($this->storageKey('session_user:' . self::USER_ID)));
     }
 
     public function testDeleteExpiredDoesNotInvalidateCache(): void
@@ -175,7 +175,7 @@ final class CachedSessionRepositoryTest extends TestCase
 
         $this->repository->deleteExpired();
 
-        self::assertTrue($this->storage->has('test:session:' . self::SESSION_ID));
+        self::assertTrue($this->storage->has($this->storageKey('session:' . self::SESSION_ID)));
     }
 
     public function testFindByIdCachesNullResult(): void
@@ -187,7 +187,7 @@ final class CachedSessionRepositoryTest extends TestCase
             ->willReturn(null);
 
         self::assertNull($this->repository->findById(self::SESSION_ID));
-        self::assertTrue($this->storage->has('test:session:' . self::SESSION_ID));
+        self::assertTrue($this->storage->has($this->storageKey('session:' . self::SESSION_ID)));
         self::assertNull($this->repository->findById(self::SESSION_ID));
     }
 
@@ -204,5 +204,10 @@ final class CachedSessionRepositoryTest extends TestCase
             createdAt: $now,
             updatedAt: $now,
         );
+    }
+
+    private function storageKey(string $key): string
+    {
+        return 'test:1:' . $key;
     }
 }
