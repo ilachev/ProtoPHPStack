@@ -167,6 +167,10 @@ final class DIContainer implements Container
             return $this->concretes[$id] = $this->aliases[$id];
         }
 
+        if (isset($this->definitions[$id])) {
+            return $id;
+        }
+
         if (interface_exists($id)) {
             $resolved = $this->endpointImplementationResolver->resolve($id);
             if ($resolved === null) {
