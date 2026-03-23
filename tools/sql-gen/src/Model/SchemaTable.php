@@ -34,6 +34,46 @@ final readonly class SchemaTable
             || $this->hasMatchingUniqueConstraint($columns);
     }
 
+    public function referencesTable(string $tableName): bool
+    {
+        $normalizedTableName = strtolower($tableName);
+
+        foreach ($this->foreignKeys as $foreignKey) {
+            if (strtolower($foreignKey->referencedTable) === $normalizedTableName) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param list<string> $columns
+     * @param list<string> $referencedColumns
+     */
+    public function matchesForeignKeyReference(
+        string $referencedTable,
+        array $columns,
+        array $referencedColumns,
+    ): bool {
+        $normalizedReferencedTable = strtolower($referencedTable);
+
+        foreach ($this->foreignKeys as $foreignKey) {
+            if (strtolower($foreignKey->referencedTable) !== $normalizedReferencedTable) {
+                continue;
+            }
+
+            if (
+                $this->matchesColumnSequence($foreignKey->columns, $columns)
+                && $this->matchesColumnSequence($foreignKey->referencedColumns, $referencedColumns)
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * @param list<string> $columns
      */
@@ -65,5 +105,24 @@ final readonly class SchemaTable
         sort($normalizedRight);
 
         return $normalizedLeft === $normalizedRight;
+    }
+
+    /**
+     * @param list<string> $left
+     * @param list<string> $right
+     */
+    private function matchesColumnSequence(array $left, array $right): bool
+    {
+        if (count($left) !== count($right)) {
+            return false;
+        }
+
+        foreach ($left as $index => $column) {
+            if (strtolower($column) !== strtolower($right[$index])) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
