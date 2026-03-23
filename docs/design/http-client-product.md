@@ -102,6 +102,8 @@ Capability code должно описывать:
 - timeout budgeting;
 - ad-hoc transport classification.
 
+Если downstream код уже находится внутри HTTP request path, inherited deadline должен подхватываться через `RequestContextAttributes::inheritDeadline(...)`, а не через прямую работу со строковыми request attributes.
+
 ### 2. `HttpTransport` не должен становиться policy layer
 
 Concrete transport adapter не должен:

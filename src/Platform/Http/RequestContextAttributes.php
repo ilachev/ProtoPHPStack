@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Platform\Http;
 
+use App\Platform\Http\Client\HttpRequestOptions;
 use App\Platform\Runtime\RequestContext;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -24,5 +25,31 @@ final class RequestContextAttributes
         $context = $request->getAttribute(self::CONTEXT);
 
         return $context instanceof RequestContext ? $context : null;
+    }
+
+    public static function require(ServerRequestInterface $request): RequestContext
+    {
+        $context = self::get($request);
+        if ($context !== null) {
+            return $context;
+        }
+
+        throw new \LogicException('Request context is missing from request attributes');
+    }
+
+    public static function inheritDeadline(
+        ServerRequestInterface $request,
+        HttpRequestOptions $options,
+    ): HttpRequestOptions {
+        if ($options->deadline !== null) {
+            return $options;
+        }
+
+        $context = self::get($request);
+        if ($context === null) {
+            return $options;
+        }
+
+        return $options->withDeadline($context->deadline);
     }
 }

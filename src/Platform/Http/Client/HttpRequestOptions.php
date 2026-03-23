@@ -18,4 +18,18 @@ final readonly class HttpRequestOptions
         public ?Deadline $deadline = null,
         public RetryPolicy $retryPolicy = new RetryPolicy(),
     ) {}
+
+    public function withDeadline(Deadline $deadline): self
+    {
+        return new self(
+            connectTimeoutSeconds: $this->connectTimeoutSeconds,
+            timeoutSeconds: $this->timeoutSeconds,
+            followRedirects: $this->followRedirects,
+            maxRedirects: $this->maxRedirects,
+            idempotent: $this->idempotent,
+            userAgent: $this->userAgent,
+            deadline: $deadline,
+            retryPolicy: $this->retryPolicy,
+        );
+    }
 }
