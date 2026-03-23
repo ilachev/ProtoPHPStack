@@ -6,18 +6,15 @@ namespace SqlGen\Config;
 
 final readonly class GeneratorConfig
 {
-    public SqlRuntimeContracts $runtimeContracts;
-    public SqlArtifactNaming $artifactNaming;
+    public SqlGenerationProfile $profile;
 
     public function __construct(
         public string $inputDir,
         public string $outputDir,
         public string $namespace,
         public string $schemaPath,
-        ?SqlRuntimeContracts $runtimeContracts = null,
-        ?SqlArtifactNaming $artifactNaming = null,
+        ?SqlGenerationProfile $profile = null,
     ) {
-        $this->runtimeContracts = $runtimeContracts ?? SqlRuntimeContracts::fromNamespace('App\Platform\Storage\Sql');
-        $this->artifactNaming = $artifactNaming ?? new SqlArtifactNaming();
+        $this->profile = $profile ?? new SqlGenerationProfile();
     }
 }

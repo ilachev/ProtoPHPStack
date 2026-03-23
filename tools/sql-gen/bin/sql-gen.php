@@ -5,6 +5,7 @@ declare(strict_types=1);
 
 use SqlGen\Application\SqlGenerationService;
 use SqlGen\Config\GeneratorConfig;
+use SqlGen\Config\SqlGenerationProfile;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
@@ -34,7 +35,7 @@ $config = new GeneratorConfig(
     outputDir: $outputDir,
     namespace: $namespace,
     schemaPath: $schemaPath,
-    runtimeContracts: \SqlGen\Config\SqlRuntimeContracts::fromNamespace($runtimeNamespace),
+    profile: SqlGenerationProfile::withRuntimeNamespace($runtimeNamespace),
 );
 
 $generationService = new SqlGenerationService();

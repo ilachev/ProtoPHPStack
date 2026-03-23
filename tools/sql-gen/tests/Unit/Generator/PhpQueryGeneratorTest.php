@@ -6,7 +6,6 @@ namespace Tests\Unit\Generator;
 
 use PHPUnit\Framework\TestCase;
 use SqlGen\Config\GeneratorConfig;
-use SqlGen\Config\SqlRuntimeContracts;
 use SqlGen\Generator\PhpQueryGenerator;
 use SqlGen\Model\DatabaseSchema;
 use SqlGen\Model\SchemaColumn;
@@ -220,7 +219,7 @@ final class PhpQueryGeneratorTest extends TestCase
                 outputDir: 'gen/Generated/Sql',
                 namespace: 'Vendor\\Custom\\Sql',
                 schemaPath: 'sql/schema.sql',
-                runtimeContracts: SqlRuntimeContracts::fromNamespace('Vendor\\Runtime\\Sql'),
+                profile: \SqlGen\Config\SqlGenerationProfile::withRuntimeNamespace('Vendor\\Runtime\\Sql'),
             ),
             new DatabaseSchema([
                 'sessions' => new SchemaTable('sessions', [

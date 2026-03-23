@@ -24,7 +24,7 @@ final readonly class SqlGenerationService
     {
         $schema = $this->sqlSchemaParser->parseFile($config->schemaPath);
         $generator = new PhpQueryGenerator($config, $schema);
-        $sqlFileParser = new SqlFileParser($config->artifactNaming);
+        $sqlFileParser = new SqlFileParser($config->profile->artifactNaming);
         $files = glob(rtrim($config->inputDir, '/') . '/*.sql');
         if (!is_array($files)) {
             throw new \RuntimeException("Failed to list SQL files in {$config->inputDir}");
