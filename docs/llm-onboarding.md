@@ -29,6 +29,7 @@
 - `docs/reusable-blocks.md` — каноническая карта reusable-блоков проекта
 - `docs/design/protoc-php-gen-product.md` — целевая модель protobuf codegen-tooling
 - `docs/design/sql-gen-product.md` — целевая модель typed SQL generation
+- `docs/design/http-client-product.md` — целевая модель outbound HTTP client
 
 ## Текущая структура
 
@@ -84,6 +85,7 @@ Reusable blocks:
 - `sql-gen` должен восприниматься как generic engine с внешним project profile из `codegen/Sql`, а не как тулза со встроенным знанием этого шаблона
 - roadmap `sql-gen` сейчас идёт в richer expression typing и relation-aware schema semantics, а не в ORM-like abstractions или “полную поддержку PostgreSQL”
 - cache layer должен восприниматься как reusable library: capability code должно идти через `ScopedCacheFactory` / `ScopedCache`, а не напрямую через общий `CacheService` с ручной склейкой keys и invalidation logic
+- outbound HTTP должен двигаться через `Platform/Http/Client` как reliability block с deadlines, retry policy и transport separation, а не через ad-hoc `file_get_contents()`/stream-context logic
 
 ## Команды
 

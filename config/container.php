@@ -8,6 +8,7 @@ use App\Capabilities\Session\SessionModule;
 use App\Platform\DI\Container;
 use App\Platform\DI\ServiceProviders\CacheServiceProvider;
 use App\Platform\DI\ServiceProviders\CoreServiceProvider;
+use App\Platform\DI\ServiceProviders\HttpClientServiceProvider;
 use App\Platform\DI\ServiceProviders\HydratorServiceProvider;
 use App\Platform\DI\ServiceProviders\MigrationServiceProvider;
 use App\Platform\DI\ServiceProviders\PlatformSupportServiceProvider;
@@ -20,6 +21,7 @@ return static function (Container $container): void {
         new CacheServiceProvider(),
         new StorageServiceProvider(),
         new MigrationServiceProvider(),
+        new HttpClientServiceProvider(),
         new RoutingServiceProvider(),
         new PlatformSupportServiceProvider(),
         new HydratorServiceProvider(),

@@ -5,6 +5,11 @@ declare(strict_types=1);
 namespace App\Capabilities\Session\Infrastructure\GeoLocation;
 
 use App\Capabilities\Session\Application\GeoLocationConfig;
+use App\Platform\Http\Client\HttpClient;
+use App\Platform\Http\Client\HttpMethod;
+use App\Platform\Http\Client\HttpRequest;
+use App\Platform\Http\Client\HttpRequestOptions;
+use App\Platform\Http\Client\RetryPolicy;
 use App\Platform\Logging\Logger;
 
 /**
@@ -14,6 +19,7 @@ final readonly class UpdateGeoIPCommand
 {
     public function __construct(
         private GeoLocationConfig $config,
+        private HttpClient $httpClient,
         private Logger $logger,
     ) {}
 
@@ -107,26 +113,34 @@ final readonly class UpdateGeoIPCommand
      */
     private function downloadFile(string $url, string $destination): void
     {
-        $options = [
-            'http' => [
-                'method' => 'GET',
-                'header' => [
-                    'User-Agent: PHP/' . PHP_VERSION,
-                ],
-                'timeout' => 120,
-                'follow_location' => 1,
-                'max_redirects' => 3,
-            ],
-        ];
+        $response = $this->httpClient->send(
+            new HttpRequest(
+                method: HttpMethod::GET,
+                uri: $url,
+                upstream: 'ip2location-download',
+                options: new HttpRequestOptions(
+                    connectTimeoutSeconds: 10.0,
+                    timeoutSeconds: 120.0,
+                    followRedirects: true,
+                    maxRedirects: 3,
+                    idempotent: true,
+                    userAgent: 'base-api-template-http-client/' . PHP_VERSION,
+                    retryPolicy: new RetryPolicy(
+                        maxAttempts: 3,
+                        baseDelayMilliseconds: 250,
+                        maxDelayMilliseconds: 2000,
+                    ),
+                ),
+            ),
+        );
 
-        $context = stream_context_create($options);
-        $content = file_get_contents($url, false, $context);
-
-        if ($content === false) {
-            throw new \RuntimeException('Failed to download file from ' . $url);
+        if (!$response->isSuccess()) {
+            throw new \RuntimeException(
+                'Failed to download file from ' . $url . ' with status ' . $response->statusCode,
+            );
         }
 
-        if (file_put_contents($destination, $content) === false) {
+        if (file_put_contents($destination, $response->body) === false) {
             throw new \RuntimeException('Failed to save downloaded file to ' . $destination);
         }
     }
