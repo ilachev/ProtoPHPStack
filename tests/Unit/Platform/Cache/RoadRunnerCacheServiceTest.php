@@ -77,7 +77,29 @@ final class RoadRunnerCacheServiceTest extends TestCase
         self::assertTrue($this->cacheService->set($cacheKey, 'typed-value'));
         self::assertTrue($this->cacheService->has($cacheKey));
         self::assertSame('typed-value', $this->cacheService->get($cacheKey));
-        self::assertTrue($this->mockStorage->has('test:deploy-42:1:typed:identifier'));
+        self::assertTrue($this->mockStorage->has('test:deploy-42:1:typed:1:identifier'));
+    }
+
+    public function testInvalidateScopeRotatesOnlyScopedKeys(): void
+    {
+        $cacheKey = (new CacheScope('typed'))->key('identifier');
+
+        self::assertTrue($this->cacheService->set($cacheKey, 'value-before-invalidate'));
+        self::assertSame('value-before-invalidate', $this->mockStorage->get('test:deploy-42:1:typed:1:identifier'));
+
+        self::assertTrue($this->cacheService->invalidateScope('typed'));
+        self::assertFalse($this->cacheService->has($cacheKey));
+        self::assertSame('value-before-invalidate', $this->mockStorage->get('test:deploy-42:1:typed:1:identifier'));
+
+        $scopeVersion = $this->mockStorage->get('test:deploy-42:1:__scope_version:typed');
+        self::assertIsString($scopeVersion);
+        self::assertNotSame('1', $scopeVersion);
+
+        self::assertTrue($this->cacheService->set($cacheKey, 'value-after-invalidate'));
+        self::assertSame(
+            'value-after-invalidate',
+            $this->mockStorage->get("test:deploy-42:1:typed:{$scopeVersion}:identifier"),
+        );
     }
 
     public function testGetNonExistentKey(): void

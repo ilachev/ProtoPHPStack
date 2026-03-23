@@ -8,6 +8,7 @@ use App\Capabilities\Session\Domain\Session;
 use App\Capabilities\Session\Domain\SessionRepository;
 use App\Capabilities\Session\Infrastructure\Persistence\CachedSessionRepository;
 use App\Platform\Cache\CacheConfig;
+use App\Platform\Cache\CacheScope;
 use App\Platform\Cache\CacheService;
 use App\Platform\Cache\RoadRunnerCacheService;
 use App\Platform\Cache\ScopedCacheFactory;
@@ -28,6 +29,8 @@ final class CachedSessionRepositoryTest extends TestCase
     private CacheService $cacheService;
 
     private MockStorage $storage;
+
+    private ScopedCacheFactory $scopedCacheFactory;
 
     protected function setUp(): void
     {
@@ -59,10 +62,12 @@ final class CachedSessionRepositoryTest extends TestCase
         $reflection = new \ReflectionProperty($this->cacheService, 'available');
         $reflection->setValue($this->cacheService, true);
 
+        $this->scopedCacheFactory = new ScopedCacheFactory($this->cacheService);
+
         // Create repository under test.
         $this->repository = new CachedSessionRepository(
             $this->innerRepository,
-            new ScopedCacheFactory($this->cacheService),
+            $this->scopedCacheFactory,
             $logger,
         );
     }
@@ -80,7 +85,7 @@ final class CachedSessionRepositoryTest extends TestCase
         $result1 = $this->repository->findById(self::SESSION_ID);
         self::assertSame($session, $result1);
 
-        self::assertTrue($this->storage->has($this->storageKey('session:' . self::SESSION_ID)));
+        self::assertTrue($this->storage->has($this->storageKey('session', self::SESSION_ID)));
 
         $result2 = $this->repository->findById(self::SESSION_ID);
         self::assertSame($session, $result2);
@@ -99,7 +104,7 @@ final class CachedSessionRepositoryTest extends TestCase
         $result1 = $this->repository->findByUserId(self::USER_ID);
         self::assertSame($sessions, $result1);
 
-        self::assertTrue($this->storage->has($this->storageKey('session_user:' . self::USER_ID)));
+        self::assertTrue($this->storage->has($this->storageKey('session_user', self::USER_ID)));
 
         $result2 = $this->repository->findByUserId(self::USER_ID);
         self::assertSame($sessions, $result2);
@@ -133,10 +138,10 @@ final class CachedSessionRepositoryTest extends TestCase
 
         $savedSession = $this->repository->save($session);
 
-        self::assertTrue($this->storage->has($this->storageKey('session:' . self::SESSION_ID)));
+        self::assertTrue($this->storage->has($this->storageKey('session', self::SESSION_ID)));
         self::assertSame($session, $savedSession);
 
-        $cachedSession = $this->cacheService->get('session:' . self::SESSION_ID);
+        $cachedSession = $this->cacheService->get((new CacheScope('session'))->key(self::SESSION_ID));
         self::assertSame($session, $cachedSession);
     }
 
@@ -155,20 +160,24 @@ final class CachedSessionRepositoryTest extends TestCase
             ->method('delete')
             ->with(self::SESSION_ID);
 
-        $this->cacheService->set('session:' . self::SESSION_ID, $session);
-        $this->cacheService->set('session_user:' . self::USER_ID, [$session]);
+        $this->cacheService->set((new CacheScope('session'))->key(self::SESSION_ID), $session);
+        $this->cacheService->set((new CacheScope('session_user'))->key(self::USER_ID), [$session]);
 
         $this->repository->delete(self::SESSION_ID);
 
-        self::assertFalse($this->storage->has($this->storageKey('session:' . self::SESSION_ID)));
-        self::assertFalse($this->storage->has($this->storageKey('session_user:' . self::USER_ID)));
+        self::assertFalse($this->storage->has($this->storageKey('session', self::SESSION_ID)));
+        self::assertFalse($this->storage->has($this->storageKey('session_user', self::USER_ID)));
     }
 
-    public function testDeleteExpiredDoesNotInvalidateCache(): void
+    public function testDeleteExpiredInvalidatesCachedScopes(): void
     {
         $session = $this->createSession();
 
-        $this->cacheService->set('session:' . self::SESSION_ID, $session);
+        $sessionCache = $this->scopedCacheFactory->scope('session');
+        $userSessionsCache = $this->scopedCacheFactory->scope('session_user');
+
+        $sessionCache->set(self::SESSION_ID, $session);
+        $userSessionsCache->set(self::USER_ID, [$session]);
 
         $this->innerRepository
             ->expects(self::once())
@@ -176,7 +185,8 @@ final class CachedSessionRepositoryTest extends TestCase
 
         $this->repository->deleteExpired();
 
-        self::assertTrue($this->storage->has($this->storageKey('session:' . self::SESSION_ID)));
+        self::assertFalse($sessionCache->has(self::SESSION_ID));
+        self::assertFalse($userSessionsCache->has(self::USER_ID));
     }
 
     public function testFindByIdCachesNullResult(): void
@@ -188,7 +198,7 @@ final class CachedSessionRepositoryTest extends TestCase
             ->willReturn(null);
 
         self::assertNull($this->repository->findById(self::SESSION_ID));
-        self::assertTrue($this->storage->has($this->storageKey('session:' . self::SESSION_ID)));
+        self::assertTrue($this->storage->has($this->storageKey('session', self::SESSION_ID)));
         self::assertNull($this->repository->findById(self::SESSION_ID));
     }
 
@@ -207,8 +217,8 @@ final class CachedSessionRepositoryTest extends TestCase
         );
     }
 
-    private function storageKey(string $key): string
+    private function storageKey(string $scope, string|int $identifier, string $scopeVersion = '1'): string
     {
-        return 'test:1:' . $key;
+        return "test:1:{$scope}:{$scopeVersion}:{$identifier}";
     }
 }

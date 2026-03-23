@@ -75,5 +75,7 @@ final readonly class CachedSessionRepository extends AbstractCachedRepository im
     public function deleteExpired(): void
     {
         $this->repository->deleteExpired();
+        $this->sessionCache->invalidate();
+        $this->userSessionsCache->invalidate();
     }
 }

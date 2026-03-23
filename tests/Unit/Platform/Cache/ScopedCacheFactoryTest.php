@@ -36,6 +36,9 @@ final class ScopedCacheFactoryTest extends TestCase
         self::assertTrue($sessionCache->has('abc'));
         self::assertSame('value', $sessionCache->get('abc'));
         self::assertSame('session:abc', $sessionCache->key('abc')->toString());
-        self::assertTrue($storage->has('test:deploy-42:1:session:abc'));
+        self::assertTrue($storage->has('test:deploy-42:1:session:1:abc'));
+
+        self::assertTrue($sessionCache->invalidate());
+        self::assertFalse($sessionCache->has('abc'));
     }
 }

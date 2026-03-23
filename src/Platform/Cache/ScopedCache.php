@@ -20,6 +20,8 @@ interface ScopedCache
 
     public function delete(string|int $identifier): bool;
 
+    public function invalidate(): bool;
+
     /**
      * @template T
      * @param callable():T $callback

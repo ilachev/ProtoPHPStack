@@ -75,7 +75,7 @@ final class RoadRunnerCacheService implements CacheService
             return false;
         }
 
-        $prefixedKey = $this->prefixKey($this->normalizeKey($key));
+        $prefixedKey = $this->prefixKey($key);
         $ttl ??= $this->config->defaultTtl;
 
         try {
@@ -95,7 +95,7 @@ final class RoadRunnerCacheService implements CacheService
             return $default;
         }
 
-        $prefixedKey = $this->prefixKey($this->normalizeKey($key));
+        $prefixedKey = $this->prefixKey($key);
 
         try {
             $value = $this->storage->get($prefixedKey);
@@ -114,7 +114,7 @@ final class RoadRunnerCacheService implements CacheService
             return false;
         }
 
-        $prefixedKey = $this->prefixKey($this->normalizeKey($key));
+        $prefixedKey = $this->prefixKey($key);
 
         try {
             return $this->storage->has($prefixedKey);
@@ -131,7 +131,7 @@ final class RoadRunnerCacheService implements CacheService
             return false;
         }
 
-        $prefixedKey = $this->prefixKey($this->normalizeKey($key));
+        $prefixedKey = $this->prefixKey($key);
 
         try {
             return $this->storage->delete($prefixedKey);
@@ -177,6 +177,38 @@ final class RoadRunnerCacheService implements CacheService
         }
     }
 
+    public function invalidateScope(CacheScope|string $scope): bool
+    {
+        if (!$this->available) {
+            return false;
+        }
+
+        $scopeVersionKey = $this->scopeVersionStorageKey($scope);
+
+        try {
+            if ($this->storage instanceof FallbackStorage) {
+                $this->storage->clear();
+            }
+
+            $scopeVersion = $this->generateNamespaceVersion();
+            $this->storage->set($scopeVersionKey, $scopeVersion);
+
+            $this->logger->info('Cache scope invalidated successfully', [
+                'scope' => $this->normalizeScopeName($scope),
+                'scopeVersion' => $scopeVersion,
+                'degraded' => $this->degraded,
+            ]);
+
+            return true;
+        } catch (\Throwable $e) {
+            $this->switchToFallback($e, 'Cache scope invalidation error', [
+                'scope' => $this->normalizeScopeName($scope),
+            ]);
+
+            return false;
+        }
+    }
+
     public function getOrSet(CacheKey|string $key, callable $callback, ?int $ttl = null): mixed
     {
         if (!$this->available) {
@@ -193,14 +225,23 @@ final class RoadRunnerCacheService implements CacheService
         return $value;
     }
 
-    private function prefixKey(string $key): string
+    private function prefixKey(CacheKey|string $key): string
     {
+        if ($key instanceof CacheKey) {
+            return $this->prefixScopedKey($key);
+        }
+
         return $this->namespacePrefix() . $key;
     }
 
-    private function normalizeKey(CacheKey|string $key): string
+    private function prefixScopedKey(CacheKey $key): string
     {
-        return $key instanceof CacheKey ? $key->toString() : $key;
+        return $this->namespacePrefix()
+            . $key->scope->name
+            . ':'
+            . $this->resolveScopeVersion($key->scope)
+            . ':'
+            . $key->identifier;
     }
 
     private function namespacePrefix(): string
@@ -218,6 +259,11 @@ final class RoadRunnerCacheService implements CacheService
     private function namespaceVersionStorageKey(): string
     {
         return $this->namespaceBasePrefix() . '__namespace_version';
+    }
+
+    private function scopeVersionStorageKey(CacheScope|string $scope): string
+    {
+        return $this->namespacePrefix() . '__scope_version:' . $this->normalizeScopeName($scope);
     }
 
     private function resolveNamespaceVersion(): string
@@ -247,6 +293,41 @@ final class RoadRunnerCacheService implements CacheService
 
             return self::DEFAULT_NAMESPACE_VERSION;
         }
+    }
+
+    private function resolveScopeVersion(CacheScope|string $scope): string
+    {
+        $storageKey = $this->scopeVersionStorageKey($scope);
+
+        try {
+            if ($this->storage->has($storageKey)) {
+                $version = $this->storage->get($storageKey);
+
+                if (\is_string($version) && $version !== '') {
+                    return $version;
+                }
+
+                if (\is_int($version) || \is_float($version)) {
+                    return (string) $version;
+                }
+            }
+
+            $this->storage->set($storageKey, self::DEFAULT_NAMESPACE_VERSION);
+
+            return self::DEFAULT_NAMESPACE_VERSION;
+        } catch (\Throwable $e) {
+            $this->switchToFallback($e, 'Cache scope resolution error', [
+                'scope' => $this->normalizeScopeName($scope),
+                'key' => $storageKey,
+            ]);
+
+            return self::DEFAULT_NAMESPACE_VERSION;
+        }
+    }
+
+    private function normalizeScopeName(CacheScope|string $scope): string
+    {
+        return $scope instanceof CacheScope ? $scope->name : $scope;
     }
 
     private function generateNamespaceVersion(): string

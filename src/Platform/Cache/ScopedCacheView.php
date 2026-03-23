@@ -36,6 +36,11 @@ final readonly class ScopedCacheView implements ScopedCache
         return $this->cache->delete($this->key($identifier));
     }
 
+    public function invalidate(): bool
+    {
+        return $this->cache->invalidateScope($this->scope);
+    }
+
     public function getOrSet(string|int $identifier, callable $callback, ?int $ttl = null): mixed
     {
         return $this->cache->getOrSet($this->key($identifier), $callback, $ttl);

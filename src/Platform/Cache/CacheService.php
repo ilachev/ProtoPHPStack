@@ -55,6 +55,14 @@ interface CacheService
     public function clear(): bool;
 
     /**
+     * Invalidates the current version of a cache scope.
+     *
+     * @param CacheScope|string $scope Cache scope
+     * @return bool Operation result
+     */
+    public function invalidateScope(CacheScope|string $scope): bool;
+
+    /**
      * Gets a value from cache or computes and stores it.
      *
      * @template T of mixed
